@@ -262,3 +262,161 @@ export async function getMarketById(
     throw error;
   }
 }
+
+/**
+ * Options for fetching a single market by slug
+ */
+export interface GetMarketBySlugOptions {
+  /**
+   * Custom Gamma client to use instead of default singleton.
+   */
+  client?: GammaClient;
+}
+
+/**
+ * Extract slug from a Polymarket URL.
+ *
+ * Handles URLs in the format:
+ * - https://polymarket.com/event/slug-name
+ * - https://polymarket.com/event/slug-name?query=params
+ * - polymarket.com/event/slug-name
+ * - /event/slug-name
+ * - slug-name (returned as-is)
+ *
+ * @param urlOrSlug - A Polymarket URL or raw slug
+ * @returns The extracted slug, or null if invalid
+ */
+export function parseSlugFromUrl(urlOrSlug: string): string | null {
+  if (!urlOrSlug || urlOrSlug.trim() === "") {
+    return null;
+  }
+
+  const trimmed = urlOrSlug.trim();
+
+  // Try to parse as URL first
+  try {
+    // Handle URLs that might not have a protocol
+    const urlToParse = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+    const url = new URL(urlToParse);
+
+    // Check if it looks like a polymarket URL
+    const pathname = url.pathname;
+
+    // Look for /event/<slug> pattern
+    const eventMatch = pathname.match(/\/event\/([^/?#]+)/);
+    if (eventMatch?.[1]) {
+      return eventMatch[1];
+    }
+
+    // If the URL has a path but no /event/, take the last path segment
+    const pathSegments = pathname.split("/").filter(Boolean);
+    if (pathSegments.length > 0) {
+      return pathSegments[pathSegments.length - 1] ?? null;
+    }
+
+    // No valid path found
+    return null;
+  } catch {
+    // Not a valid URL, treat as raw slug
+
+    // Handle /event/slug format
+    const eventMatch = trimmed.match(/^\/?event\/([^/?#]+)/);
+    if (eventMatch?.[1]) {
+      return eventMatch[1];
+    }
+
+    // Handle slug with leading slash
+    if (trimmed.startsWith("/")) {
+      const withoutSlash = trimmed.slice(1);
+      // Don't allow slugs with more slashes (likely a path)
+      if (withoutSlash.includes("/")) {
+        return null;
+      }
+      return withoutSlash || null;
+    }
+
+    // If it contains slashes but isn't a URL or /event/ pattern, it's invalid
+    if (trimmed.includes("/")) {
+      return null;
+    }
+
+    // Treat as raw slug
+    return trimmed;
+  }
+}
+
+/**
+ * Fetch a specific market by its URL slug.
+ *
+ * This function queries the markets endpoint with a slug filter
+ * to find the matching market.
+ *
+ * @param slug - The market slug (or full Polymarket URL)
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to the market, or null if not found
+ *
+ * @example
+ * ```typescript
+ * // Fetch by slug directly
+ * const market = await getMarketBySlug("will-bitcoin-reach-100k");
+ * if (market) {
+ *   console.log(`Market: ${market.question}`);
+ * }
+ *
+ * // Fetch by URL
+ * const market2 = await getMarketBySlug("https://polymarket.com/event/will-biden-win");
+ *
+ * // Handle not found
+ * const market3 = await getMarketBySlug("non-existent-slug");
+ * if (!market3) {
+ *   console.log("Market not found");
+ * }
+ * ```
+ */
+export async function getMarketBySlug(
+  slug: string,
+  options: GetMarketBySlugOptions = {}
+): Promise<GammaMarket | null> {
+  // Parse slug from URL if needed
+  const parsedSlug = parseSlugFromUrl(slug);
+
+  if (!parsedSlug) {
+    return null;
+  }
+
+  const client = options.client ?? gammaClient;
+
+  // Query the markets endpoint with slug filter
+  const queryString = `slug=${encodeURIComponent(parsedSlug)}`;
+  const endpoint = `/markets?${queryString}`;
+
+  try {
+    const response = await client.get<GammaMarket[] | GammaMarketsResponse>(endpoint);
+
+    // Handle both response formats
+    let markets: GammaMarket[];
+    if (Array.isArray(response)) {
+      markets = response;
+    } else {
+      markets = response.data;
+    }
+
+    // Return the first matching market, or null if none found
+    if (markets.length === 0) {
+      return null;
+    }
+
+    // Find exact match (case-insensitive)
+    const exactMatch = markets.find(
+      (market) => market.slug.toLowerCase() === parsedSlug.toLowerCase()
+    );
+
+    return exactMatch ?? markets[0] ?? null;
+  } catch (error) {
+    // Return null for 404 (not found), re-throw other errors
+    if (error instanceof GammaApiException && error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
+}

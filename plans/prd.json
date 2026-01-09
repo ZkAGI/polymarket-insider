@@ -264,7 +264,8 @@
       "priority": 14,
       "name": "Fetch market by slug",
       "description": "Retrieve market information using URL slug identifier",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T15:45:00Z",
       "steps": [
         "Create getMarketBySlug function",
         "Parse slug from URL if needed",

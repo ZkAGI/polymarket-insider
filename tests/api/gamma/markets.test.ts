@@ -3,7 +3,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getActiveMarkets, getAllActiveMarkets, getMarketById } from "@/api/gamma/markets";
+import {
+  getActiveMarkets,
+  getAllActiveMarkets,
+  getMarketById,
+  getMarketBySlug,
+  parseSlugFromUrl,
+} from "@/api/gamma/markets";
 import { GammaClient, GammaApiException } from "@/api/gamma/client";
 import type { GammaMarket, GammaMarketsResponse } from "@/api/gamma/types";
 
@@ -505,6 +511,341 @@ describe("getMarketById", () => {
       });
 
       await expect(getMarketById("invalid!market")).rejects.toThrow(GammaApiException);
+    });
+  });
+});
+
+describe("parseSlugFromUrl", () => {
+  describe("valid URLs", () => {
+    it("should extract slug from full Polymarket URL", () => {
+      const slug = parseSlugFromUrl("https://polymarket.com/event/will-bitcoin-reach-100k");
+      expect(slug).toBe("will-bitcoin-reach-100k");
+    });
+
+    it("should extract slug from URL with query parameters", () => {
+      const slug = parseSlugFromUrl("https://polymarket.com/event/trump-wins-2024?ref=123");
+      expect(slug).toBe("trump-wins-2024");
+    });
+
+    it("should extract slug from URL without protocol", () => {
+      const slug = parseSlugFromUrl("polymarket.com/event/eth-price-prediction");
+      expect(slug).toBe("eth-price-prediction");
+    });
+
+    it("should extract slug from URL with www", () => {
+      const slug = parseSlugFromUrl("https://www.polymarket.com/event/election-results");
+      expect(slug).toBe("election-results");
+    });
+
+    it("should extract slug from relative path with /event/", () => {
+      const slug = parseSlugFromUrl("/event/market-slug");
+      expect(slug).toBe("market-slug");
+    });
+
+    it("should handle URL with trailing slash", () => {
+      const slug = parseSlugFromUrl("https://polymarket.com/event/my-market/");
+      expect(slug).toBe("my-market");
+    });
+
+    it("should handle URL with hash fragment", () => {
+      const slug = parseSlugFromUrl("https://polymarket.com/event/test-market#details");
+      expect(slug).toBe("test-market");
+    });
+  });
+
+  describe("raw slugs", () => {
+    it("should return raw slug as-is", () => {
+      const slug = parseSlugFromUrl("will-bitcoin-reach-100k");
+      expect(slug).toBe("will-bitcoin-reach-100k");
+    });
+
+    it("should trim whitespace from slug", () => {
+      const slug = parseSlugFromUrl("  my-market-slug  ");
+      expect(slug).toBe("my-market-slug");
+    });
+
+    it("should handle slug with leading slash", () => {
+      const slug = parseSlugFromUrl("/simple-slug");
+      expect(slug).toBe("simple-slug");
+    });
+  });
+
+  describe("invalid inputs", () => {
+    it("should return null for empty string", () => {
+      const slug = parseSlugFromUrl("");
+      expect(slug).toBeNull();
+    });
+
+    it("should return null for whitespace-only string", () => {
+      const slug = parseSlugFromUrl("   ");
+      expect(slug).toBeNull();
+    });
+
+    it("should return null for just a path with multiple slashes", () => {
+      const slug = parseSlugFromUrl("/some/invalid/path");
+      expect(slug).toBeNull();
+    });
+
+    it("should return null for URL with no path", () => {
+      const slug = parseSlugFromUrl("https://polymarket.com/");
+      expect(slug).toBeNull();
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle event path with event prefix", () => {
+      const slug = parseSlugFromUrl("event/my-event-slug");
+      expect(slug).toBe("my-event-slug");
+    });
+
+    it("should handle URL-encoded slugs", () => {
+      const slug = parseSlugFromUrl("https://polymarket.com/event/market%20with%20spaces");
+      expect(slug).toBe("market%20with%20spaces");
+    });
+
+    it("should extract last segment from non-event URL", () => {
+      const slug = parseSlugFromUrl("https://polymarket.com/markets/some-market");
+      expect(slug).toBe("some-market");
+    });
+  });
+});
+
+describe("getMarketBySlug", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("successful requests", () => {
+    it("should fetch market by slug", async () => {
+      const mockMarket = createMockMarket({ slug: "test-market-slug" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([mockMarket])),
+      });
+
+      const result = await getMarketBySlug("test-market-slug");
+
+      expect(result).toEqual(mockMarket);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("slug=test-market-slug"),
+        expect.any(Object)
+      );
+    });
+
+    it("should extract slug from full Polymarket URL", async () => {
+      const mockMarket = createMockMarket({ slug: "bitcoin-prediction" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([mockMarket])),
+      });
+
+      const result = await getMarketBySlug("https://polymarket.com/event/bitcoin-prediction");
+
+      expect(result).toEqual(mockMarket);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("slug=bitcoin-prediction"),
+        expect.any(Object)
+      );
+    });
+
+    it("should URL encode special characters in slug", async () => {
+      const mockMarket = createMockMarket({ slug: "slug with spaces" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([mockMarket])),
+      });
+
+      await getMarketBySlug("slug with spaces");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("slug=slug%20with%20spaces"),
+        expect.any(Object)
+      );
+    });
+
+    it("should handle paginated response format", async () => {
+      const mockMarket = createMockMarket({ slug: "paginated-market" });
+      const paginatedResponse: GammaMarketsResponse = {
+        data: [mockMarket],
+        count: 1,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(paginatedResponse)),
+      });
+
+      const result = await getMarketBySlug("paginated-market");
+
+      expect(result).toEqual(mockMarket);
+    });
+
+    it("should find exact case-insensitive match", async () => {
+      const exactMatch = createMockMarket({ id: "1", slug: "My-Market-Slug" });
+      const partialMatch = createMockMarket({ id: "2", slug: "my-market-slug-extended" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([partialMatch, exactMatch])),
+      });
+
+      const result = await getMarketBySlug("my-market-slug");
+
+      expect(result?.id).toBe("1");
+    });
+
+    it("should return first market if no exact match found", async () => {
+      const market1 = createMockMarket({ id: "1", slug: "close-match-1" });
+      const market2 = createMockMarket({ id: "2", slug: "close-match-2" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([market1, market2])),
+      });
+
+      const result = await getMarketBySlug("different-slug");
+
+      expect(result?.id).toBe("1");
+    });
+
+    it("should use custom client when provided", async () => {
+      const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+      const mockMarket = createMockMarket({ slug: "custom-market" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([mockMarket])),
+      });
+
+      await getMarketBySlug("custom-market", { client: customClient });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("https://custom.api.com"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("not found handling", () => {
+    it("should return null when no markets match slug", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      const result = await getMarketBySlug("non-existent-market");
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null for empty string slug", async () => {
+      const result = await getMarketBySlug("");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return null for whitespace-only slug", async () => {
+      const result = await getMarketBySlug("   ");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return null for invalid URL pattern", async () => {
+      const result = await getMarketBySlug("/some/invalid/path/structure");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return null on 404 API response", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketBySlug("valid-slug");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("error handling", () => {
+    it("should throw for server errors (500)", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve(JSON.stringify({ message: "Server error" })),
+      });
+
+      await expect(getMarketBySlug("some-market")).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw for forbidden errors (403)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve(JSON.stringify({ message: "Access denied" })),
+      });
+
+      await expect(getMarketBySlug("forbidden-market")).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw for rate limit errors (429)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        text: () => Promise.resolve(JSON.stringify({ message: "Rate limited" })),
+      });
+
+      await expect(getMarketBySlug("rate-limited-market")).rejects.toThrow(GammaApiException);
+    });
+  });
+
+  describe("URL parsing integration", () => {
+    it("should work with URL containing query params", async () => {
+      const mockMarket = createMockMarket({ slug: "url-with-params" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([mockMarket])),
+      });
+
+      const result = await getMarketBySlug(
+        "https://polymarket.com/event/url-with-params?utm_source=twitter"
+      );
+
+      expect(result).toEqual(mockMarket);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("slug=url-with-params"),
+        expect.any(Object)
+      );
+    });
+
+    it("should work with relative /event/ path", async () => {
+      const mockMarket = createMockMarket({ slug: "relative-path" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([mockMarket])),
+      });
+
+      const result = await getMarketBySlug("/event/relative-path");
+
+      expect(result).toEqual(mockMarket);
     });
   });
 });

@@ -183,3 +183,44 @@ COMPLETED: API-GAMMA-003 - Fetch market by ID
   - Bad request error handling (throws GammaApiException)
 - Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
 - Next up: API-GAMMA-004
+
+COMPLETED: API-GAMMA-004 - Fetch market by slug
+- Added getMarketBySlug() function to src/api/gamma/markets.ts
+- Added parseSlugFromUrl() helper function to extract slug from Polymarket URLs
+- Accepts slug string parameter (can be raw slug or full Polymarket URL)
+- Returns GammaMarket or null if not found
+- Features:
+  - parseSlugFromUrl() handles multiple URL formats:
+    - Full URLs: https://polymarket.com/event/slug-name
+    - URLs without protocol: polymarket.com/event/slug-name
+    - Relative paths: /event/slug-name
+    - Raw slugs: slug-name
+    - URLs with query params and hash fragments
+  - Queries the /markets endpoint with slug filter
+  - URL encodes slug for safe API requests
+  - Returns null for invalid/empty slugs (no API call made)
+  - Returns null for 404 responses (market not found)
+  - Finds exact case-insensitive match when multiple results returned
+  - Falls back to first result if no exact match
+  - Re-throws other API errors (5xx, 403, 429, etc.)
+  - Supports custom GammaClient via options parameter
+- Created GetMarketBySlugOptions interface for configuration
+- Updated src/api/gamma/index.ts to export new functions and types
+- Added 35+ test cases to tests/api/gamma/markets.test.ts covering:
+  - parseSlugFromUrl tests:
+    - Valid URL formats (full, without protocol, with www, relative)
+    - Query params and hash fragments
+    - Raw slugs and edge cases
+    - Invalid inputs (empty, whitespace, invalid paths)
+  - getMarketBySlug tests:
+    - Successful fetch by slug
+    - URL parsing integration
+    - Paginated response handling
+    - Case-insensitive matching
+    - Custom client injection
+    - Not found handling (empty response, 404)
+    - Error handling (500, 403, 429)
+- Implementation follows established patterns from getMarketById
+- Created scripts/init.sh for easier development setup with nvm
+- NOTE: Tests require Node 20+ to run (project uses .nvmrc with v20.17.0)
+- Next up: API-GAMMA-005
