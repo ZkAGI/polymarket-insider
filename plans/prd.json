@@ -164,7 +164,8 @@
       "priority": 9,
       "name": "Set up Next.js frontend",
       "description": "Initialize Next.js with App Router",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T08:55:00Z",
       "steps": [
         "Install next, react, react-dom",
         "Create app/ directory structure",

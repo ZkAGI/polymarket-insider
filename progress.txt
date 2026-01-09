@@ -70,9 +70,20 @@ COMPLETED: SETUP-008 - Set up database with Prisma
 - DATABASE_URL already configured in .env from SETUP-006
 - Verified: npx prisma validate passes
 
+COMPLETED: SETUP-009 - Set up Next.js frontend
+- Installed next, react, react-dom and @types/react, @types/react-dom
+- Created app/ directory with App Router structure
+- Created next.config.ts with reactStrictMode enabled
+- Created app/layout.tsx with metadata (title, description)
+- Created app/page.tsx with landing page content
+- Updated tsconfig.json with @/app/* path alias
+- Verified: npm run dev starts server at localhost:3000
+- Verified: App renders correctly with title and content
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
 - ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
 - Run `npm test` for single run, `npm run test:watch` for watch mode
 - Run `npx prisma db push` to sync schema with database
-- Next up: SETUP-009 (Set up Next.js frontend)
+- Run `npm run dev` to start Next.js dev server
+- Next up: SETUP-010 (Configure Tailwind CSS)
