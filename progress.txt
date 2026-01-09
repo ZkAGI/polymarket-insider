@@ -472,3 +472,60 @@ COMPLETED: API-GAMMA-010 - Gamma API pagination handler
 - TypeScript typecheck passes
 - ESLint passes
 - Next up: API-GAMMA-011
+
+COMPLETED: API-GAMMA-011 - Gamma API rate limiter
+- Created src/api/gamma/rate-limiter.ts with comprehensive rate limiting:
+  - RateLimiter class implementing token bucket algorithm
+  - RateLimiterError class for typed error handling
+  - RateLimiterConfig interface for configuration
+  - RateLimiterStats interface for monitoring
+- Token bucket implementation features:
+  - Configurable maxTokens (default: 10)
+  - Configurable refillRate and refillInterval (default: 1 token/second)
+  - Token consumption and automatic refill
+  - Manual refill on each acquire() call for accuracy
+- Request queuing features:
+  - Configurable maxQueueSize (default: 100)
+  - Configurable maxWaitTime timeout (default: 30s)
+  - FIFO queue processing as tokens become available
+  - Queue timeout with RateLimiterError thrown
+- 429 response handling:
+  - handleRateLimitResponse() method for Response objects
+  - Parses Retry-After header (seconds or HTTP date)
+  - Exponential backoff with jitter when no header
+  - Configurable retryDelay and maxRetryDelay
+  - pause() and resume() methods
+- Helper functions and utilities:
+  - createRateLimiter() factory function
+  - getSharedRateLimiter() for singleton access
+  - resetSharedRateLimiter() for testing/reset
+  - withRateLimit() decorator for wrapping functions
+  - executeWithRateLimit() for automatic 429 retry
+- Statistics and monitoring:
+  - getStats() returns current state and metrics
+  - Tracks: totalRequests, throttledRequests, rateLimitedResponses, averageWaitTime
+  - resetStats() to clear statistics only
+  - reset() to clear all state including queue
+  - dispose() for cleanup
+- Updated src/api/gamma/index.ts exports:
+  - Classes: RateLimiter, RateLimiterError
+  - Functions: createRateLimiter, getSharedRateLimiter, resetSharedRateLimiter, withRateLimit, executeWithRateLimit
+  - Types: RateLimiterConfig, RateLimiterStats
+- Created tests/api/gamma/rate-limiter.test.ts with 40+ test cases covering:
+  - Constructor and configuration (default and custom)
+  - acquire() token consumption, queuing, queue full error, timeout
+  - tryAcquire() non-blocking acquisition
+  - Token refill behavior (rate, interval, max cap)
+  - handleRateLimitResponse() with Response, number, Retry-After header
+  - Exponential backoff calculation with jitter
+  - pause() and resume() functionality
+  - Statistics tracking and reset
+  - reset() and dispose() cleanup
+  - createRateLimiter() factory
+  - Shared rate limiter singleton
+  - withRateLimit() function decorator
+  - executeWithRateLimit() automatic 429 retry
+  - RateLimiterError class properties
+- TypeScript typecheck passes (tsc --noEmit)
+- NOTE: Tests require Node.js 20+ to run (vitest uses modern regex features)
+- Next up: API-GAMMA-012

@@ -75,3 +75,16 @@ export type {
   PaginatedResult,
   PaginateEndpointConfig,
 } from "./paginate";
+
+// Rate limiting utilities
+export {
+  RateLimiter,
+  RateLimiterError,
+  createRateLimiter,
+  getSharedRateLimiter,
+  resetSharedRateLimiter,
+  withRateLimit,
+  executeWithRateLimit,
+} from "./rate-limiter";
+
+export type { RateLimiterConfig, RateLimiterStats } from "./rate-limiter";
