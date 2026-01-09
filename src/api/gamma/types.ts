@@ -122,3 +122,68 @@ export interface GammaRequestOptions {
   body?: unknown;
   timeout?: number;
 }
+
+/**
+ * Supported time intervals for historical data
+ */
+export type TimeInterval = "1h" | "4h" | "1d" | "1w" | "1m";
+
+/**
+ * Time range for volume history queries
+ */
+export interface TimeRange {
+  /** Start date/time (ISO string or Date) */
+  startDate: string | Date;
+
+  /** End date/time (ISO string or Date) */
+  endDate: string | Date;
+}
+
+/**
+ * A single data point in volume history time series
+ */
+export interface VolumeDataPoint {
+  /** Timestamp for this data point (ISO string) */
+  timestamp: string;
+
+  /** Trading volume in this period (in USD/USDC) */
+  volume: number;
+
+  /** Number of trades in this period */
+  tradeCount?: number;
+
+  /** Cumulative volume up to this point (if available) */
+  cumulativeVolume?: number;
+}
+
+/**
+ * Result from fetching market volume history
+ */
+export interface VolumeHistoryResult {
+  /** Market ID */
+  marketId: string;
+
+  /** Market question for reference */
+  question: string;
+
+  /** Start of the time range */
+  startDate: string;
+
+  /** End of the time range */
+  endDate: string;
+
+  /** Time interval used for aggregation */
+  interval: TimeInterval;
+
+  /** Array of volume data points */
+  dataPoints: VolumeDataPoint[];
+
+  /** Total volume over the entire time range */
+  totalVolume: number;
+
+  /** Total number of trades over the entire time range */
+  totalTrades?: number;
+
+  /** Timestamp of when this data was fetched */
+  fetchedAt: string;
+}

@@ -260,3 +260,44 @@ COMPLETED: API-GAMMA-005 - Fetch market outcomes
 - All tests pass (103 total)
 - TypeScript typecheck passes
 - Next up: API-GAMMA-006
+
+COMPLETED: API-GAMMA-006 - Fetch market volume history
+- Added new types to src/api/gamma/types.ts:
+  - TimeInterval: "1h" | "4h" | "1d" | "1w" | "1m"
+  - TimeRange: Interface for start/end dates
+  - VolumeDataPoint: Time-series volume data point with timestamp, volume, tradeCount, cumulativeVolume
+  - VolumeHistoryResult: Complete volume history result with metadata
+- Created functions in src/api/gamma/markets.ts:
+  - getMarketVolumeHistory(marketId, options): Fetch volume history by market ID
+  - getMarketVolumeHistoryBySlug(slug, options): Fetch volume history by slug/URL
+  - Helper functions: toISOString, toUnixTimestamp, getDefaultTimeRange, getIntervalMs
+  - parseTimeseriesResponse: Parse API response (supports 'history' and 'data' formats)
+  - generateSyntheticVolumeHistory: Fallback when API doesn't provide timeseries data
+- Features:
+  - Accepts market ID or slug (including full Polymarket URLs)
+  - Configurable time range (default: last 30 days)
+  - Configurable interval: 1h, 4h, 1d, 1w, 1m (default: 1d)
+  - Supports both API formats: { history: [{t, v}] } and { data: [{timestamp, volume, tradeCount}] }
+  - Calculates cumulative volume for each data point
+  - Falls back to synthetic data distribution when timeseries API returns 404
+  - Synthetic data respects market creation date
+  - Custom client support for testing
+- Updated src/api/gamma/index.ts exports:
+  - Functions: getMarketVolumeHistory, getMarketVolumeHistoryBySlug
+  - Types: TimeInterval, TimeRange, VolumeDataPoint, VolumeHistoryResult, GetMarketVolumeHistoryOptions
+- Added 27 comprehensive tests in tests/api/gamma/markets.test.ts:
+  - API timeseries data parsing (history and data formats)
+  - Cumulative volume calculation
+  - Unix timestamp to ISO conversion
+  - Fallback to synthetic data on 404 or empty response
+  - Respecting market creation date in synthetic data
+  - Default and custom time ranges (string and Date objects)
+  - Default and custom intervals
+  - Custom client injection
+  - Not found handling (null returns)
+  - Error handling (500, 403 errors throw GammaApiException)
+  - Result metadata (fetchedAt, question, totalTrades)
+  - Slug-based lookups with options passthrough
+- All tests pass (130 total, up from 103)
+- TypeScript typecheck passes
+- Next up: API-GAMMA-007

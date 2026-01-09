@@ -10,6 +10,8 @@ import {
   getMarketBySlug,
   getMarketOutcomes,
   getMarketOutcomesBySlug,
+  getMarketVolumeHistory,
+  getMarketVolumeHistoryBySlug,
   parseSlugFromUrl,
 } from "@/api/gamma/markets";
 import { GammaClient, GammaApiException } from "@/api/gamma/client";
@@ -1143,6 +1145,679 @@ describe("getMarketOutcomesBySlug", () => {
 
     await getMarketOutcomesBySlug("custom-market", { client: customClient });
 
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("https://custom.api.com"),
+      expect.any(Object)
+    );
+  });
+});
+
+describe("getMarketVolumeHistory", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("successful requests with API timeseries data", () => {
+    it("should fetch volume history with history format", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        question: "Will Bitcoin reach $100k?",
+        volume: 50000,
+      });
+
+      const mockTimeseries = {
+        history: [
+          { t: 1704067200, v: 1000 }, // 2024-01-01T00:00:00Z
+          { t: 1704153600, v: 1500 }, // 2024-01-02T00:00:00Z
+          { t: 1704240000, v: 2000 }, // 2024-01-03T00:00:00Z
+        ],
+      };
+
+      // First call: getMarketById
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Second call: timeseries endpoint
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockTimeseries)),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.marketId).toBe("market-1");
+      expect(result?.question).toBe("Will Bitcoin reach $100k?");
+      expect(result?.dataPoints).toHaveLength(3);
+      expect(result?.totalVolume).toBe(4500);
+    });
+
+    it("should fetch volume history with data format", async () => {
+      const mockMarket = createMockMarket({ id: "market-1", volume: 30000 });
+
+      const mockTimeseries = {
+        data: [
+          { timestamp: "2024-01-01T00:00:00Z", volume: 500, tradeCount: 10 },
+          { timestamp: "2024-01-02T00:00:00Z", volume: 750, tradeCount: 15 },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockTimeseries)),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.dataPoints).toHaveLength(2);
+      expect(result?.dataPoints[0]?.tradeCount).toBe(10);
+      expect(result?.dataPoints[1]?.tradeCount).toBe(15);
+      expect(result?.totalTrades).toBe(25);
+    });
+
+    it("should calculate cumulative volume correctly", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      const mockTimeseries = {
+        history: [
+          { t: 1704067200, v: 100 },
+          { t: 1704153600, v: 200 },
+          { t: 1704240000, v: 300 },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockTimeseries)),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result?.dataPoints[0]?.cumulativeVolume).toBe(100);
+      expect(result?.dataPoints[1]?.cumulativeVolume).toBe(300);
+      expect(result?.dataPoints[2]?.cumulativeVolume).toBe(600);
+    });
+
+    it("should convert unix timestamps to ISO strings", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      const mockTimeseries = {
+        history: [{ t: 1704067200, v: 100 }], // 2024-01-01T00:00:00.000Z
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockTimeseries)),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result?.dataPoints[0]?.timestamp).toBe("2024-01-01T00:00:00.000Z");
+    });
+  });
+
+  describe("fallback to synthetic data", () => {
+    it("should generate synthetic data when timeseries endpoint returns 404", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        volume: 10000,
+        createdAt: "2024-01-01T00:00:00Z",
+      });
+
+      // First call: getMarketById
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Second call: timeseries endpoint returns 404
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("market-1", {
+        timeRange: {
+          startDate: "2024-01-01T00:00:00Z",
+          endDate: "2024-01-10T00:00:00Z",
+        },
+        interval: "1d",
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.dataPoints.length).toBeGreaterThan(0);
+      // Total volume from synthetic data should approximately equal market volume
+      expect(result?.totalVolume).toBeCloseTo(10000, 0);
+    });
+
+    it("should generate synthetic data when timeseries returns empty response", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        volume: 5000,
+        createdAt: "2024-01-01T00:00:00Z",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("{}"),
+      });
+
+      const result = await getMarketVolumeHistory("market-1", {
+        timeRange: {
+          startDate: "2024-01-01T00:00:00Z",
+          endDate: "2024-01-05T00:00:00Z",
+        },
+        interval: "1d",
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.dataPoints.length).toBeGreaterThan(0);
+      expect(result?.totalVolume).toBeCloseTo(5000, 0);
+    });
+
+    it("should respect market creation date in synthetic data", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        volume: 1000,
+        createdAt: "2024-01-05T00:00:00Z", // Created on day 5
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("market-1", {
+        timeRange: {
+          startDate: "2024-01-01T00:00:00Z", // Before market creation
+          endDate: "2024-01-10T00:00:00Z",
+        },
+        interval: "1d",
+      });
+
+      expect(result).not.toBeNull();
+      // All data points should be after market creation
+      const firstTimestamp = new Date(result?.dataPoints[0]?.timestamp ?? "");
+      const marketCreated = new Date("2024-01-05T00:00:00Z");
+      expect(firstTimestamp.getTime()).toBeGreaterThanOrEqual(marketCreated.getTime());
+    });
+  });
+
+  describe("options handling", () => {
+    it("should use default time range (last 30 days) when not provided", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result).not.toBeNull();
+      const startDate = new Date(result?.startDate ?? "");
+      const endDate = new Date(result?.endDate ?? "");
+      const diffDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+      expect(diffDays).toBeCloseTo(30, 0);
+    });
+
+    it("should use default interval (1d) when not provided", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result?.interval).toBe("1d");
+    });
+
+    it("should accept custom time range", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("market-1", {
+        timeRange: {
+          startDate: "2024-06-01T00:00:00Z",
+          endDate: "2024-06-15T00:00:00Z",
+        },
+      });
+
+      expect(result?.startDate).toBe("2024-06-01T00:00:00.000Z");
+      expect(result?.endDate).toBe("2024-06-15T00:00:00.000Z");
+    });
+
+    it("should accept Date objects for time range", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const startDate = new Date("2024-03-01T00:00:00Z");
+      const endDate = new Date("2024-03-10T00:00:00Z");
+
+      const result = await getMarketVolumeHistory("market-1", {
+        timeRange: { startDate, endDate },
+      });
+
+      expect(result?.startDate).toBe("2024-03-01T00:00:00.000Z");
+      expect(result?.endDate).toBe("2024-03-10T00:00:00.000Z");
+    });
+
+    it("should accept different interval options", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("market-1", {
+        interval: "1h",
+        timeRange: {
+          startDate: "2024-01-01T00:00:00Z",
+          endDate: "2024-01-02T00:00:00Z",
+        },
+      });
+
+      expect(result?.interval).toBe("1h");
+      // With hourly interval over 1 day, expect ~24 data points
+      expect(result?.dataPoints.length).toBeGreaterThanOrEqual(20);
+    });
+
+    it("should use custom client when provided", async () => {
+      const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ history: [] })),
+      });
+
+      await getMarketVolumeHistory("market-1", { client: customClient });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("https://custom.api.com"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("not found handling", () => {
+    it("should return null for non-existent market", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("non-existent");
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null for empty market ID", async () => {
+      const result = await getMarketVolumeHistory("");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return null for whitespace-only market ID", async () => {
+      const result = await getMarketVolumeHistory("   ");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("error handling", () => {
+    it("should throw for server errors (500)", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve(JSON.stringify({ message: "Server error" })),
+      });
+
+      await expect(getMarketVolumeHistory("market-1")).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw for forbidden errors (403)", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve(JSON.stringify({ message: "Forbidden" })),
+      });
+
+      await expect(getMarketVolumeHistory("market-1")).rejects.toThrow(GammaApiException);
+    });
+  });
+
+  describe("result metadata", () => {
+    it("should include fetchedAt timestamp", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const beforeFetch = new Date().toISOString();
+      const result = await getMarketVolumeHistory("market-1");
+      const afterFetch = new Date().toISOString();
+
+      expect(result?.fetchedAt).toBeDefined();
+      expect(result!.fetchedAt >= beforeFetch).toBe(true);
+      expect(result!.fetchedAt <= afterFetch).toBe(true);
+    });
+
+    it("should include market question in result", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        question: "Will SpaceX launch Starship?",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result?.question).toBe("Will SpaceX launch Starship?");
+    });
+
+    it("should not include totalTrades when no trade count data", async () => {
+      const mockMarket = createMockMarket({ id: "market-1" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              history: [{ t: 1704067200, v: 100 }],
+            })
+          ),
+      });
+
+      const result = await getMarketVolumeHistory("market-1");
+
+      expect(result?.totalTrades).toBeUndefined();
+    });
+  });
+});
+
+describe("getMarketVolumeHistoryBySlug", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch volume history by slug", async () => {
+    const mockMarket = createMockMarket({
+      id: "market-1",
+      slug: "bitcoin-100k",
+      question: "Will Bitcoin reach $100k?",
+      volume: 25000,
+    });
+
+    // First call: getMarketBySlug -> markets endpoint
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    // Second call: getMarketById (from getMarketVolumeHistory)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    // Third call: timeseries endpoint
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    const result = await getMarketVolumeHistoryBySlug("bitcoin-100k");
+
+    expect(result).not.toBeNull();
+    expect(result?.marketId).toBe("market-1");
+    expect(result?.question).toBe("Will Bitcoin reach $100k?");
+  });
+
+  it("should fetch volume history from Polymarket URL", async () => {
+    const mockMarket = createMockMarket({
+      id: "market-1",
+      slug: "election-winner",
+      volume: 100000,
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    const result = await getMarketVolumeHistoryBySlug("https://polymarket.com/event/election-winner");
+
+    expect(result).not.toBeNull();
+    expect(result?.marketId).toBe("market-1");
+  });
+
+  it("should return null for non-existent slug", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve("[]"),
+    });
+
+    const result = await getMarketVolumeHistoryBySlug("non-existent-market");
+
+    expect(result).toBeNull();
+  });
+
+  it("should return null for invalid slug", async () => {
+    const result = await getMarketVolumeHistoryBySlug("");
+
+    expect(result).toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("should pass options to getMarketVolumeHistory", async () => {
+    const mockMarket = createMockMarket({
+      id: "market-1",
+      slug: "test-market",
+      volume: 5000,
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    const result = await getMarketVolumeHistoryBySlug("test-market", {
+      interval: "4h",
+      timeRange: {
+        startDate: "2024-01-01T00:00:00Z",
+        endDate: "2024-01-03T00:00:00Z",
+      },
+    });
+
+    expect(result?.interval).toBe("4h");
+    expect(result?.startDate).toBe("2024-01-01T00:00:00.000Z");
+    expect(result?.endDate).toBe("2024-01-03T00:00:00.000Z");
+  });
+
+  it("should use custom client when provided", async () => {
+    const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+    const mockMarket = createMockMarket({ slug: "custom-market" });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ history: [] })),
+    });
+
+    await getMarketVolumeHistoryBySlug("custom-market", { client: customClient });
+
+    // All three API calls should use custom client
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("https://custom.api.com"),
       expect.any(Object)

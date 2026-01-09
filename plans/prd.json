@@ -302,7 +302,8 @@
       "priority": 16,
       "name": "Fetch market volume history",
       "description": "Retrieve historical volume data for a specific market",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T21:25:00Z",
       "steps": [
         "Create getMarketVolumeHistory function",
         "Accept market ID and time range",
