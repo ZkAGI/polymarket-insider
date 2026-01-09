@@ -85,7 +85,8 @@
       "priority": 5,
       "name": "Set up project directory structure",
       "description": "Create folder structure for src, tests, config",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T08:15:00Z",
       "steps": [
         "Create src/ with subdirs: api, detection, ui, notifications, ai, utils",
         "Create tests/ with matching structure",

@@ -31,7 +31,14 @@ COMPLETED: SETUP-004 - Configure ESLint and Prettier
 - Verified: npm run lint passes with no errors
 - Verified: npm run format works correctly
 
+COMPLETED: SETUP-005 - Set up project directory structure
+- Created src/ with subdirectories: api, detection, ui, notifications, ai, utils
+- Created tests/ with matching structure (api, detection, ui, notifications, ai, utils)
+- Created config/ for configuration files
+- Added .gitkeep files to ensure empty directories are tracked
+- Verified: All directories exist with correct structure
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
 - ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
-- Next up: SETUP-005 (Set up project directory structure)
+- Next up: SETUP-006 (Configure environment variables)
