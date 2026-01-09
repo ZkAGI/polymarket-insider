@@ -31,9 +31,26 @@ export {
   filterTradesByTimeRange,
   filterTradesByMinSize,
   getUniqueWallets,
+  // Wallet-specific trade functions (API-CLOB-004)
+  getTradesByWallet,
+  getAllTradesByWallet,
+  getWalletActivitySummary,
+  hasWalletTraded,
+  getFirstWalletTrade,
+  getTradesBetweenWallets,
+  isValidWalletAddress,
+  normalizeWalletAddress,
 } from "./trades";
 
-export type { GetRecentTradesOptions, GetRecentTradesResult } from "./trades";
+export type {
+  GetRecentTradesOptions,
+  GetRecentTradesResult,
+  // Wallet-specific types (API-CLOB-004)
+  GetTradesByWalletOptions,
+  GetTradesByWalletResult,
+  WalletActivitySummary,
+  WalletTradeRole,
+} from "./trades";
 
 export type {
   ClobClientConfig,

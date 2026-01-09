@@ -777,3 +777,46 @@ COMPLETED: API-CLOB-003 - Fetch recent trades
 - Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
 - NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
 - Next up: API-CLOB-004
+
+COMPLETED: API-CLOB-004 - Fetch trades by wallet address
+- Extended src/api/clob/trades.ts with comprehensive wallet trade functions:
+  - getTradesByWallet(walletAddress, options): Fetch trades for a specific wallet
+  - getAllTradesByWallet(walletAddress, options): Fetch all trades with automatic pagination
+  - getWalletActivitySummary(trades, walletAddress): Get activity summary for wallet
+  - hasWalletTraded(walletAddress, options): Check if wallet has any trading history
+  - getFirstWalletTrade(walletAddress, options): Get oldest trade for wallet
+  - getTradesBetweenWallets(walletA, walletB, options): Find trades between two wallets
+  - isValidWalletAddress(address): Validate Ethereum address format
+  - normalizeWalletAddress(address): Normalize address (lowercase, trimmed)
+- Features:
+  - Validates Ethereum wallet address format (0x + 40 hex characters)
+  - Supports role filtering: "maker", "taker", or "both"
+  - Token ID filtering for specific market trades
+  - Time range filtering with startTime/endTime
+  - Pagination support with cursor-based navigation
+  - Case-insensitive address matching
+  - Automatic pagination in getAllTradesByWallet with safety limits
+  - WalletActivitySummary includes: totalTrades, tradesAsMaker/tradesAsTaker,
+    volumeAsMaker/volumeAsTaker, buyTrades/sellTrades, uniqueTokens, timestamps
+  - Returns null for invalid addresses (no API call made)
+  - Returns empty result for 404 responses (wallet has no trades)
+  - Throws ClobApiException for server errors
+  - Custom ClobClient injection for testing
+- Added new types:
+  - WalletTradeRole: "maker" | "taker" | "both"
+  - GetTradesByWalletOptions: limit, cursor, role, tokenId, startTime, endTime, client
+  - GetTradesByWalletResult: trades, count, walletAddress, role, nextCursor, hasMore, fetchedAt
+  - WalletActivitySummary: comprehensive wallet trading statistics
+- Updated src/api/clob/index.ts to export all new functions and types
+- Created comprehensive tests in tests/api/clob/trades.test.ts (40+ new test cases):
+  - isValidWalletAddress tests (valid/invalid addresses, whitespace, null/undefined)
+  - normalizeWalletAddress tests
+  - getTradesByWallet tests (basic fetch, role filtering, pagination, time filters,
+    error handling, address normalization, sorting, limit parameter)
+  - getAllTradesByWallet tests (pagination, maxTrades limit, invalid addresses)
+  - getWalletActivitySummary tests (summary calculation, empty array, invalid sizes)
+  - hasWalletTraded tests (true/false cases, invalid address)
+  - getFirstWalletTrade tests (oldest trade, no trades, invalid address)
+  - getTradesBetweenWallets tests (find trades, invalid addresses, same wallet, no trades)
+- NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
+- Next up: API-CLOB-005

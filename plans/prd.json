@@ -521,7 +521,8 @@
       "priority": 27,
       "name": "Fetch trades by wallet address",
       "description": "Retrieve all trades made by a specific wallet address",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T01:15:00Z",
       "steps": [
         "Create getTradesByWallet function",
         "Accept wallet address param",

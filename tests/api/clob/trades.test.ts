@@ -14,6 +14,15 @@ import {
   filterTradesByTimeRange,
   filterTradesByMinSize,
   getUniqueWallets,
+  // API-CLOB-004: Wallet trade functions
+  getTradesByWallet,
+  getAllTradesByWallet,
+  getWalletActivitySummary,
+  hasWalletTraded,
+  getFirstWalletTrade,
+  getTradesBetweenWallets,
+  isValidWalletAddress,
+  normalizeWalletAddress,
 } from "@/api/clob/trades";
 import { ClobClient, ClobApiException } from "@/api/clob/client";
 import { Trade } from "@/api/clob/types";
@@ -668,6 +677,703 @@ describe("Trades API", () => {
         expect(wallets.makers.size).toBe(1);
         expect(wallets.all.size).toBe(2);
       });
+    });
+  });
+
+  // ==========================================================================
+  // API-CLOB-004: Fetch trades by wallet address tests
+  // ==========================================================================
+
+  describe("Wallet Address Utilities", () => {
+    describe("isValidWalletAddress", () => {
+      it("should return true for valid Ethereum addresses", () => {
+        expect(isValidWalletAddress("0x1234567890123456789012345678901234567890")).toBe(true);
+        expect(isValidWalletAddress("0xaBcDeF1234567890123456789012345678901234")).toBe(true);
+        expect(isValidWalletAddress("0x0000000000000000000000000000000000000000")).toBe(true);
+      });
+
+      it("should return false for invalid addresses", () => {
+        expect(isValidWalletAddress("")).toBe(false);
+        expect(isValidWalletAddress("0x")).toBe(false);
+        expect(isValidWalletAddress("0x123")).toBe(false);
+        expect(isValidWalletAddress("1234567890123456789012345678901234567890")).toBe(false);
+        expect(isValidWalletAddress("0xGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")).toBe(false);
+        expect(isValidWalletAddress("0x12345678901234567890123456789012345678901")).toBe(false); // too long
+        expect(isValidWalletAddress("not an address")).toBe(false);
+      });
+
+      it("should handle whitespace", () => {
+        expect(isValidWalletAddress("  0x1234567890123456789012345678901234567890  ")).toBe(true);
+      });
+
+      it("should return false for null/undefined-like inputs", () => {
+        expect(isValidWalletAddress(null as unknown as string)).toBe(false);
+        expect(isValidWalletAddress(undefined as unknown as string)).toBe(false);
+      });
+    });
+
+    describe("normalizeWalletAddress", () => {
+      it("should lowercase and trim addresses", () => {
+        expect(normalizeWalletAddress("0xABCDEF1234567890123456789012345678901234")).toBe(
+          "0xabcdef1234567890123456789012345678901234"
+        );
+        expect(normalizeWalletAddress("  0x1234567890123456789012345678901234567890  ")).toBe(
+          "0x1234567890123456789012345678901234567890"
+        );
+      });
+    });
+  });
+
+  describe("getTradesByWallet", () => {
+    const validWallet = "0x1234567890123456789012345678901234567890";
+    const validWallet2 = "0xabcdef1234567890123456789012345678901234";
+
+    it("should fetch trades for a valid wallet address", async () => {
+      const mockResponse = {
+        trades: [
+          {
+            id: "trade1",
+            asset_id: "token123",
+            taker_address: validWallet,
+            maker_address: validWallet2,
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: "2026-01-10T00:00:00Z",
+          },
+          {
+            id: "trade2",
+            asset_id: "token456",
+            taker_address: validWallet2,
+            maker_address: validWallet,
+            side: "sell",
+            price: "0.60",
+            size: "200",
+            created_at: "2026-01-09T23:00:00Z",
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(validWallet, { client });
+
+      expect(result).not.toBeNull();
+      expect(result?.trades).toHaveLength(2);
+      expect(result?.count).toBe(2);
+      expect(result?.walletAddress).toBe(validWallet.toLowerCase());
+      expect(result?.role).toBe("both");
+      expect(result?.fetchedAt).toBeDefined();
+    });
+
+    it("should filter trades by maker role", async () => {
+      const mockResponse = {
+        trades: [
+          {
+            id: "trade1",
+            taker_address: validWallet,
+            maker_address: validWallet2,
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: "2026-01-10T00:00:00Z",
+          },
+          {
+            id: "trade2",
+            taker_address: validWallet2,
+            maker_address: validWallet,
+            side: "sell",
+            price: "0.60",
+            size: "200",
+            created_at: "2026-01-09T23:00:00Z",
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(validWallet, { role: "maker", client });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.maker_address?.toLowerCase()).toBe(validWallet.toLowerCase());
+      expect(result?.role).toBe("maker");
+    });
+
+    it("should filter trades by taker role", async () => {
+      const mockResponse = {
+        trades: [
+          {
+            id: "trade1",
+            taker_address: validWallet,
+            maker_address: validWallet2,
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: "2026-01-10T00:00:00Z",
+          },
+          {
+            id: "trade2",
+            taker_address: validWallet2,
+            maker_address: validWallet,
+            side: "sell",
+            price: "0.60",
+            size: "200",
+            created_at: "2026-01-09T23:00:00Z",
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(validWallet, { role: "taker", client });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.taker_address?.toLowerCase()).toBe(validWallet.toLowerCase());
+      expect(result?.role).toBe("taker");
+    });
+
+    it("should return null for invalid wallet address", async () => {
+      const client = new ClobClient();
+      const result = await getTradesByWallet("invalid-address", { client });
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return null for empty wallet address", async () => {
+      const client = new ClobClient();
+      const result = await getTradesByWallet("", { client });
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return null for whitespace-only wallet address", async () => {
+      const client = new ClobClient();
+      const result = await getTradesByWallet("   ", { client });
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should handle pagination cursor", async () => {
+      const mockResponse = {
+        trades: [
+          {
+            id: "trade1",
+            taker_address: validWallet,
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: "2026-01-10T00:00:00Z",
+          },
+        ],
+        next_cursor: "abc123",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(validWallet, { client });
+
+      expect(result?.nextCursor).toBe("abc123");
+      expect(result?.hasMore).toBe(true);
+    });
+
+    it("should include cursor in request when provided", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      await getTradesByWallet(validWallet, { cursor: "mycursor123", client });
+
+      const url = mockFetch.mock.calls[0]?.[0] as string;
+      expect(url).toContain("cursor=mycursor123");
+    });
+
+    it("should include token_id filter when provided", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      await getTradesByWallet(validWallet, { tokenId: "token123", client });
+
+      const url = mockFetch.mock.calls[0]?.[0] as string;
+      expect(url).toContain("token_id=token123");
+    });
+
+    it("should include time filters when provided", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      await getTradesByWallet(validWallet, {
+        startTime: "2026-01-01T00:00:00Z",
+        endTime: new Date("2026-01-10T00:00:00Z"),
+        client,
+      });
+
+      const url = mockFetch.mock.calls[0]?.[0] as string;
+      expect(url).toContain("start_ts=2026-01-01T00%3A00%3A00Z");
+      expect(url).toContain("end_ts=");
+    });
+
+    it("should handle 404 response gracefully", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve('{"message": "Wallet not found"}'),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(validWallet, { client });
+
+      expect(result).not.toBeNull();
+      expect(result?.trades).toHaveLength(0);
+      expect(result?.count).toBe(0);
+    });
+
+    it("should throw on server error", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve('{"message": "Server error"}'),
+      });
+
+      const client = new ClobClient({ retries: 1 });
+
+      await expect(getTradesByWallet(validWallet, { client })).rejects.toThrow(ClobApiException);
+    });
+
+    it("should sort trades by timestamp descending", async () => {
+      const mockResponse = {
+        trades: [
+          {
+            id: "trade1",
+            taker_address: validWallet,
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: "2026-01-09T20:00:00Z",
+          },
+          {
+            id: "trade2",
+            taker_address: validWallet,
+            side: "sell",
+            price: "0.60",
+            size: "200",
+            created_at: "2026-01-10T00:00:00Z",
+          },
+          {
+            id: "trade3",
+            taker_address: validWallet,
+            side: "buy",
+            price: "0.53",
+            size: "300",
+            created_at: "2026-01-09T22:00:00Z",
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(validWallet, { client });
+
+      expect(result?.trades[0]?.id).toBe("trade2"); // Most recent
+      expect(result?.trades[1]?.id).toBe("trade3");
+      expect(result?.trades[2]?.id).toBe("trade1"); // Oldest
+    });
+
+    it("should apply limit parameter", async () => {
+      const mockResponse = {
+        trades: Array(50)
+          .fill(null)
+          .map((_, i) => ({
+            id: `trade${i}`,
+            taker_address: validWallet,
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: `2026-01-10T${String(i).padStart(2, "0")}:00:00Z`,
+          })),
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(validWallet, { limit: 10, client });
+
+      expect(result?.count).toBe(10);
+      expect(result?.trades).toHaveLength(10);
+    });
+
+    it("should normalize wallet address (case-insensitive)", async () => {
+      const upperCaseWallet = "0xABCDEF1234567890123456789012345678901234";
+      const mockResponse = {
+        trades: [
+          {
+            id: "trade1",
+            taker_address: upperCaseWallet.toLowerCase(),
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: "2026-01-10T00:00:00Z",
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesByWallet(upperCaseWallet, { client });
+
+      expect(result?.walletAddress).toBe(upperCaseWallet.toLowerCase());
+      expect(result?.trades).toHaveLength(1);
+    });
+  });
+
+  describe("getAllTradesByWallet", () => {
+    const validWallet = "0x1234567890123456789012345678901234567890";
+
+    it("should fetch all trades with automatic pagination", async () => {
+      // First page with next_cursor
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              trades: [
+                { id: "trade1", taker_address: validWallet, side: "buy", price: "0.5", size: "10", created_at: "2026-01-10T02:00:00Z" },
+                { id: "trade2", taker_address: validWallet, side: "buy", price: "0.5", size: "10", created_at: "2026-01-10T01:00:00Z" },
+              ],
+              next_cursor: "cursor1",
+            })
+          ),
+      });
+
+      // Second page without next_cursor (last page)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              trades: [
+                { id: "trade3", taker_address: validWallet, side: "sell", price: "0.6", size: "20", created_at: "2026-01-10T00:00:00Z" },
+              ],
+            })
+          ),
+      });
+
+      const client = new ClobClient();
+      const trades = await getAllTradesByWallet(validWallet, { client });
+
+      expect(trades).not.toBeNull();
+      expect(trades).toHaveLength(3);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("should return null for invalid wallet address", async () => {
+      const client = new ClobClient();
+      const trades = await getAllTradesByWallet("invalid", { client });
+
+      expect(trades).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should respect maxTrades limit", async () => {
+      const mockResponse = {
+        trades: Array(100)
+          .fill(null)
+          .map((_, i) => ({
+            id: `trade${i}`,
+            taker_address: validWallet,
+            side: "buy",
+            price: "0.55",
+            size: "100",
+            created_at: `2026-01-10T${String(i % 24).padStart(2, "0")}:00:00Z`,
+          })),
+        next_cursor: "next",
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const trades = await getAllTradesByWallet(validWallet, { maxTrades: 150, client });
+
+      // Should stop after reaching maxTrades
+      expect(trades).not.toBeNull();
+      expect(trades!.length).toBeLessThanOrEqual(150);
+    });
+  });
+
+  describe("getWalletActivitySummary", () => {
+    const validWallet = "0x1234567890123456789012345678901234567890";
+    const validWallet2 = "0xabcdef1234567890123456789012345678901234";
+
+    const createTestTrade = (overrides: Partial<Trade> = {}): Trade => ({
+      id: "trade1",
+      asset_id: "token123",
+      side: "buy",
+      price: "0.55",
+      size: "100",
+      created_at: "2026-01-10T00:00:00Z",
+      ...overrides,
+    });
+
+    it("should calculate activity summary correctly", () => {
+      const trades: Trade[] = [
+        createTestTrade({
+          id: "1",
+          asset_id: "token1",
+          taker_address: validWallet,
+          maker_address: validWallet2,
+          side: "buy",
+          size: "100",
+          created_at: "2026-01-10T00:00:00Z",
+        }),
+        createTestTrade({
+          id: "2",
+          asset_id: "token2",
+          taker_address: validWallet2,
+          maker_address: validWallet,
+          side: "sell",
+          size: "200",
+          created_at: "2026-01-09T00:00:00Z",
+        }),
+        createTestTrade({
+          id: "3",
+          asset_id: "token1",
+          taker_address: validWallet,
+          maker_address: validWallet2,
+          side: "buy",
+          size: "150",
+          created_at: "2026-01-11T00:00:00Z",
+        }),
+      ];
+
+      const summary = getWalletActivitySummary(trades, validWallet);
+
+      expect(summary.walletAddress).toBe(validWallet.toLowerCase());
+      expect(summary.totalTrades).toBe(3);
+      expect(summary.tradesAsMaker).toBe(1);
+      expect(summary.tradesAsTaker).toBe(2);
+      expect(summary.totalVolume).toBe(450);
+      expect(summary.volumeAsMaker).toBe(200);
+      expect(summary.volumeAsTaker).toBe(250);
+      expect(summary.buyTrades).toBe(2);
+      expect(summary.sellTrades).toBe(1);
+      expect(summary.uniqueTokens.size).toBe(2);
+      expect(summary.firstTradeAt).toBe("2026-01-09T00:00:00Z");
+      expect(summary.lastTradeAt).toBe("2026-01-11T00:00:00Z");
+    });
+
+    it("should handle empty trades array", () => {
+      const summary = getWalletActivitySummary([], validWallet);
+
+      expect(summary.totalTrades).toBe(0);
+      expect(summary.totalVolume).toBe(0);
+      expect(summary.uniqueTokens.size).toBe(0);
+    });
+
+    it("should handle invalid size values", () => {
+      const trades: Trade[] = [
+        createTestTrade({ taker_address: validWallet, size: "invalid" }),
+        createTestTrade({ taker_address: validWallet, size: "100" }),
+      ];
+
+      const summary = getWalletActivitySummary(trades, validWallet);
+
+      expect(summary.totalVolume).toBe(100);
+    });
+  });
+
+  describe("hasWalletTraded", () => {
+    const validWallet = "0x1234567890123456789012345678901234567890";
+
+    it("should return true when wallet has trades", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              trades: [
+                { id: "trade1", taker_address: validWallet, side: "buy", price: "0.5", size: "10", created_at: "2026-01-10T00:00:00Z" },
+              ],
+            })
+          ),
+      });
+
+      const client = new ClobClient();
+      const result = await hasWalletTraded(validWallet, { client });
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false when wallet has no trades", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      const result = await hasWalletTraded(validWallet, { client });
+
+      expect(result).toBe(false);
+    });
+
+    it("should return false for invalid wallet address", async () => {
+      const client = new ClobClient();
+      const result = await hasWalletTraded("invalid", { client });
+
+      expect(result).toBe(false);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getFirstWalletTrade", () => {
+    const validWallet = "0x1234567890123456789012345678901234567890";
+
+    it("should return the oldest trade", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              trades: [
+                { id: "trade3", taker_address: validWallet, side: "buy", price: "0.5", size: "10", created_at: "2026-01-10T00:00:00Z" },
+                { id: "trade2", taker_address: validWallet, side: "buy", price: "0.5", size: "10", created_at: "2026-01-09T00:00:00Z" },
+                { id: "trade1", taker_address: validWallet, side: "buy", price: "0.5", size: "10", created_at: "2026-01-08T00:00:00Z" },
+              ],
+            })
+          ),
+      });
+
+      const client = new ClobClient();
+      const trade = await getFirstWalletTrade(validWallet, { client });
+
+      expect(trade).not.toBeNull();
+      expect(trade?.id).toBe("trade1");
+      expect(trade?.created_at).toBe("2026-01-08T00:00:00Z");
+    });
+
+    it("should return null when wallet has no trades", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      const trade = await getFirstWalletTrade(validWallet, { client });
+
+      expect(trade).toBeNull();
+    });
+
+    it("should return null for invalid wallet address", async () => {
+      const client = new ClobClient();
+      const trade = await getFirstWalletTrade("invalid", { client });
+
+      expect(trade).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getTradesBetweenWallets", () => {
+    const walletA = "0x1111111111111111111111111111111111111111";
+    const walletB = "0x2222222222222222222222222222222222222222";
+    const walletC = "0x3333333333333333333333333333333333333333";
+
+    it("should find trades between two wallets", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              trades: [
+                { id: "trade1", taker_address: walletA, maker_address: walletB, side: "buy", price: "0.5", size: "10", created_at: "2026-01-10T00:00:00Z" },
+                { id: "trade2", taker_address: walletB, maker_address: walletA, side: "sell", price: "0.6", size: "20", created_at: "2026-01-09T00:00:00Z" },
+                { id: "trade3", taker_address: walletA, maker_address: walletC, side: "buy", price: "0.5", size: "15", created_at: "2026-01-08T00:00:00Z" },
+              ],
+            })
+          ),
+      });
+
+      const client = new ClobClient();
+      const trades = await getTradesBetweenWallets(walletA, walletB, { client });
+
+      expect(trades).toHaveLength(2);
+      expect(trades[0]?.id).toBe("trade1");
+      expect(trades[1]?.id).toBe("trade2");
+    });
+
+    it("should return empty array for invalid wallet addresses", async () => {
+      const client = new ClobClient();
+      const trades = await getTradesBetweenWallets("invalid", walletB, { client });
+
+      expect(trades).toHaveLength(0);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return empty array when same wallet is provided for both", async () => {
+      const client = new ClobClient();
+      const trades = await getTradesBetweenWallets(walletA, walletA, { client });
+
+      expect(trades).toHaveLength(0);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return empty array when no trades exist between wallets", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              trades: [
+                { id: "trade1", taker_address: walletA, maker_address: walletC, side: "buy", price: "0.5", size: "10", created_at: "2026-01-10T00:00:00Z" },
+              ],
+            })
+          ),
+      });
+
+      const client = new ClobClient();
+      const trades = await getTradesBetweenWallets(walletA, walletB, { client });
+
+      expect(trades).toHaveLength(0);
     });
   });
 });

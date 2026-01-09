@@ -1,5 +1,4 @@
-#!/bin/bash
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-nvm use 20.17.0 >/dev/null 2>&1
+#!/usr/bin/env bash
+# Run a command with Node.js 20
+export PATH="/Users/ankitasahu/.nvm/versions/node/v20.17.0/bin:$PATH"
 exec "$@"
