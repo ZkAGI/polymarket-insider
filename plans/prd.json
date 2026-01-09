@@ -1,0 +1,800 @@
+{
+  "project": "Polymarket Insider/Whale Tracker",
+  "version": "1.0.0",
+  "totalFeatures": 200,
+  "features": [
+    {
+      "id": "SETUP-001",
+      "priority": 1,
+      "name": "Initialize Git repository",
+      "description": "Initialize git repo with .gitignore for Node.js/TypeScript project",
+      "passes": false,
+      "steps": [
+        "Run git init in project directory",
+        "Create .gitignore with node_modules, dist, .env, coverage",
+        "Create initial commit"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Verify .git folder exists and .gitignore is properly configured"
+      }
+    },
+    {
+      "id": "SETUP-002",
+      "priority": 2,
+      "name": "Initialize package.json",
+      "description": "Create package.json with project metadata and scripts",
+      "passes": false,
+      "steps": [
+        "Run npm init or create package.json manually",
+        "Add name, version, description fields",
+        "Add scripts for dev, build, test, lint"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Run npm install and verify no errors"
+      }
+    },
+    {
+      "id": "SETUP-003",
+      "priority": 3,
+      "name": "Configure TypeScript",
+      "description": "Set up TypeScript with strict configuration",
+      "passes": false,
+      "steps": [
+        "Install typescript as dev dependency",
+        "Create tsconfig.json with strict mode enabled",
+        "Configure paths, outDir, and module resolution"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": "Run tsc --noEmit to verify configuration",
+        "e2e": null,
+        "manual_verification": "Create test .ts file and compile successfully"
+      }
+    },
+    {
+      "id": "SETUP-004",
+      "priority": 4,
+      "name": "Configure ESLint and Prettier",
+      "description": "Set up linting and formatting tools",
+      "passes": false,
+      "steps": [
+        "Install eslint, prettier, and typescript-eslint",
+        "Create .eslintrc.js with TypeScript rules",
+        "Create .prettierrc with formatting preferences",
+        "Add lint and format scripts to package.json"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Run npm run lint and npm run format"
+      }
+    },
+    {
+      "id": "SETUP-005",
+      "priority": 5,
+      "name": "Set up project directory structure",
+      "description": "Create folder structure for src, tests, config",
+      "passes": false,
+      "steps": [
+        "Create src/ with subdirs: api, detection, ui, notifications, ai, utils",
+        "Create tests/ with matching structure",
+        "Create config/ for configuration files"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Verify all directories exist with correct structure"
+      }
+    },
+    {
+      "id": "SETUP-006",
+      "priority": 6,
+      "name": "Configure environment variables",
+      "description": "Set up dotenv and environment configuration",
+      "passes": false,
+      "steps": [
+        "Install dotenv package",
+        "Create .env.example with all required variables",
+        "Create config/env.ts for typed env access",
+        "Add .env to .gitignore"
+      ],
+      "test_instructions": {
+        "unit": "Test env.ts loads and validates variables",
+        "typecheck": "Run tsc on config/env.ts",
+        "e2e": null,
+        "manual_verification": "Copy .env.example to .env and verify app loads"
+      }
+    },
+    {
+      "id": "SETUP-007",
+      "priority": 7,
+      "name": "Set up testing framework",
+      "description": "Configure Jest or Vitest for testing",
+      "passes": false,
+      "steps": [
+        "Install vitest and testing utilities",
+        "Create vitest.config.ts",
+        "Add test script to package.json",
+        "Create sample test to verify setup"
+      ],
+      "test_instructions": {
+        "unit": "Run npm test to execute sample test",
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Verify test output shows passing test"
+      }
+    },
+    {
+      "id": "SETUP-008",
+      "priority": 8,
+      "name": "Set up database with Prisma",
+      "description": "Initialize Prisma ORM with PostgreSQL",
+      "passes": false,
+      "steps": [
+        "Install prisma and @prisma/client",
+        "Run npx prisma init",
+        "Configure DATABASE_URL in .env",
+        "Create initial schema.prisma structure"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": "Run npx prisma validate",
+        "e2e": null,
+        "manual_verification": "Run npx prisma db push to verify connection"
+      }
+    },
+    {
+      "id": "SETUP-009",
+      "priority": 9,
+      "name": "Set up Next.js frontend",
+      "description": "Initialize Next.js with App Router",
+      "passes": false,
+      "steps": [
+        "Install next, react, react-dom",
+        "Create app/ directory structure",
+        "Set up next.config.js",
+        "Create root layout and page"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": "Run tsc on Next.js files",
+        "e2e": null,
+        "manual_verification": "Run npm run dev and verify app loads at localhost:3000"
+      }
+    },
+    {
+      "id": "SETUP-010",
+      "priority": 10,
+      "name": "Configure Tailwind CSS",
+      "description": "Set up Tailwind CSS for styling",
+      "passes": false,
+      "steps": [
+        "Install tailwindcss, postcss, autoprefixer",
+        "Create tailwind.config.js",
+        "Add Tailwind directives to globals.css",
+        "Configure content paths"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Add Tailwind class to component and verify styling"
+      }
+    },
+    {
+      "id": "API-GAMMA-001",
+      "priority": 11,
+      "name": "Gamma API client initialization",
+      "description": "Initialize HTTP client for Polymarket Gamma API with base URL and headers",
+      "passes": false,
+      "steps": [
+        "Create src/api/gamma/client.ts",
+        "Install axios or use fetch wrapper",
+        "Configure base URL and default headers",
+        "Export typed client instance"
+      ],
+      "test_instructions": {
+        "unit": "Test client instantiation and configuration",
+        "typecheck": "Run tsc on client.ts",
+        "e2e": null,
+        "manual_verification": "Make test request to Gamma API"
+      }
+    },
+    {
+      "id": "API-GAMMA-002",
+      "priority": 12,
+      "name": "Fetch all active markets",
+      "description": "Retrieve list of all currently active prediction markets",
+      "passes": false,
+      "steps": [
+        "Create getActiveMarkets function",
+        "Define Market type interface",
+        "Handle pagination if needed",
+        "Return typed array of markets"
+      ],
+      "test_instructions": {
+        "unit": "Mock API response and test parsing",
+        "typecheck": "Verify return type matches Market[]",
+        "e2e": "Call live API and verify response structure",
+        "manual_verification": "Log first 5 markets to console"
+      }
+    },
+    {
+      "id": "API-GAMMA-003",
+      "priority": 13,
+      "name": "Fetch market by ID",
+      "description": "Retrieve detailed information for a specific market by its ID",
+      "passes": false,
+      "steps": [
+        "Create getMarketById function",
+        "Accept market ID as parameter",
+        "Return detailed Market object",
+        "Handle 404 case"
+      ],
+      "test_instructions": {
+        "unit": "Test with valid and invalid IDs",
+        "typecheck": "Verify return type",
+        "e2e": "Fetch known market and verify data",
+        "manual_verification": "Fetch market and inspect response"
+      }
+    },
+    {
+      "id": "API-GAMMA-004",
+      "priority": 14,
+      "name": "Fetch market by slug",
+      "description": "Retrieve market information using URL slug identifier",
+      "passes": false,
+      "steps": [
+        "Create getMarketBySlug function",
+        "Parse slug from URL if needed",
+        "Return Market object or null"
+      ],
+      "test_instructions": {
+        "unit": "Test slug parsing and API call",
+        "typecheck": "Verify types",
+        "e2e": "Fetch market by known slug",
+        "manual_verification": "Test with Polymarket URL slug"
+      }
+    },
+    {
+      "id": "API-GAMMA-005",
+      "priority": 15,
+      "name": "Fetch market outcomes",
+      "description": "Get all possible outcomes and their current probabilities for a market",
+      "passes": false,
+      "steps": [
+        "Create getMarketOutcomes function",
+        "Define Outcome interface with probability field",
+        "Parse outcome data from API response"
+      ],
+      "test_instructions": {
+        "unit": "Test outcome parsing logic",
+        "typecheck": "Verify Outcome type",
+        "e2e": "Fetch outcomes for active market",
+        "manual_verification": "Verify probabilities sum to ~100%"
+      }
+    },
+    {
+      "id": "API-GAMMA-006",
+      "priority": 16,
+      "name": "Fetch market volume history",
+      "description": "Retrieve historical volume data for a specific market",
+      "passes": false,
+      "steps": [
+        "Create getMarketVolumeHistory function",
+        "Accept market ID and time range",
+        "Define VolumeDataPoint interface",
+        "Return time-series volume data"
+      ],
+      "test_instructions": {
+        "unit": "Test time range filtering",
+        "typecheck": "Verify VolumeDataPoint[]",
+        "e2e": "Fetch volume for active market",
+        "manual_verification": "Plot data points to verify"
+      }
+    },
+    {
+      "id": "API-GAMMA-007",
+      "priority": 17,
+      "name": "Fetch market price history",
+      "description": "Get historical price/probability data for market outcomes",
+      "passes": false,
+      "steps": [
+        "Create getMarketPriceHistory function",
+        "Accept market ID, outcome, and time range",
+        "Define PriceDataPoint interface",
+        "Return time-series price data"
+      ],
+      "test_instructions": {
+        "unit": "Test parsing of price data",
+        "typecheck": "Verify PriceDataPoint[]",
+        "e2e": "Fetch price history for known market",
+        "manual_verification": "Compare with Polymarket chart"
+      }
+    },
+    {
+      "id": "API-GAMMA-008",
+      "priority": 18,
+      "name": "Fetch markets by category",
+      "description": "Filter and retrieve markets by category (politics, sports, crypto, etc.)",
+      "passes": false,
+      "steps": [
+        "Create getMarketsByCategory function",
+        "Define MarketCategory enum",
+        "Accept category and pagination params",
+        "Return filtered market list"
+      ],
+      "test_instructions": {
+        "unit": "Test category filtering",
+        "typecheck": "Verify category enum usage",
+        "e2e": "Fetch politics markets",
+        "manual_verification": "Verify returned markets match category"
+      }
+    },
+    {
+      "id": "API-GAMMA-009",
+      "priority": 19,
+      "name": "Fetch trending markets",
+      "description": "Get list of markets with highest recent activity",
+      "passes": false,
+      "steps": [
+        "Create getTrendingMarkets function",
+        "Accept limit parameter",
+        "Sort by recent volume or activity"
+      ],
+      "test_instructions": {
+        "unit": "Test limit parameter",
+        "typecheck": "Verify Market[]",
+        "e2e": "Fetch top 10 trending",
+        "manual_verification": "Compare with Polymarket trending"
+      }
+    },
+    {
+      "id": "API-GAMMA-010",
+      "priority": 20,
+      "name": "Gamma API pagination handler",
+      "description": "Handle paginated responses for large data sets",
+      "passes": false,
+      "steps": [
+        "Create paginate utility function",
+        "Handle cursor or offset-based pagination",
+        "Support automatic fetching of all pages",
+        "Add configurable page size"
+      ],
+      "test_instructions": {
+        "unit": "Test pagination logic with mocked responses",
+        "typecheck": "Verify generic types work",
+        "e2e": "Fetch all markets using pagination",
+        "manual_verification": "Verify all pages retrieved"
+      }
+    },
+    {
+      "id": "API-GAMMA-011",
+      "priority": 21,
+      "name": "Gamma API rate limiter",
+      "description": "Implement rate limiting to avoid API throttling",
+      "passes": false,
+      "steps": ["Create RateLimiter class", "Implement token bucket algorithm", "Add request queuing", "Handle 429 responses"],
+      "test_instructions": {"unit": "Test rate limiting behavior", "typecheck": "Verify class types", "e2e": "Make rapid requests and verify throttling", "manual_verification": "Monitor request timing"}
+    },
+    {
+      "id": "API-GAMMA-012",
+      "priority": 22,
+      "name": "Gamma API error handler",
+      "description": "Handle API errors with retry logic and exponential backoff",
+      "passes": false,
+      "steps": ["Create error handler wrapper", "Implement exponential backoff", "Define retry conditions", "Log errors appropriately"],
+      "test_instructions": {"unit": "Test retry logic with mock failures", "typecheck": "Verify error types", "e2e": null, "manual_verification": "Test with network disconnection"}
+    },
+    {
+      "id": "API-GAMMA-013",
+      "priority": 23,
+      "name": "Gamma API response caching",
+      "description": "Cache frequently accessed data to reduce API calls",
+      "passes": false,
+      "steps": ["Implement in-memory cache", "Add TTL configuration", "Create cache invalidation logic", "Add cache hit/miss logging"],
+      "test_instructions": {"unit": "Test cache behavior", "typecheck": "Verify cache types", "e2e": "Verify reduced API calls", "manual_verification": "Monitor cache hit rate"}
+    },
+    {
+      "id": "API-CLOB-001",
+      "priority": 24,
+      "name": "CLOB API client initialization",
+      "description": "Initialize client for Polymarket CLOB (Central Limit Order Book) API",
+      "passes": false,
+      "steps": ["Create src/api/clob/client.ts", "Configure CLOB base URL", "Set up authentication headers", "Export typed client"],
+      "test_instructions": {"unit": "Test client configuration", "typecheck": "Run tsc", "e2e": null, "manual_verification": "Make test CLOB request"}
+    },
+    {
+      "id": "API-CLOB-002",
+      "priority": 25,
+      "name": "Fetch order book for market",
+      "description": "Retrieve current buy/sell orders for a specific market",
+      "passes": false,
+      "steps": ["Create getOrderBook function", "Define OrderBook interface", "Parse bids and asks", "Sort by price level"],
+      "test_instructions": {"unit": "Test order book parsing", "typecheck": "Verify OrderBook type", "e2e": "Fetch live order book", "manual_verification": "Inspect bid/ask spread"}
+    },
+    {
+      "id": "API-CLOB-003",
+      "priority": 26,
+      "name": "Fetch recent trades",
+      "description": "Get list of recently executed trades for a market",
+      "passes": false,
+      "steps": ["Create getRecentTrades function", "Define Trade interface", "Accept limit parameter", "Sort by timestamp desc"],
+      "test_instructions": {"unit": "Test trade parsing", "typecheck": "Verify Trade type", "e2e": "Fetch trades for active market", "manual_verification": "Verify trade data accuracy"}
+    },
+    {
+      "id": "API-CLOB-004",
+      "priority": 27,
+      "name": "Fetch trades by wallet address",
+      "description": "Retrieve all trades made by a specific wallet address",
+      "passes": false,
+      "steps": ["Create getTradesByWallet function", "Accept wallet address param", "Handle pagination", "Return Trade array"],
+      "test_instructions": {"unit": "Test wallet address validation", "typecheck": "Verify types", "e2e": "Fetch trades for known wallet", "manual_verification": "Cross-reference with Polygonscan"}
+    },
+    {
+      "id": "API-CLOB-005",
+      "priority": 28,
+      "name": "Fetch open orders by wallet",
+      "description": "Get all open/pending orders for a wallet address",
+      "passes": false,
+      "steps": ["Create getOpenOrders function", "Define Order interface", "Filter by status", "Return Order array"],
+      "test_instructions": {"unit": "Test order filtering", "typecheck": "Verify Order type", "e2e": "Check wallet open orders", "manual_verification": "Verify order status"}
+    },
+    {
+      "id": "API-CLOB-006",
+      "priority": 29,
+      "name": "Fetch trade history with filters",
+      "description": "Query trade history with date range and size filters",
+      "passes": false,
+      "steps": ["Create getFilteredTrades function", "Accept filter parameters", "Build query string", "Return filtered results"],
+      "test_instructions": {"unit": "Test filter combinations", "typecheck": "Verify filter types", "e2e": "Apply date and size filters", "manual_verification": "Verify filter accuracy"}
+    },
+    {
+      "id": "API-CLOB-007",
+      "priority": 30,
+      "name": "Fetch order book depth",
+      "description": "Get aggregated order book depth at various price levels",
+      "passes": false,
+      "steps": ["Create getOrderBookDepth function", "Aggregate orders by price level", "Calculate cumulative depth", "Return depth data"],
+      "test_instructions": {"unit": "Test depth aggregation", "typecheck": "Verify depth types", "e2e": "Fetch depth for market", "manual_verification": "Verify depth visualization"}
+    },
+    {
+      "id": "API-CLOB-008",
+      "priority": 31,
+      "name": "CLOB API authentication",
+      "description": "Handle API key authentication for protected endpoints",
+      "passes": false,
+      "steps": ["Create auth header generator", "Store API keys securely", "Implement key rotation support", "Handle auth errors"],
+      "test_instructions": {"unit": "Test auth header generation", "typecheck": "Verify types", "e2e": "Access protected endpoint", "manual_verification": "Verify auth works"}
+    },
+    {
+      "id": "API-CLOB-009",
+      "priority": 32,
+      "name": "CLOB API rate limiter",
+      "description": "Implement rate limiting specific to CLOB API constraints",
+      "passes": false,
+      "steps": ["Configure CLOB rate limits", "Share limiter with Gamma client", "Handle different limits per endpoint", "Log rate limit status"],
+      "test_instructions": {"unit": "Test CLOB-specific limits", "typecheck": "Verify types", "e2e": "Test under load", "manual_verification": "Monitor rate limiting"}
+    },
+    {
+      "id": "API-CLOB-010",
+      "priority": 33,
+      "name": "CLOB API error handler",
+      "description": "Handle CLOB-specific errors and edge cases",
+      "passes": false,
+      "steps": ["Create CLOB error types", "Handle specific error codes", "Implement recovery logic", "Log errors with context"],
+      "test_instructions": {"unit": "Test error handling", "typecheck": "Verify error types", "e2e": null, "manual_verification": "Test error scenarios"}
+    },
+    {
+      "id": "API-CLOB-011",
+      "priority": 34,
+      "name": "Parse trade execution data",
+      "description": "Parse and normalize trade execution response data",
+      "passes": false,
+      "steps": ["Create TradeExecution interface", "Parse execution details", "Normalize timestamps", "Extract fees and costs"],
+      "test_instructions": {"unit": "Test parsing with sample data", "typecheck": "Verify interface", "e2e": "Parse live trade data", "manual_verification": "Verify parsed values"}
+    },
+    {
+      "id": "API-CLOB-012",
+      "priority": 35,
+      "name": "Calculate trade sizes in USD",
+      "description": "Convert trade sizes to USD equivalent values",
+      "passes": false,
+      "steps": ["Get USDC price (or assume 1:1)", "Calculate position value", "Handle outcome token pricing", "Return USD values"],
+      "test_instructions": {"unit": "Test USD calculations", "typecheck": "Verify number types", "e2e": "Calculate for live trades", "manual_verification": "Verify USD accuracy"}
+    },
+    {
+      "id": "API-WS-001",
+      "priority": 36,
+      "name": "WebSocket connection manager",
+      "description": "Establish and manage WebSocket connection to Polymarket",
+      "passes": false,
+      "steps": ["Create WebSocketManager class", "Handle connection lifecycle", "Manage multiple connections", "Emit connection events"],
+      "test_instructions": {"unit": "Test connection state machine", "typecheck": "Verify class types", "e2e": "Establish live connection", "manual_verification": "Monitor connection stability"}
+    },
+    {
+      "id": "API-WS-002",
+      "priority": 37,
+      "name": "WebSocket auto-reconnection",
+      "description": "Automatically reconnect on connection loss with backoff",
+      "passes": false,
+      "steps": ["Detect disconnection", "Implement exponential backoff", "Restore subscriptions after reconnect", "Emit reconnection events"],
+      "test_instructions": {"unit": "Test reconnection logic", "typecheck": "Verify types", "e2e": "Test with network interruption", "manual_verification": "Verify seamless reconnection"}
+    },
+    {
+      "id": "API-WS-003",
+      "priority": 38,
+      "name": "Subscribe to market updates",
+      "description": "Subscribe to real-time price updates for specific markets",
+      "passes": false,
+      "steps": ["Create subscribe method", "Build subscription message", "Handle subscription confirmation", "Process price updates"],
+      "test_instructions": {"unit": "Test subscription message format", "typecheck": "Verify types", "e2e": "Subscribe to live market", "manual_verification": "Verify real-time updates"}
+    },
+    {
+      "id": "API-WS-004",
+      "priority": 39,
+      "name": "Subscribe to trade stream",
+      "description": "Subscribe to real-time trade execution feed",
+      "passes": false,
+      "steps": ["Create trade stream subscription", "Parse trade messages", "Emit trade events", "Handle high-volume streams"],
+      "test_instructions": {"unit": "Test trade message parsing", "typecheck": "Verify Trade type", "e2e": "Subscribe to active market trades", "manual_verification": "Verify trade stream"}
+    },
+    {
+      "id": "API-WS-005",
+      "priority": 40,
+      "name": "Subscribe to order book updates",
+      "description": "Subscribe to real-time order book changes",
+      "passes": false,
+      "steps": ["Create order book subscription", "Handle delta updates", "Maintain local order book state", "Emit order book events"],
+      "test_instructions": {"unit": "Test delta application", "typecheck": "Verify types", "e2e": "Subscribe to order book", "manual_verification": "Verify order book accuracy"}
+    },
+    {
+      "id": "API-WS-006",
+      "priority": 41,
+      "name": "WebSocket message parser",
+      "description": "Parse and validate incoming WebSocket messages",
+      "passes": false,
+      "steps": ["Create message parser", "Validate message schema", "Handle unknown message types", "Log parsing errors"],
+      "test_instructions": {"unit": "Test parsing various messages", "typecheck": "Verify message types", "e2e": null, "manual_verification": "Inspect parsed messages"}
+    },
+    {
+      "id": "API-WS-007",
+      "priority": 42,
+      "name": "WebSocket heartbeat handler",
+      "description": "Handle ping/pong heartbeat to maintain connection",
+      "passes": false,
+      "steps": ["Implement ping interval", "Handle pong responses", "Detect stale connections", "Reconnect on heartbeat failure"],
+      "test_instructions": {"unit": "Test heartbeat timing", "typecheck": "Verify types", "e2e": "Monitor heartbeat over time", "manual_verification": "Verify connection health"}
+    },
+    {
+      "id": "API-WS-008",
+      "priority": 43,
+      "name": "WebSocket message queue",
+      "description": "Queue incoming messages for processing during high load",
+      "passes": false,
+      "steps": ["Create message queue", "Implement backpressure handling", "Process queue asynchronously", "Monitor queue depth"],
+      "test_instructions": {"unit": "Test queue operations", "typecheck": "Verify types", "e2e": "Test under high volume", "manual_verification": "Monitor queue metrics"}
+    },
+    {
+      "id": "API-WS-009",
+      "priority": 44,
+      "name": "Multi-market subscription manager",
+      "description": "Manage subscriptions across multiple markets efficiently",
+      "passes": false,
+      "steps": ["Track active subscriptions", "Batch subscription requests", "Handle subscription limits", "Provide subscription status"],
+      "test_instructions": {"unit": "Test subscription management", "typecheck": "Verify types", "e2e": "Subscribe to 50+ markets", "manual_verification": "Verify all subscriptions active"}
+    },
+    {
+      "id": "API-WS-010",
+      "priority": 45,
+      "name": "WebSocket event emitter",
+      "description": "Emit parsed events to internal event bus for processing",
+      "passes": false,
+      "steps": ["Create typed event emitter", "Define event types", "Allow event listeners", "Support event filtering"],
+      "test_instructions": {"unit": "Test event emission", "typecheck": "Verify event types", "e2e": "Listen to events", "manual_verification": "Verify event delivery"}
+    },
+    {
+      "id": "API-CHAIN-001",
+      "priority": 46,
+      "name": "Polygon RPC client setup",
+      "description": "Initialize connection to Polygon network RPC endpoint",
+      "passes": false,
+      "steps": ["Install ethers.js or viem", "Configure RPC provider", "Handle multiple RPC endpoints", "Test connection"],
+      "test_instructions": {"unit": "Test provider configuration", "typecheck": "Verify types", "e2e": "Fetch block number", "manual_verification": "Verify RPC connection"}
+    },
+    {
+      "id": "API-CHAIN-002",
+      "priority": 47,
+      "name": "Fetch wallet transaction history",
+      "description": "Retrieve on-chain transaction history for a wallet",
+      "passes": false,
+      "steps": ["Create getWalletHistory function", "Use Polygonscan API or RPC", "Parse transaction data", "Handle pagination"],
+      "test_instructions": {"unit": "Test history parsing", "typecheck": "Verify types", "e2e": "Fetch known wallet history", "manual_verification": "Cross-reference Polygonscan"}
+    },
+    {
+      "id": "API-CHAIN-003",
+      "priority": 48,
+      "name": "Fetch wallet token balances",
+      "description": "Get current token balances for a wallet address",
+      "passes": false,
+      "steps": ["Create getTokenBalances function", "Query relevant token contracts", "Parse balance data", "Return formatted balances"],
+      "test_instructions": {"unit": "Test balance parsing", "typecheck": "Verify types", "e2e": "Fetch live balances", "manual_verification": "Verify balance accuracy"}
+    },
+    {
+      "id": "API-CHAIN-004",
+      "priority": 49,
+      "name": "Fetch wallet creation date",
+      "description": "Determine when a wallet address was first used on-chain",
+      "passes": false,
+      "steps": ["Find first transaction", "Parse block timestamp", "Cache results", "Handle empty wallets"],
+      "test_instructions": {"unit": "Test timestamp parsing", "typecheck": "Verify types", "e2e": "Get creation date for wallet", "manual_verification": "Verify date accuracy"}
+    },
+    {
+      "id": "API-CHAIN-005",
+      "priority": 50,
+      "name": "Monitor wallet for new transactions",
+      "description": "Set up real-time monitoring for wallet activity",
+      "passes": false,
+      "steps": ["Create wallet monitor", "Use WebSocket or polling", "Emit new transaction events", "Handle multiple wallets"],
+      "test_instructions": {"unit": "Test monitor logic", "typecheck": "Verify types", "e2e": "Monitor active wallet", "manual_verification": "Verify real-time detection"}
+    },
+    {"id": "API-CHAIN-006", "priority": 51, "name": "Decode Polymarket contract interactions", "description": "Parse and decode Polymarket smart contract calls", "passes": false, "steps": ["Get contract ABIs", "Create decoder functions", "Parse method calls and params", "Extract relevant data"], "test_instructions": {"unit": "Test decoding sample transactions", "typecheck": "Verify types", "e2e": "Decode live transaction", "manual_verification": "Verify decoded data"}},
+    {"id": "API-CHAIN-007", "priority": 52, "name": "Track USDC transfers to Polymarket", "description": "Monitor USDC deposits from wallets to Polymarket contracts", "passes": false, "steps": ["Identify Polymarket contract addresses", "Filter USDC transfers", "Track deposit amounts", "Emit deposit events"], "test_instructions": {"unit": "Test transfer detection", "typecheck": "Verify types", "e2e": "Track live deposits", "manual_verification": "Verify deposit tracking"}},
+    {"id": "API-CHAIN-008", "priority": 53, "name": "Identify wallet funding sources", "description": "Trace where wallet funds originated from", "passes": false, "steps": ["Trace incoming transfers", "Identify exchange wallets", "Flag mixer/privacy tools", "Build funding graph"], "test_instructions": {"unit": "Test tracing logic", "typecheck": "Verify types", "e2e": "Trace wallet funding", "manual_verification": "Verify source identification"}},
+    {"id": "API-DB-001", "priority": 54, "name": "Database schema design", "description": "Design database schema for markets, trades, wallets, and alerts", "passes": false, "steps": ["Design entity relationships", "Define indexes", "Plan partitioning strategy", "Document schema"], "test_instructions": {"unit": null, "typecheck": null, "e2e": null, "manual_verification": "Review schema diagram"}},
+    {"id": "API-DB-002", "priority": 55, "name": "Markets table and model", "description": "Create table and ORM model for market data", "passes": false, "steps": ["Define Market model in Prisma", "Add all market fields", "Create indexes", "Run migration"], "test_instructions": {"unit": "Test model CRUD", "typecheck": "Verify Prisma types", "e2e": "Insert and query markets", "manual_verification": "Verify table structure"}},
+    {"id": "API-DB-003", "priority": 56, "name": "Trades table and model", "description": "Create table and ORM model for trade data", "passes": false, "steps": ["Define Trade model", "Add relations to Market and Wallet", "Index by timestamp and wallet", "Run migration"], "test_instructions": {"unit": "Test model CRUD", "typecheck": "Verify types", "e2e": "Insert and query trades", "manual_verification": "Verify table structure"}},
+    {"id": "API-DB-004", "priority": 57, "name": "Wallets table and model", "description": "Create table and ORM model for wallet profiles", "passes": false, "steps": ["Define Wallet model", "Add profile fields", "Add suspicion score field", "Run migration"], "test_instructions": {"unit": "Test model CRUD", "typecheck": "Verify types", "e2e": "Insert and query wallets", "manual_verification": "Verify table structure"}},
+    {"id": "API-DB-005", "priority": 58, "name": "Alerts table and model", "description": "Create table and ORM model for generated alerts", "passes": false, "steps": ["Define Alert model", "Add alert type enum", "Add relations to Wallet/Market", "Run migration"], "test_instructions": {"unit": "Test model CRUD", "typecheck": "Verify types", "e2e": "Insert and query alerts", "manual_verification": "Verify table structure"}},
+    {"id": "API-DB-006", "priority": 59, "name": "Historical snapshots table", "description": "Store periodic snapshots of market state for analysis", "passes": false, "steps": ["Define Snapshot model", "Store market state JSON", "Add timestamp index", "Plan retention policy"], "test_instructions": {"unit": "Test snapshot storage", "typecheck": "Verify types", "e2e": "Store and retrieve snapshots", "manual_verification": "Verify snapshot data"}},
+    {"id": "API-DB-007", "priority": 60, "name": "Database connection pooling", "description": "Implement connection pooling for efficient database access", "passes": false, "steps": ["Configure Prisma connection pool", "Set pool size based on load", "Add connection timeout", "Monitor pool usage"], "test_instructions": {"unit": "Test pool configuration", "typecheck": null, "e2e": "Test under concurrent load", "manual_verification": "Monitor pool metrics"}},
+    {"id": "API-DB-008", "priority": 61, "name": "Data retention and cleanup jobs", "description": "Automated cleanup of old data to manage storage", "passes": false, "steps": ["Create cleanup cron job", "Define retention periods", "Archive before delete", "Log cleanup operations"], "test_instructions": {"unit": "Test cleanup logic", "typecheck": "Verify types", "e2e": "Run cleanup on test data", "manual_verification": "Verify data removed"}},
+    {"id": "API-DB-009", "priority": 62, "name": "Database indexing optimization", "description": "Create indexes for frequently queried fields", "passes": false, "steps": ["Analyze query patterns", "Add composite indexes", "Test query performance", "Document indexes"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Benchmark queries", "manual_verification": "Check EXPLAIN output"}},
+    {"id": "API-DB-010", "priority": 63, "name": "Time-series data storage", "description": "Optimize storage for time-series market data", "passes": false, "steps": ["Consider TimescaleDB extension", "Implement chunking", "Add compression", "Optimize range queries"], "test_instructions": {"unit": "Test time-series queries", "typecheck": null, "e2e": "Query large date ranges", "manual_verification": "Verify query performance"}},
+    {"id": "DET-FRESH-001", "priority": 64, "name": "Wallet age calculator", "description": "Calculate wallet age from first on-chain transaction", "passes": false, "steps": ["Fetch first transaction timestamp", "Calculate age in days", "Cache results", "Handle new wallets"], "test_instructions": {"unit": "Test age calculation", "typecheck": "Verify types", "e2e": "Calculate for known wallets", "manual_verification": "Verify age accuracy"}},
+    {"id": "DET-FRESH-002", "priority": 65, "name": "Fresh wallet threshold configuration", "description": "Configurable thresholds for what constitutes a fresh wallet", "passes": false, "steps": ["Define threshold config", "Support age and tx count thresholds", "Allow per-category thresholds", "Store in config"], "test_instructions": {"unit": "Test threshold logic", "typecheck": "Verify config types", "e2e": "Apply different thresholds", "manual_verification": "Verify threshold behavior"}},
+    {"id": "DET-FRESH-003", "priority": 66, "name": "Zero trading history detector", "description": "Identify wallets with no prior Polymarket trading history", "passes": false, "steps": ["Check Polymarket trade count", "Distinguish from general blockchain age", "Flag first-time traders", "Track status changes"], "test_instructions": {"unit": "Test detection logic", "typecheck": "Verify types", "e2e": "Check known wallets", "manual_verification": "Verify detection accuracy"}},
+    {"id": "DET-FRESH-004", "priority": 67, "name": "First trade size analyzer", "description": "Flag when first trade from wallet is unusually large", "passes": false, "steps": ["Track first trade per wallet", "Compare to average first trades", "Calculate size percentile", "Flag outliers"], "test_instructions": {"unit": "Test size analysis", "typecheck": "Verify types", "e2e": "Analyze first trades", "manual_verification": "Verify flagging accuracy"}},
+    {"id": "DET-FRESH-005", "priority": 68, "name": "Wallet funding pattern analyzer", "description": "Analyze how fresh wallets are funded before trading", "passes": false, "steps": ["Track pre-trade deposits", "Identify funding timing", "Flag immediate trading after funding", "Score funding patterns"], "test_instructions": {"unit": "Test pattern analysis", "typecheck": "Verify types", "e2e": "Analyze funding patterns", "manual_verification": "Verify pattern detection"}},
+    {"id": "DET-FRESH-006", "priority": 69, "name": "Fresh wallet clustering", "description": "Detect multiple fresh wallets potentially controlled by same entity", "passes": false, "steps": ["Identify similar funding sources", "Detect coordinated creation times", "Cluster by trading patterns", "Calculate cluster confidence"], "test_instructions": {"unit": "Test clustering algorithm", "typecheck": "Verify types", "e2e": "Cluster known related wallets", "manual_verification": "Verify cluster accuracy"}},
+    {"id": "DET-FRESH-007", "priority": 70, "name": "Wallet reactivation detector", "description": "Detect dormant wallets suddenly becoming active", "passes": false, "steps": ["Track last activity timestamp", "Define dormancy threshold", "Detect activity after dormancy", "Flag reactivation events"], "test_instructions": {"unit": "Test reactivation logic", "typecheck": "Verify types", "e2e": "Detect reactivated wallets", "manual_verification": "Verify detection accuracy"}},
+    {"id": "DET-FRESH-008", "priority": 71, "name": "Fresh wallet confidence scorer", "description": "Score likelihood that fresh wallet activity is suspicious", "passes": false, "steps": ["Combine multiple signals", "Weight by signal importance", "Normalize to 0-100 scale", "Provide confidence breakdown"], "test_instructions": {"unit": "Test scoring algorithm", "typecheck": "Verify types", "e2e": "Score known wallets", "manual_verification": "Verify score reasonableness"}},
+    {"id": "DET-FRESH-009", "priority": 72, "name": "Wallet history depth analyzer", "description": "Analyze depth of wallet transaction history across chains", "passes": false, "steps": ["Query multiple chains if possible", "Count total transactions", "Analyze transaction types", "Score history depth"], "test_instructions": {"unit": "Test depth analysis", "typecheck": "Verify types", "e2e": "Analyze multi-chain history", "manual_verification": "Verify depth accuracy"}},
+    {"id": "DET-FRESH-010", "priority": 73, "name": "Fresh wallet alert generator", "description": "Generate alerts when fresh wallet criteria are met", "passes": false, "steps": ["Define alert conditions", "Create alert with context", "Set alert severity", "Store and emit alert"], "test_instructions": {"unit": "Test alert generation", "typecheck": "Verify Alert type", "e2e": "Trigger fresh wallet alert", "manual_verification": "Verify alert content"}},
+    {"id": "DET-VOL-001", "priority": 74, "name": "Market baseline volume calculator", "description": "Calculate normal volume baseline for each market", "passes": false, "steps": ["Collect historical volume data", "Calculate rolling averages", "Account for market maturity", "Update baselines periodically"], "test_instructions": {"unit": "Test baseline calculation", "typecheck": "Verify types", "e2e": "Calculate for active markets", "manual_verification": "Verify baseline accuracy"}},
+    {"id": "DET-VOL-002", "priority": 75, "name": "Rolling volume average tracker", "description": "Track rolling average volume over configurable windows", "passes": false, "steps": ["Implement sliding window", "Support multiple time windows", "Handle sparse data", "Provide current averages"], "test_instructions": {"unit": "Test rolling calculation", "typecheck": "Verify types", "e2e": "Track live volume", "manual_verification": "Verify rolling accuracy"}},
+    {"id": "DET-VOL-003", "priority": 76, "name": "Volume spike detector", "description": "Detect sudden spikes in trading volume above threshold", "passes": false, "steps": ["Compare current to baseline", "Define spike thresholds", "Detect sustained vs momentary spikes", "Emit spike events"], "test_instructions": {"unit": "Test spike detection", "typecheck": "Verify types", "e2e": "Detect live spikes", "manual_verification": "Verify spike accuracy"}},
+    {"id": "DET-VOL-004", "priority": 77, "name": "Individual trade size analyzer", "description": "Flag individual trades significantly larger than average", "passes": false, "steps": ["Calculate trade size percentiles", "Define large trade thresholds", "Flag outlier trades", "Track large trade frequency"], "test_instructions": {"unit": "Test size analysis", "typecheck": "Verify types", "e2e": "Analyze live trades", "manual_verification": "Verify flagging accuracy"}},
+    {"id": "DET-VOL-005", "priority": 78, "name": "Whale trade threshold calculator", "description": "Dynamically calculate whale thresholds per market", "passes": false, "steps": ["Analyze market liquidity", "Calculate dynamic threshold", "Update as market changes", "Provide threshold API"], "test_instructions": {"unit": "Test threshold calculation", "typecheck": "Verify types", "e2e": "Calculate for various markets", "manual_verification": "Verify threshold appropriateness"}},
+    {"id": "DET-VOL-006", "priority": 79, "name": "Volume-to-liquidity ratio analyzer", "description": "Analyze trade volume relative to available liquidity", "passes": false, "steps": ["Get order book depth", "Calculate volume/liquidity ratio", "Flag high ratio trades", "Track ratio over time"], "test_instructions": {"unit": "Test ratio calculation", "typecheck": "Verify types", "e2e": "Analyze live trades", "manual_verification": "Verify ratio accuracy"}},
+    {"id": "DET-VOL-007", "priority": 80, "name": "Time-of-day volume normalizer", "description": "Normalize volume analysis for time-of-day patterns", "passes": false, "steps": ["Build hour-of-day profiles", "Normalize by expected volume", "Handle timezone differences", "Detect off-hours anomalies"], "test_instructions": {"unit": "Test normalization", "typecheck": "Verify types", "e2e": "Normalize live data", "manual_verification": "Verify normalization accuracy"}},
+    {"id": "DET-VOL-008", "priority": 81, "name": "Consecutive large trade detector", "description": "Detect series of large trades in quick succession", "passes": false, "steps": ["Track trade sequences", "Define consecutive trade window", "Flag burst patterns", "Calculate burst intensity"], "test_instructions": {"unit": "Test burst detection", "typecheck": "Verify types", "e2e": "Detect trade bursts", "manual_verification": "Verify burst accuracy"}},
+    {"id": "DET-VOL-009", "priority": 82, "name": "Market impact calculator", "description": "Calculate price impact of large trades", "passes": false, "steps": ["Track price before/after trade", "Calculate slippage", "Compare to expected impact", "Flag excessive impact"], "test_instructions": {"unit": "Test impact calculation", "typecheck": "Verify types", "e2e": "Calculate live impact", "manual_verification": "Verify impact accuracy"}},
+    {"id": "DET-VOL-010", "priority": 83, "name": "Unusual volume alert generator", "description": "Generate alerts when volume anomalies are detected", "passes": false, "steps": ["Define volume alert conditions", "Create alert with volume context", "Set severity by anomaly size", "Include comparison data"], "test_instructions": {"unit": "Test alert generation", "typecheck": "Verify Alert type", "e2e": "Trigger volume alert", "manual_verification": "Verify alert content"}},
+    {"id": "DET-VOL-011", "priority": 84, "name": "Volume clustering analyzer", "description": "Detect coordinated volume from multiple wallets", "passes": false, "steps": ["Group trades by time window", "Identify wallet clusters", "Calculate coordination score", "Flag suspicious clusters"], "test_instructions": {"unit": "Test clustering logic", "typecheck": "Verify types", "e2e": "Detect volume clusters", "manual_verification": "Verify cluster detection"}},
+    {"id": "DET-VOL-012", "priority": 85, "name": "Pre-event volume spike detector", "description": "Detect volume spikes before scheduled events", "passes": false, "steps": ["Track market event dates", "Monitor pre-event volume", "Compare to normal pre-event", "Flag unusual pre-event activity"], "test_instructions": {"unit": "Test pre-event logic", "typecheck": "Verify types", "e2e": "Monitor pre-event markets", "manual_verification": "Verify detection accuracy"}},
+    {"id": "DET-NICHE-001", "priority": 86, "name": "Market category classifier", "description": "Classify markets into categories (political, geopolitical, etc.)", "passes": false, "steps": ["Define category taxonomy", "Parse market titles/descriptions", "Apply ML or rule-based classification", "Store category assignments"], "test_instructions": {"unit": "Test classification logic", "typecheck": "Verify types", "e2e": "Classify live markets", "manual_verification": "Verify classification accuracy"}},
+    {"id": "DET-NICHE-002", "priority": 87, "name": "Information-advantage market identifier", "description": "Identify markets where insider info would be most valuable", "passes": false, "steps": ["Define high-value categories", "Score by information asymmetry potential", "Rank markets by insider value", "Update rankings periodically"], "test_instructions": {"unit": "Test scoring logic", "typecheck": "Verify types", "e2e": "Score active markets", "manual_verification": "Verify ranking reasonableness"}},
+    {"id": "DET-NICHE-003", "priority": 88, "name": "Geopolitical event market tagger", "description": "Tag markets related to geopolitical events", "passes": false, "steps": ["Define geopolitical keywords", "Parse market metadata", "Apply geopolitical tags", "Link related markets"], "test_instructions": {"unit": "Test tagging logic", "typecheck": "Verify types", "e2e": "Tag live markets", "manual_verification": "Verify tag accuracy"}},
+    {"id": "DET-NICHE-004", "priority": 89, "name": "Political market identifier", "description": "Identify markets related to political decisions/events", "passes": false, "steps": ["Define political keywords", "Identify election/policy markets", "Tag political markets", "Track political category"], "test_instructions": {"unit": "Test identification", "typecheck": "Verify types", "e2e": "Identify political markets", "manual_verification": "Verify identification accuracy"}},
+    {"id": "DET-NICHE-005", "priority": 90, "name": "Regulatory decision market detector", "description": "Detect markets about regulatory decisions", "passes": false, "steps": ["Define regulatory keywords", "Identify agency-related markets", "Track regulatory deadlines", "Flag regulatory markets"], "test_instructions": {"unit": "Test detection logic", "typecheck": "Verify types", "e2e": "Detect regulatory markets", "manual_verification": "Verify detection accuracy"}},
+    {"id": "DET-NICHE-006", "priority": 91, "name": "Market liquidity scorer", "description": "Score markets by liquidity to identify thin markets", "passes": false, "steps": ["Calculate order book depth", "Track average trade size", "Score liquidity 0-100", "Identify thin markets"], "test_instructions": {"unit": "Test scoring logic", "typecheck": "Verify types", "e2e": "Score live markets", "manual_verification": "Verify liquidity scores"}},
+    {"id": "DET-NICHE-007", "priority": 92, "name": "Niche market watchlist manager", "description": "Maintain watchlist of high-priority niche markets", "passes": false, "steps": ["Create watchlist data structure", "Add/remove markets", "Prioritize by insider potential", "Emit watchlist updates"], "test_instructions": {"unit": "Test watchlist operations", "typecheck": "Verify types", "e2e": "Manage live watchlist", "manual_verification": "Verify watchlist behavior"}},
+    {"id": "DET-NICHE-008", "priority": 93, "name": "Wallet niche market concentration analyzer", "description": "Detect wallets focusing on specific niche categories", "passes": false, "steps": ["Track wallet trades by category", "Calculate category concentration", "Flag specialists", "Score concentration level"], "test_instructions": {"unit": "Test concentration analysis", "typecheck": "Verify types", "e2e": "Analyze wallet categories", "manual_verification": "Verify concentration accuracy"}},
+    {"id": "DET-NICHE-009", "priority": 94, "name": "Cross-market correlation detector", "description": "Detect correlated trading across related niche markets", "passes": false, "steps": ["Identify related markets", "Track cross-market trades", "Calculate correlation scores", "Flag unusual correlations"], "test_instructions": {"unit": "Test correlation logic", "typecheck": "Verify types", "e2e": "Detect live correlations", "manual_verification": "Verify correlation accuracy"}},
+    {"id": "DET-NICHE-010", "priority": 95, "name": "Niche market alert generator", "description": "Generate alerts for suspicious niche market activity", "passes": false, "steps": ["Define niche alert conditions", "Create alert with market context", "Include category information", "Set niche-specific severity"], "test_instructions": {"unit": "Test alert generation", "typecheck": "Verify types", "e2e": "Trigger niche alerts", "manual_verification": "Verify alert content"}},
+    {"id": "DET-PAT-001", "priority": 96, "name": "Wallet behavior profiler", "description": "Build behavioral profiles for tracked wallets", "passes": false, "steps": ["Define profile attributes", "Collect behavioral data", "Build profile over time", "Update profiles with new activity"], "test_instructions": {"unit": "Test profiling logic", "typecheck": "Verify Profile type", "e2e": "Profile active wallets", "manual_verification": "Verify profile accuracy"}},
+    {"id": "DET-PAT-002", "priority": 97, "name": "Trading pattern classifier", "description": "Classify wallet trading patterns (scalper, insider, etc.)", "passes": false, "steps": ["Define pattern types", "Extract pattern features", "Apply classification algorithm", "Assign pattern labels"], "test_instructions": {"unit": "Test classification", "typecheck": "Verify types", "e2e": "Classify live wallets", "manual_verification": "Verify classification accuracy"}},
+    {"id": "DET-PAT-003", "priority": 98, "name": "Timing pattern analyzer", "description": "Analyze timing patterns of wallet trades", "passes": false, "steps": ["Extract trade timestamps", "Analyze time-of-day patterns", "Detect unusual timing", "Score timing suspicion"], "test_instructions": {"unit": "Test timing analysis", "typecheck": "Verify types", "e2e": "Analyze live timing", "manual_verification": "Verify timing insights"}},
+    {"id": "DET-PAT-004", "priority": 99, "name": "Win rate tracker", "description": "Track historical win rate for each wallet", "passes": false, "steps": ["Track resolved positions", "Calculate win/loss ratio", "Track win rate over time", "Identify unusually high rates"], "test_instructions": {"unit": "Test win rate calculation", "typecheck": "Verify types", "e2e": "Track live win rates", "manual_verification": "Verify win rate accuracy"}},
+    {"id": "DET-PAT-005", "priority": 100, "name": "Profit/loss calculator", "description": "Calculate realized and unrealized P&L for wallets", "passes": false, "steps": ["Track position costs", "Calculate realized gains", "Calculate unrealized gains", "Aggregate total P&L"], "test_instructions": {"unit": "Test P&L calculation", "typecheck": "Verify types", "e2e": "Calculate live P&L", "manual_verification": "Verify P&L accuracy"}},
+    {"id": "DET-PAT-006", "priority": 101, "name": "Position sizing pattern analyzer", "description": "Analyze how wallets size their positions", "passes": false, "steps": ["Track position sizes", "Calculate size distribution", "Detect size anomalies", "Score sizing patterns"], "test_instructions": {"unit": "Test sizing analysis", "typecheck": "Verify types", "e2e": "Analyze live sizing", "manual_verification": "Verify sizing insights"}},
+    {"id": "DET-PAT-007", "priority": 102, "name": "Market selection pattern analyzer", "description": "Analyze which markets wallets tend to trade", "passes": false, "steps": ["Track market selection", "Identify market preferences", "Detect selection shifts", "Score selection patterns"], "test_instructions": {"unit": "Test selection analysis", "typecheck": "Verify types", "e2e": "Analyze selections", "manual_verification": "Verify selection insights"}},
+    {"id": "DET-PAT-008", "priority": 103, "name": "Coordinated trading detector", "description": "Detect multiple wallets trading in coordination", "passes": false, "steps": ["Identify simultaneous trades", "Analyze trade similarity", "Calculate coordination score", "Flag coordinated groups"], "test_instructions": {"unit": "Test coordination detection", "typecheck": "Verify types", "e2e": "Detect live coordination", "manual_verification": "Verify detection accuracy"}},
+    {"id": "DET-PAT-009", "priority": 104, "name": "Sybil attack detector", "description": "Detect potential sybil attacks using multiple wallets", "passes": false, "steps": ["Identify wallet clusters", "Analyze cluster behavior", "Detect sybil patterns", "Score sybil probability"], "test_instructions": {"unit": "Test sybil detection", "typecheck": "Verify types", "e2e": "Detect sybil patterns", "manual_verification": "Verify detection accuracy"}},
+    {"id": "DET-PAT-010", "priority": 105, "name": "Historical accuracy scorer", "description": "Score wallets based on historical prediction accuracy", "passes": false, "steps": ["Track prediction outcomes", "Calculate accuracy rate", "Weight by conviction level", "Rank by accuracy"], "test_instructions": {"unit": "Test accuracy scoring", "typecheck": "Verify types", "e2e": "Score live wallets", "manual_verification": "Verify accuracy scores"}},
+    {"id": "DET-SCORE-001", "priority": 106, "name": "Composite suspicion score calculator", "description": "Calculate overall suspicion score from multiple signals", "passes": false, "steps": ["Collect all signal scores", "Apply signal weights", "Combine into composite score", "Normalize to 0-100"], "test_instructions": {"unit": "Test score calculation", "typecheck": "Verify types", "e2e": "Calculate live scores", "manual_verification": "Verify score reasonableness"}},
+    {"id": "DET-SCORE-002", "priority": 107, "name": "Signal weight configurator", "description": "Configure weights for different detection signals", "passes": false, "steps": ["Define weight configuration", "Allow per-signal weights", "Validate weight sum", "Store in settings"], "test_instructions": {"unit": "Test weight configuration", "typecheck": "Verify config types", "e2e": "Apply custom weights", "manual_verification": "Verify weight effects"}},
+    {"id": "DET-SCORE-003", "priority": 108, "name": "Dynamic threshold adjuster", "description": "Automatically adjust thresholds based on market conditions", "passes": false, "steps": ["Monitor market conditions", "Detect regime changes", "Adjust thresholds automatically", "Log threshold changes"], "test_instructions": {"unit": "Test adjustment logic", "typecheck": "Verify types", "e2e": "Test with varying conditions", "manual_verification": "Verify adjustment behavior"}},
+    {"id": "DET-SCORE-004", "priority": 109, "name": "False positive reducer", "description": "Apply filters to reduce false positive alerts", "passes": false, "steps": ["Define false positive patterns", "Apply filtering rules", "Track filter effectiveness", "Tune filters over time"], "test_instructions": {"unit": "Test filter logic", "typecheck": "Verify types", "e2e": "Apply filters to alerts", "manual_verification": "Verify FP reduction"}},
+    {"id": "DET-SCORE-005", "priority": 110, "name": "Alert priority ranker", "description": "Rank alerts by priority/urgency for user attention", "passes": false, "steps": ["Define priority factors", "Calculate priority score", "Sort alerts by priority", "Highlight urgent alerts"], "test_instructions": {"unit": "Test ranking logic", "typecheck": "Verify types", "e2e": "Rank live alerts", "manual_verification": "Verify ranking reasonableness"}},
+    {"id": "DET-SCORE-006", "priority": 111, "name": "Confidence level calculator", "description": "Calculate confidence level for each detection", "passes": false, "steps": ["Assess signal strength", "Consider data quality", "Calculate confidence 0-100", "Include in alert metadata"], "test_instructions": {"unit": "Test confidence calculation", "typecheck": "Verify types", "e2e": "Calculate live confidence", "manual_verification": "Verify confidence levels"}},
+    {"id": "DET-SCORE-007", "priority": 112, "name": "Historical score calibrator", "description": "Calibrate scoring based on historical outcomes", "passes": false, "steps": ["Track score vs outcome", "Calculate calibration metrics", "Adjust scoring parameters", "Improve over time"], "test_instructions": {"unit": "Test calibration logic", "typecheck": "Verify types", "e2e": "Calibrate with history", "manual_verification": "Verify calibration improvement"}},
+    {"id": "DET-SCORE-008", "priority": 113, "name": "Multi-signal correlation scorer", "description": "Boost score when multiple signals correlate", "passes": false, "steps": ["Detect signal correlations", "Calculate correlation boost", "Apply boost to composite", "Track boost effectiveness"], "test_instructions": {"unit": "Test correlation scoring", "typecheck": "Verify types", "e2e": "Apply correlation boosts", "manual_verification": "Verify boost behavior"}},
+    {"id": "UI-DASH-001", "priority": 114, "name": "Main dashboard layout", "description": "Primary dashboard layout with responsive grid", "passes": false, "steps": ["Create dashboard page", "Implement responsive grid", "Add widget containers", "Handle loading states"], "test_instructions": {"unit": "Test component rendering", "typecheck": "Run tsc", "e2e": "Load dashboard in browser", "manual_verification": "Verify responsive layout"}},
+    {"id": "UI-DASH-002", "priority": 115, "name": "Real-time alert feed widget", "description": "Live-updating feed of latest alerts", "passes": false, "steps": ["Create alert feed component", "Subscribe to alert stream", "Animate new alerts", "Handle feed overflow"], "test_instructions": {"unit": "Test feed component", "typecheck": "Verify types", "e2e": "Verify live updates", "manual_verification": "Watch alert feed"}},
+    {"id": "UI-DASH-003", "priority": 116, "name": "Active signals counter", "description": "Display count of current active signals by type", "passes": false, "steps": ["Create counter component", "Group counts by signal type", "Update in real-time", "Add visual indicators"], "test_instructions": {"unit": "Test counter component", "typecheck": "Verify types", "e2e": "Verify count accuracy", "manual_verification": "Verify counter display"}},
+    {"id": "UI-DASH-004", "priority": 117, "name": "Top suspicious wallets widget", "description": "Show top wallets by suspicion score", "passes": false, "steps": ["Create wallet list component", "Sort by suspicion score", "Show score and key info", "Link to wallet details"], "test_instructions": {"unit": "Test list component", "typecheck": "Verify types", "e2e": "Verify wallet ranking", "manual_verification": "Verify widget display"}},
+    {"id": "UI-DASH-005", "priority": 118, "name": "Hot markets widget", "description": "Display markets with most suspicious activity", "passes": false, "steps": ["Create market list component", "Sort by alert count", "Show market key info", "Link to market details"], "test_instructions": {"unit": "Test list component", "typecheck": "Verify types", "e2e": "Verify market ranking", "manual_verification": "Verify widget display"}},
+    {"id": "UI-DASH-006", "priority": 119, "name": "Recent large trades widget", "description": "Show recent trades above whale threshold", "passes": false, "steps": ["Create trade list component", "Filter by size threshold", "Show trade details", "Update in real-time"], "test_instructions": {"unit": "Test trade list", "typecheck": "Verify types", "e2e": "Verify trade display", "manual_verification": "Verify large trades shown"}},
+    {"id": "UI-DASH-007", "priority": 120, "name": "System status indicator", "description": "Show connection status for all data sources", "passes": false, "steps": ["Create status component", "Monitor all connections", "Show status icons", "Alert on disconnection"], "test_instructions": {"unit": "Test status component", "typecheck": "Verify types", "e2e": "Verify status accuracy", "manual_verification": "Verify status indicators"}},
+    {"id": "UI-DASH-008", "priority": 121, "name": "Quick stats summary bar", "description": "Summary stats bar with key metrics", "passes": false, "steps": ["Create stats bar component", "Show key metrics", "Update in real-time", "Add trend indicators"], "test_instructions": {"unit": "Test stats component", "typecheck": "Verify types", "e2e": "Verify stats accuracy", "manual_verification": "Verify stats display"}},
+    {"id": "UI-DASH-009", "priority": 122, "name": "Dashboard refresh controls", "description": "Manual refresh and auto-refresh toggle", "passes": false, "steps": ["Add refresh button", "Implement auto-refresh toggle", "Show last refresh time", "Handle refresh states"], "test_instructions": {"unit": "Test refresh logic", "typecheck": "Verify types", "e2e": "Test refresh functionality", "manual_verification": "Verify refresh behavior"}},
+    {"id": "UI-DASH-010", "priority": 123, "name": "Dashboard theme toggle", "description": "Light/dark theme toggle for dashboard", "passes": false, "steps": ["Create theme context", "Implement theme toggle", "Persist preference", "Apply theme styles"], "test_instructions": {"unit": "Test theme switching", "typecheck": "Verify types", "e2e": "Toggle theme in browser", "manual_verification": "Verify theme appearance"}},
+    {"id": "UI-ALERT-001", "priority": 124, "name": "Alerts list view", "description": "Paginated list view of all alerts", "passes": false, "steps": ["Create alerts page", "Implement pagination", "Show alert summaries", "Handle empty state"], "test_instructions": {"unit": "Test list component", "typecheck": "Verify types", "e2e": "Navigate alert pages", "manual_verification": "Verify list display"}},
+    {"id": "UI-ALERT-002", "priority": 125, "name": "Alert detail modal", "description": "Detailed view of individual alert with all context", "passes": false, "steps": ["Create modal component", "Show full alert details", "Include related data", "Add action buttons"], "test_instructions": {"unit": "Test modal component", "typecheck": "Verify types", "e2e": "Open alert details", "manual_verification": "Verify detail display"}},
+    {"id": "UI-ALERT-003", "priority": 126, "name": "Alert type filter", "description": "Filter alerts by type (fresh wallet, volume, etc.)", "passes": false, "steps": ["Create filter dropdown", "Apply type filtering", "Show active filters", "Clear filters option"], "test_instructions": {"unit": "Test filter logic", "typecheck": "Verify types", "e2e": "Apply type filters", "manual_verification": "Verify filtering works"}},
+    {"id": "UI-ALERT-004", "priority": 127, "name": "Alert severity filter", "description": "Filter alerts by severity/priority level", "passes": false, "steps": ["Create severity filter", "Define severity levels", "Apply filtering", "Show severity indicators"], "test_instructions": {"unit": "Test severity filter", "typecheck": "Verify types", "e2e": "Filter by severity", "manual_verification": "Verify severity filtering"}},
+    {"id": "UI-ALERT-005", "priority": 128, "name": "Alert date range filter", "description": "Filter alerts by date range", "passes": false, "steps": ["Create date picker", "Apply date filtering", "Support preset ranges", "Handle timezone"], "test_instructions": {"unit": "Test date filter", "typecheck": "Verify types", "e2e": "Filter by date range", "manual_verification": "Verify date filtering"}},
+    {"id": "UI-WALLET-001", "priority": 129, "name": "Wallet profile page", "description": "Detailed profile page for individual wallet", "passes": false, "steps": ["Create wallet page", "Show wallet metadata", "Display suspicion score", "Show activity summary"], "test_instructions": {"unit": "Test page component", "typecheck": "Verify types", "e2e": "Navigate to wallet", "manual_verification": "Verify profile display"}},
+    {"id": "UI-WALLET-002", "priority": 130, "name": "Wallet trading history table", "description": "Paginated table of wallet trading history", "passes": false, "steps": ["Create history table", "Implement pagination", "Add sorting options", "Show trade details"], "test_instructions": {"unit": "Test table component", "typecheck": "Verify types", "e2e": "Browse trade history", "manual_verification": "Verify history display"}},
+    {"id": "UI-WALLET-003", "priority": 131, "name": "Wallet P&L chart", "description": "Chart showing wallet profit/loss over time", "passes": false, "steps": ["Create P&L chart", "Plot cumulative P&L", "Add time range selector", "Show profit/loss zones"], "test_instructions": {"unit": "Test chart component", "typecheck": "Verify types", "e2e": "View P&L chart", "manual_verification": "Verify chart accuracy"}},
+    {"id": "UI-MARKET-001", "priority": 132, "name": "Market detail page", "description": "Detailed page for individual market", "passes": false, "steps": ["Create market page", "Show market info", "Display current odds", "Link to Polymarket"], "test_instructions": {"unit": "Test page component", "typecheck": "Verify types", "e2e": "Navigate to market", "manual_verification": "Verify market display"}},
+    {"id": "UI-MARKET-002", "priority": 133, "name": "Market price chart", "description": "Interactive price/probability chart over time", "passes": false, "steps": ["Create price chart", "Plot probability history", "Add zoom/pan controls", "Show key events"], "test_instructions": {"unit": "Test chart component", "typecheck": "Verify types", "e2e": "Interact with chart", "manual_verification": "Verify chart accuracy"}},
+    {"id": "UI-MARKET-003", "priority": 134, "name": "Market volume chart", "description": "Trading volume chart over time", "passes": false, "steps": ["Create volume chart", "Plot volume bars", "Show volume trends", "Highlight anomalies"], "test_instructions": {"unit": "Test chart component", "typecheck": "Verify types", "e2e": "View volume chart", "manual_verification": "Verify volume display"}},
+    {"id": "UI-SET-001", "priority": 135, "name": "Settings page layout", "description": "Main settings page with categorized sections", "passes": false, "steps": ["Create settings page", "Organize by category", "Add navigation", "Handle form state"], "test_instructions": {"unit": "Test settings page", "typecheck": "Verify types", "e2e": "Navigate settings", "manual_verification": "Verify settings layout"}},
+    {"id": "UI-SET-002", "priority": 136, "name": "Alert threshold configuration", "description": "UI to configure alert thresholds", "passes": false, "steps": ["Create threshold form", "Add input validation", "Show current values", "Save to backend"], "test_instructions": {"unit": "Test form validation", "typecheck": "Verify types", "e2e": "Update thresholds", "manual_verification": "Verify threshold persistence"}},
+    {"id": "UI-SET-003", "priority": 137, "name": "Notification preferences", "description": "Configure notification channels and frequency", "passes": false, "steps": ["Create notification form", "Toggle channels", "Set frequency", "Test notifications"], "test_instructions": {"unit": "Test preference form", "typecheck": "Verify types", "e2e": "Update preferences", "manual_verification": "Verify notifications work"}},
+    {"id": "UI-CHART-001", "priority": 138, "name": "Line chart component", "description": "Reusable line chart for time series data", "passes": false, "steps": ["Create line chart", "Support multiple series", "Add tooltips", "Handle responsive sizing"], "test_instructions": {"unit": "Test chart rendering", "typecheck": "Verify types", "e2e": "Render with data", "manual_verification": "Verify chart appearance"}},
+    {"id": "UI-CHART-002", "priority": 139, "name": "Bar chart component", "description": "Reusable bar chart for volume/comparison data", "passes": false, "steps": ["Create bar chart", "Support stacked bars", "Add tooltips", "Handle responsive sizing"], "test_instructions": {"unit": "Test chart rendering", "typecheck": "Verify types", "e2e": "Render with data", "manual_verification": "Verify chart appearance"}},
+    {"id": "UI-CHART-003", "priority": 140, "name": "Chart time range selector", "description": "Common time range selector for charts (1H, 24H, 7D, etc.)", "passes": false, "steps": ["Create range selector", "Define preset ranges", "Handle custom range", "Emit range changes"], "test_instructions": {"unit": "Test selector logic", "typecheck": "Verify types", "e2e": "Change time ranges", "manual_verification": "Verify range updates chart"}},
+    {"id": "NOTIF-EMAIL-001", "priority": 141, "name": "Email service integration", "description": "Integrate email service provider (SendGrid, Resend, etc.)", "passes": false, "steps": ["Choose email provider", "Install SDK", "Configure API keys", "Create email client"], "test_instructions": {"unit": "Test email client", "typecheck": "Verify types", "e2e": "Send test email", "manual_verification": "Check inbox"}},
+    {"id": "NOTIF-EMAIL-002", "priority": 142, "name": "Alert email template", "description": "HTML email template for alert notifications", "passes": false, "steps": ["Design email template", "Use email-safe HTML/CSS", "Add dynamic content", "Test rendering"], "test_instructions": {"unit": "Test template rendering", "typecheck": "Verify types", "e2e": "Send templated email", "manual_verification": "Verify email appearance"}},
+    {"id": "NOTIF-EMAIL-003", "priority": 143, "name": "Daily digest email", "description": "Daily summary email of activity and alerts", "passes": false, "steps": ["Aggregate daily data", "Create digest template", "Schedule sending", "Handle timezone"], "test_instructions": {"unit": "Test digest generation", "typecheck": "Verify types", "e2e": "Generate and send digest", "manual_verification": "Verify digest content"}},
+    {"id": "NOTIF-TG-001", "priority": 144, "name": "Telegram bot setup", "description": "Create and configure Telegram bot", "passes": false, "steps": ["Create bot with BotFather", "Get bot token", "Set up webhook or polling", "Handle bot commands"], "test_instructions": {"unit": "Test bot configuration", "typecheck": "Verify types", "e2e": "Send test message", "manual_verification": "Receive in Telegram"}},
+    {"id": "NOTIF-TG-002", "priority": 145, "name": "Telegram alert message formatter", "description": "Format alert messages for Telegram", "passes": false, "steps": ["Create message formatter", "Use Telegram markdown", "Include relevant data", "Add action buttons"], "test_instructions": {"unit": "Test message formatting", "typecheck": "Verify types", "e2e": "Send formatted alert", "manual_verification": "Verify message appearance"}},
+    {"id": "NOTIF-TG-003", "priority": 146, "name": "Telegram instant notifications", "description": "Send instant alerts via Telegram", "passes": false, "steps": ["Create send function", "Handle rate limits", "Track delivery status", "Handle errors"], "test_instructions": {"unit": "Test send function", "typecheck": "Verify types", "e2e": "Trigger instant alert", "manual_verification": "Receive notification"}},
+    {"id": "NOTIF-DC-001", "priority": 147, "name": "Discord webhook setup", "description": "Configure Discord webhook for notifications", "passes": false, "steps": ["Create Discord webhook", "Store webhook URL", "Test webhook connection", "Handle webhook errors"], "test_instructions": {"unit": "Test webhook config", "typecheck": "Verify types", "e2e": "Send test message", "manual_verification": "Check Discord channel"}},
+    {"id": "NOTIF-DC-002", "priority": 148, "name": "Discord embed formatter", "description": "Format alerts as Discord embeds", "passes": false, "steps": ["Create embed builder", "Design embed layout", "Add fields and colors", "Include timestamps"], "test_instructions": {"unit": "Test embed creation", "typecheck": "Verify types", "e2e": "Send embedded alert", "manual_verification": "Verify embed appearance"}},
+    {"id": "NOTIF-PUSH-001", "priority": 149, "name": "Web push notification setup", "description": "Configure web push notifications", "passes": false, "steps": ["Generate VAPID keys", "Create push service", "Handle subscriptions", "Store subscription endpoints"], "test_instructions": {"unit": "Test push config", "typecheck": "Verify types", "e2e": "Send test push", "manual_verification": "Receive browser notification"}},
+    {"id": "NOTIF-PUSH-002", "priority": 150, "name": "Push notification service worker", "description": "Service worker for background push", "passes": false, "steps": ["Create service worker", "Handle push events", "Show notification", "Handle notification clicks"], "test_instructions": {"unit": "Test service worker", "typecheck": null, "e2e": "Receive background push", "manual_verification": "Verify notification shown"}},
+    {"id": "NOTIF-CORE-001", "priority": 151, "name": "Notification queue system", "description": "Queue system for processing notifications", "passes": false, "steps": ["Create notification queue", "Process queue async", "Handle failures", "Monitor queue depth"], "test_instructions": {"unit": "Test queue operations", "typecheck": "Verify types", "e2e": "Queue and process notifications", "manual_verification": "Verify queue processing"}},
+    {"id": "NOTIF-CORE-002", "priority": 152, "name": "Notification deduplication", "description": "Prevent duplicate notifications for same alert", "passes": false, "steps": ["Generate notification ID", "Check for duplicates", "Skip duplicates", "Log deduplication"], "test_instructions": {"unit": "Test dedup logic", "typecheck": "Verify types", "e2e": "Test with duplicate alerts", "manual_verification": "Verify no duplicates"}},
+    {"id": "NOTIF-CORE-003", "priority": 153, "name": "Notification rate limiting", "description": "Rate limit notifications to prevent spam", "passes": false, "steps": ["Define rate limits", "Track notification counts", "Throttle when exceeded", "Queue for later"], "test_instructions": {"unit": "Test rate limiting", "typecheck": "Verify types", "e2e": "Test burst of notifications", "manual_verification": "Verify throttling works"}},
+    {"id": "NOTIF-CORE-004", "priority": 154, "name": "Multi-channel notification router", "description": "Route notifications to configured channels", "passes": false, "steps": ["Get user channel preferences", "Route to enabled channels", "Handle channel failures", "Log routing decisions"], "test_instructions": {"unit": "Test routing logic", "typecheck": "Verify types", "e2e": "Route to multiple channels", "manual_verification": "Verify multi-channel delivery"}},
+    {"id": "AI-PAT-001", "priority": 155, "name": "Anomaly detection model training pipeline", "description": "Pipeline to train anomaly detection models on historical data", "passes": false, "steps": ["Prepare training data", "Define model architecture", "Train model", "Evaluate performance"], "test_instructions": {"unit": "Test pipeline components", "typecheck": "Verify types", "e2e": "Run training pipeline", "manual_verification": "Verify model quality"}},
+    {"id": "AI-PAT-002", "priority": 156, "name": "Real-time anomaly scoring", "description": "Score incoming trades for anomaly probability", "passes": false, "steps": ["Load trained model", "Extract features from trade", "Run inference", "Return anomaly score"], "test_instructions": {"unit": "Test scoring function", "typecheck": "Verify types", "e2e": "Score live trades", "manual_verification": "Verify scoring accuracy"}},
+    {"id": "AI-PAT-003", "priority": 157, "name": "Wallet clustering algorithm", "description": "Cluster wallets by behavioral similarity", "passes": false, "steps": ["Extract wallet features", "Apply clustering algorithm", "Assign cluster labels", "Update clusters periodically"], "test_instructions": {"unit": "Test clustering logic", "typecheck": "Verify types", "e2e": "Cluster active wallets", "manual_verification": "Verify cluster quality"}},
+    {"id": "AI-NLP-001", "priority": 158, "name": "Alert summary generator", "description": "Generate natural language summaries of alerts", "passes": false, "steps": ["Create summary template", "Extract key details", "Generate readable summary", "Handle edge cases"], "test_instructions": {"unit": "Test summary generation", "typecheck": "Verify types", "e2e": "Generate live summaries", "manual_verification": "Verify summary quality"}},
+    {"id": "AI-NLP-002", "priority": 159, "name": "Market context analyzer", "description": "Analyze market context from news/social media", "passes": false, "steps": ["Fetch relevant news", "Extract market mentions", "Analyze sentiment", "Correlate with activity"], "test_instructions": {"unit": "Test context analysis", "typecheck": "Verify types", "e2e": "Analyze live context", "manual_verification": "Verify context relevance"}},
+    {"id": "AI-PRED-001", "priority": 160, "name": "Insider probability predictor", "description": "Predict probability that activity is insider-related", "passes": false, "steps": ["Define feature set", "Train classifier", "Calculate probability", "Calibrate predictions"], "test_instructions": {"unit": "Test predictor", "typecheck": "Verify types", "e2e": "Predict on live data", "manual_verification": "Verify prediction quality"}},
+    {"id": "AI-PRED-002", "priority": 161, "name": "Market outcome predictor", "description": "Predict market outcomes based on insider signals", "passes": false, "steps": ["Collect signal history", "Train outcome predictor", "Generate predictions", "Track prediction accuracy"], "test_instructions": {"unit": "Test predictor", "typecheck": "Verify types", "e2e": "Predict outcomes", "manual_verification": "Track prediction success"}},
+    {"id": "AI-PRED-003", "priority": 162, "name": "Signal effectiveness tracker", "description": "Track which signals historically predicted outcomes", "passes": false, "steps": ["Log signal occurrences", "Track subsequent outcomes", "Calculate signal effectiveness", "Rank signals by value"], "test_instructions": {"unit": "Test tracking logic", "typecheck": "Verify types", "e2e": "Track live signals", "manual_verification": "Verify effectiveness metrics"}},
+    {"id": "AI-PRED-004", "priority": 163, "name": "Model performance dashboard", "description": "Dashboard showing AI model performance metrics", "passes": false, "steps": ["Collect model metrics", "Create performance charts", "Show accuracy over time", "Alert on performance drops"], "test_instructions": {"unit": "Test dashboard components", "typecheck": "Verify types", "e2e": "View performance dashboard", "manual_verification": "Verify metrics accuracy"}},
+    {"id": "AI-PRED-005", "priority": 164, "name": "Backtesting framework", "description": "Framework to backtest detection strategies", "passes": false, "steps": ["Create backtesting engine", "Load historical data", "Simulate detection logic", "Generate backtest reports"], "test_instructions": {"unit": "Test backtesting engine", "typecheck": "Verify types", "e2e": "Run full backtest", "manual_verification": "Verify backtest results"}},
+    {"id": "AI-PRED-006", "priority": 165, "name": "Model retraining scheduler", "description": "Automated retraining of models on new data", "passes": false, "steps": ["Schedule retraining jobs", "Collect new training data", "Retrain models", "Validate before deployment"], "test_instructions": {"unit": "Test scheduler logic", "typecheck": "Verify types", "e2e": "Trigger retraining", "manual_verification": "Verify model updated"}},
+    {"id": "TEST-API-001", "priority": 166, "name": "Gamma API client unit tests", "description": "Unit tests for Gamma API client methods", "passes": false, "steps": ["Mock API responses", "Test each client method", "Test error handling", "Achieve 90%+ coverage"], "test_instructions": {"unit": "Run Gamma API tests", "typecheck": null, "e2e": null, "manual_verification": "Review test coverage"}},
+    {"id": "TEST-API-002", "priority": 167, "name": "CLOB API client unit tests", "description": "Unit tests for CLOB API client methods", "passes": false, "steps": ["Mock CLOB responses", "Test each client method", "Test authentication", "Test error scenarios"], "test_instructions": {"unit": "Run CLOB API tests", "typecheck": null, "e2e": null, "manual_verification": "Review test coverage"}},
+    {"id": "TEST-API-003", "priority": 168, "name": "WebSocket connection tests", "description": "Tests for WebSocket connection handling", "passes": false, "steps": ["Mock WebSocket server", "Test connection lifecycle", "Test reconnection logic", "Test message handling"], "test_instructions": {"unit": "Run WebSocket tests", "typecheck": null, "e2e": null, "manual_verification": "Review connection scenarios"}},
+    {"id": "TEST-API-004", "priority": 169, "name": "API error handling tests", "description": "Tests for API error handling and retry logic", "passes": false, "steps": ["Simulate various errors", "Test retry behavior", "Test backoff timing", "Test error reporting"], "test_instructions": {"unit": "Run error handling tests", "typecheck": null, "e2e": null, "manual_verification": "Verify error recovery"}},
+    {"id": "TEST-API-005", "priority": 170, "name": "Rate limiter tests", "description": "Tests for rate limiting functionality", "passes": false, "steps": ["Test token bucket", "Test request queuing", "Test limit enforcement", "Test concurrent requests"], "test_instructions": {"unit": "Run rate limiter tests", "typecheck": null, "e2e": null, "manual_verification": "Verify rate limiting"}},
+    {"id": "TEST-API-006", "priority": 171, "name": "API integration tests", "description": "Integration tests with mocked API responses", "passes": false, "steps": ["Set up mock server", "Test end-to-end flows", "Test data transformation", "Test caching behavior"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run integration tests", "manual_verification": "Review integration coverage"}},
+    {"id": "TEST-DET-001", "priority": 172, "name": "Fresh wallet detection unit tests", "description": "Unit tests for fresh wallet detection logic", "passes": false, "steps": ["Test age calculation", "Test threshold logic", "Test scoring algorithm", "Test edge cases"], "test_instructions": {"unit": "Run fresh wallet tests", "typecheck": null, "e2e": null, "manual_verification": "Review detection accuracy"}},
+    {"id": "TEST-DET-002", "priority": 173, "name": "Volume anomaly detection tests", "description": "Tests for volume anomaly detection", "passes": false, "steps": ["Test baseline calculation", "Test spike detection", "Test threshold logic", "Test with historical data"], "test_instructions": {"unit": "Run volume detection tests", "typecheck": null, "e2e": null, "manual_verification": "Review detection accuracy"}},
+    {"id": "TEST-DET-003", "priority": 174, "name": "Niche market detection tests", "description": "Tests for niche market identification", "passes": false, "steps": ["Test category classification", "Test keyword matching", "Test scoring logic", "Test edge cases"], "test_instructions": {"unit": "Run niche market tests", "typecheck": null, "e2e": null, "manual_verification": "Review classification accuracy"}},
+    {"id": "TEST-DET-004", "priority": 175, "name": "Scoring algorithm tests", "description": "Tests for suspicion scoring algorithms", "passes": false, "steps": ["Test score calculation", "Test weight application", "Test normalization", "Test edge cases"], "test_instructions": {"unit": "Run scoring tests", "typecheck": null, "e2e": null, "manual_verification": "Review scoring behavior"}},
+    {"id": "TEST-DET-005", "priority": 176, "name": "Pattern matching tests", "description": "Tests for pattern matching logic", "passes": false, "steps": ["Test pattern recognition", "Test clustering logic", "Test coordination detection", "Test with sample data"], "test_instructions": {"unit": "Run pattern tests", "typecheck": null, "e2e": null, "manual_verification": "Review pattern detection"}},
+    {"id": "TEST-DET-006", "priority": 177, "name": "Alert generation tests", "description": "Tests for alert generation logic", "passes": false, "steps": ["Test alert creation", "Test alert content", "Test severity assignment", "Test deduplication"], "test_instructions": {"unit": "Run alert generation tests", "typecheck": null, "e2e": null, "manual_verification": "Review alert quality"}},
+    {"id": "TEST-UI-001", "priority": 178, "name": "Dashboard component tests", "description": "Unit tests for dashboard components", "passes": false, "steps": ["Test widget rendering", "Test data binding", "Test loading states", "Test error states"], "test_instructions": {"unit": "Run dashboard tests", "typecheck": null, "e2e": null, "manual_verification": "Review component behavior"}},
+    {"id": "TEST-UI-002", "priority": 179, "name": "Alert view component tests", "description": "Unit tests for alert view components", "passes": false, "steps": ["Test list rendering", "Test filtering", "Test pagination", "Test modal behavior"], "test_instructions": {"unit": "Run alert view tests", "typecheck": null, "e2e": null, "manual_verification": "Review component behavior"}},
+    {"id": "TEST-UI-003", "priority": 180, "name": "Wallet view component tests", "description": "Unit tests for wallet view components", "passes": false, "steps": ["Test profile rendering", "Test history table", "Test chart components", "Test data loading"], "test_instructions": {"unit": "Run wallet view tests", "typecheck": null, "e2e": null, "manual_verification": "Review component behavior"}},
+    {"id": "TEST-UI-004", "priority": 181, "name": "Market view component tests", "description": "Unit tests for market view components", "passes": false, "steps": ["Test market page", "Test price chart", "Test volume chart", "Test data updates"], "test_instructions": {"unit": "Run market view tests", "typecheck": null, "e2e": null, "manual_verification": "Review component behavior"}},
+    {"id": "TEST-UI-005", "priority": 182, "name": "Chart component tests", "description": "Unit tests for chart components", "passes": false, "steps": ["Test chart rendering", "Test data updates", "Test interactions", "Test responsiveness"], "test_instructions": {"unit": "Run chart tests", "typecheck": null, "e2e": null, "manual_verification": "Review chart behavior"}},
+    {"id": "TEST-UI-006", "priority": 183, "name": "Settings page tests", "description": "Tests for settings page functionality", "passes": false, "steps": ["Test form rendering", "Test form validation", "Test save/load", "Test preferences"], "test_instructions": {"unit": "Run settings tests", "typecheck": null, "e2e": null, "manual_verification": "Review settings behavior"}},
+    {"id": "TEST-UI-007", "priority": 184, "name": "UI accessibility tests", "description": "Accessibility testing for UI components", "passes": false, "steps": ["Run axe-core tests", "Test keyboard navigation", "Test screen reader", "Fix a11y issues"], "test_instructions": {"unit": "Run a11y tests", "typecheck": null, "e2e": null, "manual_verification": "Manual a11y review"}},
+    {"id": "TEST-UI-008", "priority": 185, "name": "UI responsive design tests", "description": "Tests for responsive design across breakpoints", "passes": false, "steps": ["Test mobile layout", "Test tablet layout", "Test desktop layout", "Test resize behavior"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Visual regression tests", "manual_verification": "Test on various devices"}},
+    {"id": "TEST-NOTIF-001", "priority": 186, "name": "Email notification tests", "description": "Tests for email notification delivery", "passes": false, "steps": ["Mock email service", "Test template rendering", "Test sending logic", "Test error handling"], "test_instructions": {"unit": "Run email tests", "typecheck": null, "e2e": "Send test emails", "manual_verification": "Check email delivery"}},
+    {"id": "TEST-NOTIF-002", "priority": 187, "name": "Telegram notification tests", "description": "Tests for Telegram notification delivery", "passes": false, "steps": ["Mock Telegram API", "Test message formatting", "Test sending logic", "Test rate limiting"], "test_instructions": {"unit": "Run Telegram tests", "typecheck": null, "e2e": "Send test messages", "manual_verification": "Check Telegram delivery"}},
+    {"id": "TEST-NOTIF-003", "priority": 188, "name": "Discord notification tests", "description": "Tests for Discord notification delivery", "passes": false, "steps": ["Mock Discord webhook", "Test embed formatting", "Test webhook sending", "Test error handling"], "test_instructions": {"unit": "Run Discord tests", "typecheck": null, "e2e": "Send test webhooks", "manual_verification": "Check Discord delivery"}},
+    {"id": "TEST-NOTIF-004", "priority": 189, "name": "Push notification tests", "description": "Tests for push notification delivery", "passes": false, "steps": ["Mock push service", "Test subscription handling", "Test push sending", "Test service worker"], "test_instructions": {"unit": "Run push tests", "typecheck": null, "e2e": "Test push delivery", "manual_verification": "Receive test pushes"}},
+    {"id": "TEST-NOTIF-005", "priority": 190, "name": "Notification queue tests", "description": "Tests for notification queue processing", "passes": false, "steps": ["Test queue operations", "Test async processing", "Test retry logic", "Test queue monitoring"], "test_instructions": {"unit": "Run queue tests", "typecheck": null, "e2e": null, "manual_verification": "Review queue behavior"}},
+    {"id": "TEST-INT-001", "priority": 191, "name": "End-to-end alert flow test", "description": "E2E test: trade detected -> alert generated -> notification sent", "passes": false, "steps": ["Set up test environment", "Simulate trade event", "Verify alert created", "Verify notification sent"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run full flow test", "manual_verification": "Verify complete flow"}},
+    {"id": "TEST-INT-002", "priority": 192, "name": "Real-time data pipeline test", "description": "Test complete real-time data pipeline", "passes": false, "steps": ["Test WebSocket ingestion", "Test data processing", "Test storage", "Test UI updates"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run pipeline test", "manual_verification": "Verify real-time updates"}},
+    {"id": "TEST-INT-003", "priority": 193, "name": "Database integration tests", "description": "Integration tests for database operations", "passes": false, "steps": ["Test CRUD operations", "Test transactions", "Test query performance", "Test migrations"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run DB integration tests", "manual_verification": "Review DB behavior"}},
+    {"id": "TEST-INT-004", "priority": 194, "name": "API to UI data flow tests", "description": "Test data flow from API to UI components", "passes": false, "steps": ["Test data fetching", "Test state management", "Test component updates", "Test error propagation"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run data flow tests", "manual_verification": "Verify UI displays data"}},
+    {"id": "TEST-INT-005", "priority": 195, "name": "Load testing", "description": "Load tests for high volume scenarios", "passes": false, "steps": ["Set up load test tools", "Define load scenarios", "Run load tests", "Analyze performance"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run load tests", "manual_verification": "Review performance metrics"}},
+    {"id": "TEST-INT-006", "priority": 196, "name": "Failover and recovery tests", "description": "Tests for system failover and recovery", "passes": false, "steps": ["Simulate failures", "Test auto-recovery", "Test data consistency", "Test graceful degradation"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run failover tests", "manual_verification": "Verify recovery behavior"}},
+    {"id": "TEST-AI-001", "priority": 197, "name": "Anomaly detection model tests", "description": "Tests for anomaly detection model accuracy", "passes": false, "steps": ["Test on labeled data", "Calculate precision/recall", "Test edge cases", "Benchmark performance"], "test_instructions": {"unit": "Run model tests", "typecheck": null, "e2e": null, "manual_verification": "Review model metrics"}},
+    {"id": "TEST-AI-002", "priority": 198, "name": "Clustering algorithm tests", "description": "Tests for wallet clustering accuracy", "passes": false, "steps": ["Test with known clusters", "Validate cluster quality", "Test stability", "Test scalability"], "test_instructions": {"unit": "Run clustering tests", "typecheck": null, "e2e": null, "manual_verification": "Review cluster quality"}},
+    {"id": "TEST-AI-003", "priority": 199, "name": "NLP summary tests", "description": "Tests for alert summary generation quality", "passes": false, "steps": ["Test summary generation", "Validate readability", "Test edge cases", "Collect quality metrics"], "test_instructions": {"unit": "Run NLP tests", "typecheck": null, "e2e": null, "manual_verification": "Review summary quality"}},
+    {"id": "TEST-PERF-001", "priority": 200, "name": "Performance benchmarks", "description": "Comprehensive performance benchmarks for all systems", "passes": false, "steps": ["Define performance targets", "Create benchmark suite", "Run benchmarks", "Document results"], "test_instructions": {"unit": null, "typecheck": null, "e2e": "Run benchmark suite", "manual_verification": "Review benchmark results"}}
+  ]
+}
