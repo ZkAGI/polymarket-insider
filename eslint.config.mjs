@@ -24,6 +24,13 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["node_modules/", "dist/", ".next/", "coverage/", "eslint.config.mjs"],
+    ignores: [
+      "node_modules/",
+      "dist/",
+      ".next/",
+      "coverage/",
+      "eslint.config.mjs",
+      "postcss.config.js",
+    ],
   }
 );

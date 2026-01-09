@@ -80,10 +80,24 @@ COMPLETED: SETUP-009 - Set up Next.js frontend
 - Verified: npm run dev starts server at localhost:3000
 - Verified: App renders correctly with title and content
 
+COMPLETED: SETUP-010 - Configure Tailwind CSS
+- Installed tailwindcss, postcss, autoprefixer, @tailwindcss/postcss
+- Note: Tailwind CSS v4 requires @tailwindcss/postcss plugin instead of tailwindcss
+- Created postcss.config.js with @tailwindcss/postcss and autoprefixer
+- Created app/globals.css with @import "tailwindcss" (v4 syntax)
+- Added CSS custom properties for theme (whale and insider colors)
+- Created custom @utility text-balance and @theme directives
+- Updated app/layout.tsx to import globals.css
+- Updated app/page.tsx with Tailwind utility classes
+- Tailwind v4 uses CSS-based configuration (no tailwind.config.js needed)
+- Verified: Styling works correctly in browser, classes rendered in HTML
+- Verified: typecheck, lint, and tests all pass
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
 - ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
 - Run `npm test` for single run, `npm run test:watch` for watch mode
 - Run `npx prisma db push` to sync schema with database
 - Run `npm run dev` to start Next.js dev server
-- Next up: SETUP-010 (Configure Tailwind CSS)
+- Tailwind CSS v4 uses @import "tailwindcss" and CSS-based config (@theme directive)
+- Next up: SETUP-011
