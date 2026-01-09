@@ -38,5 +38,8 @@
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
   }
 }

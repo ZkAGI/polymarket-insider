@@ -38,7 +38,16 @@ COMPLETED: SETUP-005 - Set up project directory structure
 - Added .gitkeep files to ensure empty directories are tracked
 - Verified: All directories exist with correct structure
 
+COMPLETED: SETUP-006 - Configure environment variables
+- Installed dotenv package
+- Created .env.example with all required variables (DATABASE_URL, API URLs, notification settings, whale thresholds)
+- Created config/env.ts with typed environment access and validation
+- Includes helper functions: getEnvVar, getEnvVarOptional, getEnvVarAsNumber, getEnvVarAsBoolean
+- .env already in .gitignore from SETUP-001
+- Verified: typecheck passes on config/env.ts
+- Verified: .env.example can be copied to .env successfully
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
 - ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
-- Next up: SETUP-006 (Configure environment variables)
+- Next up: SETUP-007 (Set up testing framework)
