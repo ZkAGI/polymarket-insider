@@ -8,6 +8,7 @@ import { GammaClient, gammaClient, GammaApiException } from "./client";
 import {
   GammaMarket,
   GammaMarketsResponse,
+  MarketCategory,
   MarketOutcome,
   MarketOutcomesResult,
   PriceDataPoint,
@@ -221,6 +222,333 @@ export async function getAllActiveMarkets(
   }
 
   return allMarkets;
+}
+
+/**
+ * Options for fetching markets by category
+ */
+export interface GetMarketsByCategoryOptions {
+  /**
+   * Maximum number of markets to fetch per request.
+   * Default: 100
+   */
+  limit?: number;
+
+  /**
+   * Offset for pagination.
+   * Default: 0
+   */
+  offset?: number;
+
+  /**
+   * Whether to include only active markets.
+   * Default: true
+   */
+  activeOnly?: boolean;
+
+  /**
+   * Sort field (e.g., "volume", "createdAt", "endDate").
+   * Default: "volume"
+   */
+  sortBy?: string;
+
+  /**
+   * Sort direction: "asc" or "desc".
+   * Default: "desc" (highest volume first)
+   */
+  order?: "asc" | "desc";
+
+  /**
+   * Custom Gamma client to use instead of default singleton.
+   */
+  client?: GammaClient;
+}
+
+/**
+ * Result from fetching markets by category
+ */
+export interface GetMarketsByCategoryResult {
+  /**
+   * Array of markets in the category
+   */
+  markets: GammaMarket[];
+
+  /**
+   * The category that was queried
+   */
+  category: MarketCategory | string;
+
+  /**
+   * Total count of markets in this category (if available)
+   */
+  count?: number;
+
+  /**
+   * Limit used in the request
+   */
+  limit: number;
+
+  /**
+   * Offset used in the request
+   */
+  offset: number;
+
+  /**
+   * Whether there are more markets to fetch
+   */
+  hasMore: boolean;
+}
+
+/**
+ * Build query string for category-based market queries
+ */
+function buildCategoryQueryString(
+  category: MarketCategory | string,
+  options: GetMarketsByCategoryOptions
+): string {
+  const params = new URLSearchParams();
+
+  // Set the category filter
+  params.set("tag", category);
+
+  // Filter for active markets by default
+  if (options.activeOnly !== false) {
+    params.set("active", "true");
+    params.set("closed", "false");
+  }
+
+  if (options.limit !== undefined) {
+    params.set("limit", String(options.limit));
+  }
+
+  if (options.offset !== undefined) {
+    params.set("offset", String(options.offset));
+  }
+
+  if (options.sortBy) {
+    params.set("order", options.sortBy);
+  }
+
+  if (options.order) {
+    params.set("ascending", options.order === "asc" ? "true" : "false");
+  }
+
+  return params.toString();
+}
+
+/**
+ * Fetch prediction markets filtered by category.
+ *
+ * Categories include politics, sports, crypto, entertainment, etc.
+ * Use the MarketCategory enum for type-safe category values.
+ *
+ * @param category - The category to filter by (can be MarketCategory enum or string)
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to markets in the specified category
+ *
+ * @example
+ * ```typescript
+ * import { getMarketsByCategory, MarketCategory } from "./gamma";
+ *
+ * // Fetch politics markets using the enum
+ * const politics = await getMarketsByCategory(MarketCategory.POLITICS);
+ * console.log(`Found ${politics.markets.length} politics markets`);
+ *
+ * // Fetch crypto markets with pagination
+ * const crypto = await getMarketsByCategory(MarketCategory.CRYPTO, {
+ *   limit: 50,
+ *   offset: 0,
+ *   sortBy: "volume",
+ *   order: "desc",
+ * });
+ *
+ * // Fetch using string category (for custom/unknown categories)
+ * const custom = await getMarketsByCategory("custom-category");
+ *
+ * // Include closed markets
+ * const allSports = await getMarketsByCategory(MarketCategory.SPORTS, {
+ *   activeOnly: false,
+ * });
+ *
+ * // Paginate through results
+ * let offset = 0;
+ * let hasMore = true;
+ * const allMarkets: GammaMarket[] = [];
+ *
+ * while (hasMore) {
+ *   const result = await getMarketsByCategory(MarketCategory.POLITICS, {
+ *     limit: 100,
+ *     offset,
+ *   });
+ *   allMarkets.push(...result.markets);
+ *   hasMore = result.hasMore;
+ *   offset += 100;
+ * }
+ * ```
+ */
+export async function getMarketsByCategory(
+  category: MarketCategory | string,
+  options: GetMarketsByCategoryOptions = {}
+): Promise<GetMarketsByCategoryResult> {
+  const limit = options.limit ?? 100;
+  const offset = options.offset ?? 0;
+  const client = options.client ?? gammaClient;
+
+  // Build query string with category filter
+  const queryString = buildCategoryQueryString(category, { ...options, limit, offset });
+  const endpoint = `/markets?${queryString}`;
+
+  // The Gamma API may return either an array or a paginated response object
+  const response = await client.get<GammaMarket[] | GammaMarketsResponse>(endpoint);
+
+  // Handle both response formats
+  let markets: GammaMarket[];
+  let count: number | undefined;
+
+  if (Array.isArray(response)) {
+    markets = response;
+    count = undefined;
+  } else {
+    markets = response.data;
+    count = response.count;
+  }
+
+  // Filter by category client-side as a safety check
+  // The API should already filter, but we ensure consistency
+  const categoryStr = category.toString().toLowerCase();
+  const filteredMarkets = markets.filter(
+    (market) => market.category?.toLowerCase() === categoryStr
+  );
+
+  // Apply active filter client-side as well if requested
+  const activeFiltered =
+    options.activeOnly !== false
+      ? filteredMarkets.filter((market) => market.active && !market.closed)
+      : filteredMarkets;
+
+  return {
+    markets: activeFiltered,
+    category,
+    count,
+    limit,
+    offset,
+    hasMore: activeFiltered.length === limit,
+  };
+}
+
+/**
+ * Fetch all markets in a category with automatic pagination.
+ *
+ * This function will make multiple API requests to fetch all available
+ * markets in the specified category. Use with caution as this may make many API calls.
+ *
+ * @param category - The category to filter by
+ * @param options - Optional configuration (limit is used as page size)
+ * @returns Promise resolving to all markets in the category
+ *
+ * @example
+ * ```typescript
+ * import { getAllMarketsByCategory, MarketCategory } from "./gamma";
+ *
+ * // Fetch all politics markets
+ * const allPolitics = await getAllMarketsByCategory(MarketCategory.POLITICS);
+ * console.log(`Total politics markets: ${allPolitics.length}`);
+ *
+ * // Fetch all crypto markets including closed ones
+ * const allCrypto = await getAllMarketsByCategory(MarketCategory.CRYPTO, {
+ *   activeOnly: false,
+ * });
+ * ```
+ */
+export async function getAllMarketsByCategory(
+  category: MarketCategory | string,
+  options: Omit<GetMarketsByCategoryOptions, "offset"> = {}
+): Promise<GammaMarket[]> {
+  const pageSize = options.limit ?? 100;
+  const allMarkets: GammaMarket[] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const result = await getMarketsByCategory(category, {
+      ...options,
+      limit: pageSize,
+      offset,
+    });
+
+    allMarkets.push(...result.markets);
+    hasMore = result.hasMore;
+    offset += pageSize;
+
+    // Safety limit to prevent infinite loops
+    if (offset > 10000) {
+      break;
+    }
+  }
+
+  return allMarkets;
+}
+
+/**
+ * Get the count of markets in each category.
+ *
+ * This is a convenience function that fetches a small sample from each
+ * category to estimate availability. For exact counts, use the
+ * getMarketsByCategory function with pagination.
+ *
+ * @param options - Optional configuration for the requests
+ * @returns Promise resolving to category counts
+ *
+ * @example
+ * ```typescript
+ * const counts = await getCategoryCounts();
+ * for (const [category, count] of Object.entries(counts)) {
+ *   console.log(`${category}: ${count} markets`);
+ * }
+ * ```
+ */
+export async function getCategoryCounts(
+  options: Pick<GetMarketsByCategoryOptions, "client" | "activeOnly"> = {}
+): Promise<Record<MarketCategory, number>> {
+  const counts: Record<MarketCategory, number> = {
+    [MarketCategory.POLITICS]: 0,
+    [MarketCategory.CRYPTO]: 0,
+    [MarketCategory.SPORTS]: 0,
+    [MarketCategory.TECH]: 0,
+    [MarketCategory.BUSINESS]: 0,
+    [MarketCategory.SCIENCE]: 0,
+    [MarketCategory.ENTERTAINMENT]: 0,
+    [MarketCategory.WEATHER]: 0,
+    [MarketCategory.GEOPOLITICS]: 0,
+    [MarketCategory.LEGAL]: 0,
+    [MarketCategory.HEALTH]: 0,
+    [MarketCategory.ECONOMY]: 0,
+    [MarketCategory.CULTURE]: 0,
+    [MarketCategory.OTHER]: 0,
+  };
+
+  // Fetch counts in parallel for efficiency
+  const categories = Object.values(MarketCategory);
+  const results = await Promise.all(
+    categories.map((category) =>
+      getMarketsByCategory(category, {
+        limit: 1,
+        activeOnly: options.activeOnly,
+        client: options.client,
+      }).catch(() => ({ markets: [], count: 0 }))
+    )
+  );
+
+  // Populate counts
+  for (let i = 0; i < categories.length; i++) {
+    const category = categories[i];
+    const result = results[i];
+    if (category && result) {
+      counts[category] = result.count ?? result.markets.length;
+    }
+  }
+
+  return counts;
 }
 
 /**

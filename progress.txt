@@ -345,3 +345,48 @@ COMPLETED: API-GAMMA-007 - Fetch market price history
 - All tests pass (167 total, up from 130)
 - TypeScript typecheck passes
 - Next up: API-GAMMA-008
+
+COMPLETED: API-GAMMA-008 - Fetch markets by category
+- Added MarketCategory enum to src/api/gamma/types.ts:
+  - Includes 14 categories: politics, crypto, sports, tech, business, science, entertainment, weather, geopolitics, legal, health, economy, culture, other
+  - Each category has JSDoc description
+- Created functions in src/api/gamma/markets.ts:
+  - getMarketsByCategory(category, options): Fetch markets filtered by category
+  - getAllMarketsByCategory(category, options): Fetch all markets in a category with pagination
+  - getCategoryCounts(options): Get counts of markets in each category
+  - buildCategoryQueryString(): Helper to build API query strings with category filter
+- Features:
+  - Accepts both MarketCategory enum values and string categories
+  - Uses API `tag` parameter for category filtering
+  - Client-side category filtering as safety check (case-insensitive)
+  - activeOnly option (default true) to filter active/closed markets
+  - Pagination support with limit/offset
+  - Sorting support with sortBy and order (asc/desc) options
+  - hasMore calculation for pagination continuation
+  - Safety limit in getAllMarketsByCategory to prevent infinite loops
+  - Parallel category fetching in getCategoryCounts for efficiency
+  - Error handling with graceful fallback in getCategoryCounts
+  - Custom GammaClient injection support
+- Updated src/api/gamma/index.ts exports:
+  - Functions: getMarketsByCategory, getAllMarketsByCategory, getCategoryCounts
+  - Enum: MarketCategory
+  - Types: GetMarketsByCategoryOptions, GetMarketsByCategoryResult
+- Added 28 comprehensive tests in tests/api/gamma/markets.test.ts:
+  - Basic functionality with enum and string categories
+  - Query string parameter verification (tag, active, closed)
+  - Response format handling (array and paginated)
+  - Category filtering (client-side safety filter)
+  - Case-insensitive category matching
+  - Active/closed market filtering
+  - Pagination options (limit, offset)
+  - hasMore calculation
+  - Sorting options (sortBy, order)
+  - Custom client injection
+  - MarketCategory enum values verification
+  - getAllMarketsByCategory pagination across pages
+  - Safety limit enforcement
+  - getCategoryCounts parallel fetching
+  - Error handling in getCategoryCounts
+- All tests pass (195 total, up from 167)
+- TypeScript typecheck passes
+- Next up: API-GAMMA-009

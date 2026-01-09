@@ -3,6 +3,54 @@
  */
 
 /**
+ * Market categories supported by Polymarket.
+ * These are the known categories used to classify prediction markets.
+ */
+export enum MarketCategory {
+  /** Political events, elections, and government decisions */
+  POLITICS = "politics",
+
+  /** Cryptocurrency prices, DeFi, and blockchain events */
+  CRYPTO = "crypto",
+
+  /** Sports events and competitions */
+  SPORTS = "sports",
+
+  /** Technology, products, and tech industry events */
+  TECH = "tech",
+
+  /** Business, economics, and financial markets */
+  BUSINESS = "business",
+
+  /** Science, research, and discoveries */
+  SCIENCE = "science",
+
+  /** Entertainment, movies, TV, and celebrities */
+  ENTERTAINMENT = "entertainment",
+
+  /** Weather and climate events */
+  WEATHER = "weather",
+
+  /** Geopolitical events and international relations */
+  GEOPOLITICS = "geopolitics",
+
+  /** Legal proceedings and court decisions */
+  LEGAL = "legal",
+
+  /** Healthcare, medicine, and public health */
+  HEALTH = "health",
+
+  /** Economic indicators and data releases */
+  ECONOMY = "economy",
+
+  /** Social trends and cultural events */
+  CULTURE = "culture",
+
+  /** Markets that don't fit other categories */
+  OTHER = "other",
+}
+
+/**
  * Market outcome with price/probability data
  */
 export interface GammaOutcome {

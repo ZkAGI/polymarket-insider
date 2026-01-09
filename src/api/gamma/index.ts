@@ -10,6 +10,9 @@ export { GammaClient, GammaApiException, gammaClient, createGammaClient } from "
 export {
   getActiveMarkets,
   getAllActiveMarkets,
+  getMarketsByCategory,
+  getAllMarketsByCategory,
+  getCategoryCounts,
   getMarketById,
   getMarketBySlug,
   getMarketOutcomes,
@@ -38,9 +41,13 @@ export type {
   PriceHistoryResult,
 } from "./types";
 
+export { MarketCategory } from "./types";
+
 export type {
   GetActiveMarketsOptions,
   GetActiveMarketsResult,
+  GetMarketsByCategoryOptions,
+  GetMarketsByCategoryResult,
   GetMarketByIdOptions,
   GetMarketBySlugOptions,
   GetMarketOutcomesOptions,

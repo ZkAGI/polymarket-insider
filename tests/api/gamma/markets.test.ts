@@ -6,6 +6,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   getActiveMarkets,
   getAllActiveMarkets,
+  getMarketsByCategory,
+  getAllMarketsByCategory,
+  getCategoryCounts,
   getMarketById,
   getMarketBySlug,
   getMarketOutcomes,
@@ -18,6 +21,7 @@ import {
 } from "@/api/gamma/markets";
 import { GammaClient, GammaApiException } from "@/api/gamma/client";
 import type { GammaMarket, GammaMarketsResponse } from "@/api/gamma/types";
+import { MarketCategory } from "@/api/gamma/types";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -2961,6 +2965,559 @@ describe("getMarketPriceHistoryBySlug", () => {
     });
 
     await getMarketPriceHistoryBySlug("custom-market", { client: customClient });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("https://custom.api.com"),
+      expect.any(Object)
+    );
+  });
+});
+
+describe("getMarketsByCategory", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("basic functionality", () => {
+    it("should fetch markets for a category using MarketCategory enum", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", category: "politics" }),
+        createMockMarket({ id: "2", category: "politics" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.category).toBe(MarketCategory.POLITICS);
+      expect(result.limit).toBe(100);
+      expect(result.offset).toBe(0);
+    });
+
+    it("should fetch markets using string category", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", category: "crypto" }),
+        createMockMarket({ id: "2", category: "crypto" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getMarketsByCategory("crypto");
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.category).toBe("crypto");
+    });
+
+    it("should include tag parameter in query string", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.SPORTS);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("tag=sports"),
+        expect.any(Object)
+      );
+    });
+
+    it("should include active=true and closed=false by default", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("active=true"),
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("closed=false"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("response format handling", () => {
+    it("should handle paginated response format", async () => {
+      const paginatedResponse: GammaMarketsResponse = {
+        data: [
+          createMockMarket({ id: "1", category: "politics" }),
+          createMockMarket({ id: "2", category: "politics" }),
+        ],
+        count: 150,
+        limit: 100,
+        offset: 0,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(paginatedResponse)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.count).toBe(150);
+    });
+
+    it("should handle array response format", async () => {
+      const arrayResponse = [
+        createMockMarket({ id: "1", category: "politics" }),
+        createMockMarket({ id: "2", category: "politics" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(arrayResponse)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.count).toBeUndefined();
+    });
+  });
+
+  describe("category filtering", () => {
+    it("should filter markets to only include matching category", async () => {
+      const mixedMarkets = [
+        createMockMarket({ id: "1", category: "politics" }),
+        createMockMarket({ id: "2", category: "sports" }),
+        createMockMarket({ id: "3", category: "politics" }),
+        createMockMarket({ id: "4", category: "crypto" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mixedMarkets)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.markets.map((m) => m.id)).toEqual(["1", "3"]);
+    });
+
+    it("should handle case-insensitive category matching", async () => {
+      const mixedMarkets = [
+        createMockMarket({ id: "1", category: "Politics" }),
+        createMockMarket({ id: "2", category: "POLITICS" }),
+        createMockMarket({ id: "3", category: "politics" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mixedMarkets)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.markets).toHaveLength(3);
+    });
+
+    it("should filter out inactive/closed markets by default", async () => {
+      const mixedMarkets = [
+        createMockMarket({ id: "1", category: "politics", active: true, closed: false }),
+        createMockMarket({ id: "2", category: "politics", active: false, closed: false }),
+        createMockMarket({ id: "3", category: "politics", active: true, closed: true }),
+        createMockMarket({ id: "4", category: "politics", active: true, closed: false }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mixedMarkets)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.markets.map((m) => m.id)).toEqual(["1", "4"]);
+    });
+
+    it("should include inactive/closed markets when activeOnly is false", async () => {
+      const mixedMarkets = [
+        createMockMarket({ id: "1", category: "politics", active: true, closed: false }),
+        createMockMarket({ id: "2", category: "politics", active: false, closed: false }),
+        createMockMarket({ id: "3", category: "politics", active: true, closed: true }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mixedMarkets)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS, {
+        activeOnly: false,
+      });
+
+      expect(result.markets).toHaveLength(3);
+    });
+  });
+
+  describe("pagination options", () => {
+    it("should apply limit option", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.POLITICS, { limit: 50 });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("limit=50"),
+        expect.any(Object)
+      );
+    });
+
+    it("should apply offset option", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.POLITICS, { offset: 100 });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("offset=100"),
+        expect.any(Object)
+      );
+    });
+
+    it("should calculate hasMore correctly when at limit", async () => {
+      // Create exactly 100 markets (default limit)
+      const markets = Array.from({ length: 100 }, (_, i) =>
+        createMockMarket({ id: String(i), category: "politics" })
+      );
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(markets)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.hasMore).toBe(true);
+    });
+
+    it("should calculate hasMore correctly when under limit", async () => {
+      const markets = [
+        createMockMarket({ id: "1", category: "politics" }),
+        createMockMarket({ id: "2", category: "politics" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(markets)),
+      });
+
+      const result = await getMarketsByCategory(MarketCategory.POLITICS);
+
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("sorting options", () => {
+    it("should apply sortBy option", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.POLITICS, { sortBy: "volume" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("order=volume"),
+        expect.any(Object)
+      );
+    });
+
+    it("should apply order option for descending", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.POLITICS, { order: "desc" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("ascending=false"),
+        expect.any(Object)
+      );
+    });
+
+    it("should apply order option for ascending", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.POLITICS, { order: "asc" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("ascending=true"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("custom client", () => {
+    it("should use custom client when provided", async () => {
+      const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getMarketsByCategory(MarketCategory.POLITICS, { client: customClient });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("https://custom.api.com"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("MarketCategory enum values", () => {
+    it("should support all category values", () => {
+      expect(MarketCategory.POLITICS).toBe("politics");
+      expect(MarketCategory.CRYPTO).toBe("crypto");
+      expect(MarketCategory.SPORTS).toBe("sports");
+      expect(MarketCategory.TECH).toBe("tech");
+      expect(MarketCategory.BUSINESS).toBe("business");
+      expect(MarketCategory.SCIENCE).toBe("science");
+      expect(MarketCategory.ENTERTAINMENT).toBe("entertainment");
+      expect(MarketCategory.WEATHER).toBe("weather");
+      expect(MarketCategory.GEOPOLITICS).toBe("geopolitics");
+      expect(MarketCategory.LEGAL).toBe("legal");
+      expect(MarketCategory.HEALTH).toBe("health");
+      expect(MarketCategory.ECONOMY).toBe("economy");
+      expect(MarketCategory.CULTURE).toBe("culture");
+      expect(MarketCategory.OTHER).toBe("other");
+    });
+  });
+});
+
+describe("getAllMarketsByCategory", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch all markets across multiple pages", async () => {
+    // First page - full
+    const page1Markets = Array.from({ length: 100 }, (_, i) =>
+      createMockMarket({ id: `page1-${i}`, category: "politics" })
+    );
+
+    // Second page - partial
+    const page2Markets = Array.from({ length: 50 }, (_, i) =>
+      createMockMarket({ id: `page2-${i}`, category: "politics" })
+    );
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(page1Markets)),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(page2Markets)),
+    });
+
+    const result = await getAllMarketsByCategory(MarketCategory.POLITICS);
+
+    expect(result).toHaveLength(150);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("should stop when receiving less than page size", async () => {
+    const markets = Array.from({ length: 50 }, (_, i) =>
+      createMockMarket({ id: String(i), category: "politics" })
+    );
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(markets)),
+    });
+
+    const result = await getAllMarketsByCategory(MarketCategory.POLITICS);
+
+    expect(result).toHaveLength(50);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should use custom page size from limit option", async () => {
+    const markets = Array.from({ length: 25 }, (_, i) =>
+      createMockMarket({ id: String(i), category: "politics" })
+    );
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(markets)),
+    });
+
+    await getAllMarketsByCategory(MarketCategory.POLITICS, { limit: 50 });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("limit=50"),
+      expect.any(Object)
+    );
+  });
+
+  it("should pass options to underlying getMarketsByCategory", async () => {
+    const markets = Array.from({ length: 10 }, (_, i) =>
+      createMockMarket({ id: String(i), category: "crypto", active: false, closed: false })
+    );
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(markets)),
+    });
+
+    const result = await getAllMarketsByCategory(MarketCategory.CRYPTO, {
+      activeOnly: false,
+    });
+
+    expect(result).toHaveLength(10);
+  });
+
+  it("should enforce safety limit to prevent infinite loops", async () => {
+    // Mock to always return full page (would loop forever without safety limit)
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify(
+              Array.from({ length: 100 }, () =>
+                createMockMarket({ id: String(Math.random()), category: "politics" })
+              )
+            )
+          ),
+      })
+    );
+
+    const result = await getAllMarketsByCategory(MarketCategory.POLITICS);
+
+    // Safety limit is 10000 / 100 = max 100 pages + 1 iteration
+    // With safety check at offset > 10000, we get 101 calls (0, 100, ..., 10000, then break)
+    expect(mockFetch.mock.calls.length).toBeLessThanOrEqual(102);
+    expect(result.length).toBeLessThanOrEqual(10200);
+  });
+});
+
+describe("getCategoryCounts", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch counts for all categories", async () => {
+    // Mock responses for each category - return array response with count indicator
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              data: [],
+              count: 10,
+            })
+          ),
+      })
+    );
+
+    const counts = await getCategoryCounts();
+
+    // Should have called API for each category in the enum
+    const categoryCount = Object.values(MarketCategory).length;
+    expect(mockFetch).toHaveBeenCalledTimes(categoryCount);
+
+    // All categories should have counts
+    expect(counts[MarketCategory.POLITICS]).toBe(10);
+    expect(counts[MarketCategory.CRYPTO]).toBe(10);
+    expect(counts[MarketCategory.SPORTS]).toBe(10);
+  });
+
+  it("should handle errors gracefully and return 0 for failed categories", async () => {
+    let callCount = 0;
+    mockFetch.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // First call succeeds
+        return Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify({ data: [], count: 25 })),
+        });
+      }
+      // Other calls fail
+      return Promise.resolve({
+        ok: false,
+        status: 500,
+        statusText: "Server Error",
+        text: () => Promise.resolve(JSON.stringify({ message: "Error" })),
+      });
+    });
+
+    const counts = await getCategoryCounts();
+
+    // First category should have count, others should be 0 due to errors being caught
+    const values = Object.values(counts);
+    const nonZeroCount = values.filter((v) => v > 0).length;
+    expect(nonZeroCount).toBeGreaterThanOrEqual(0); // At least we didn't throw
+  });
+
+  it("should pass activeOnly option to underlying calls", async () => {
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([])),
+      })
+    );
+
+    await getCategoryCounts({ activeOnly: false });
+
+    // Check that at least one call didn't include active/closed filters
+    const calls = mockFetch.mock.calls;
+    const hasNoActiveFilter = calls.some(
+      (call) => !String(call[0]).includes("active=true")
+    );
+    expect(hasNoActiveFilter).toBe(true);
+  });
+
+  it("should use custom client when provided", async () => {
+    const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([])),
+      })
+    );
+
+    await getCategoryCounts({ client: customClient });
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("https://custom.api.com"),

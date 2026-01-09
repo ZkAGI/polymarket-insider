@@ -342,7 +342,8 @@
       "priority": 18,
       "name": "Fetch markets by category",
       "description": "Filter and retrieve markets by category (politics, sports, crypto, etc.)",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T16:55:00Z",
       "steps": [
         "Create getMarketsByCategory function",
         "Define MarketCategory enum",
