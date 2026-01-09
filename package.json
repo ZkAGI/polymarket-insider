@@ -37,11 +37,13 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.7.4",
+    "prisma": "^6.19.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0",
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.1",
     "dotenv": "^17.2.3"
   }
 }

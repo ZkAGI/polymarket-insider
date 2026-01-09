@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Market data from Polymarket
+model Market {
+  id            String    @id
+  slug          String    @unique
+  question      String
+  description   String?
+  category      String?
+  endDate       DateTime?
+  active        Boolean   @default(true)
+  volume        Float     @default(0)
+  liquidity     Float     @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  outcomes      Outcome[]
+  trades        Trade[]
+  priceHistory  PriceHistory[]
+
+  @@index([category])
+  @@index([active])
+  @@index([endDate])
+}
+
+// Market outcomes (Yes/No or multiple choice)
+model Outcome {
+  id          String   @id @default(cuid())
+  marketId    String
+  name        String
+  probability Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  market       Market         @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  trades       Trade[]
+  priceHistory PriceHistory[]
+
+  @@unique([marketId, name])
+  @@index([marketId])
+}
+
+// Tracked wallet addresses
+model Wallet {
+  id          String   @id @default(cuid())
+  address     String   @unique
+  label       String?
+  isWhale     Boolean  @default(false)
+  isInsider   Boolean  @default(false)
+  totalVolume Float    @default(0)
+  tradeCount  Int      @default(0)
+  winRate     Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  trades Trade[]
+
+  @@index([isWhale])
+  @@index([isInsider])
+  @@index([totalVolume])
+}
+
+// Individual trades
+model Trade {
+  id           String   @id @default(cuid())
+  marketId     String
+  outcomeId    String
+  walletId     String
+  side         String   // "buy" or "sell"
+  amount       Float
+  price        Float
+  usdValue     Float
+  timestamp    DateTime
+  txHash       String?  @unique
+  isWhale      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  market  Market  @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  outcome Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  wallet  Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([marketId])
+  @@index([walletId])
+  @@index([timestamp])
+  @@index([isWhale])
+  @@index([usdValue])
+}
+
+// Price history for charting
+model PriceHistory {
+  id        String   @id @default(cuid())
+  marketId  String
+  outcomeId String
+  price     Float
+  volume    Float    @default(0)
+  timestamp DateTime
+
+  market  Market  @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  outcome Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+
+  @@unique([marketId, outcomeId, timestamp])
+  @@index([marketId, timestamp])
+  @@index([outcomeId, timestamp])
+}
+
+// Alerts and notifications
+model Alert {
+  id          String   @id @default(cuid())
+  type        String   // "whale_trade", "price_movement", "insider_activity"
+  marketId    String?
+  walletId    String?
+  message     String
+  data        Json?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([type])
+  @@index([read])
+  @@index([createdAt])
+}

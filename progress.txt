@@ -57,8 +57,22 @@ COMPLETED: SETUP-007 - Set up testing framework
 - Created tests/index.test.ts with 7 sample tests
 - Verified: npm test runs successfully with all 7 tests passing
 
+COMPLETED: SETUP-008 - Set up database with Prisma
+- Installed prisma (dev) and @prisma/client
+- Created prisma/schema.prisma with PostgreSQL provider
+- Initial schema includes models:
+  - Market: Polymarket market data (id, slug, question, category, volume, etc.)
+  - Outcome: Market outcomes with probabilities
+  - Wallet: Tracked wallet addresses (whale/insider flags)
+  - Trade: Individual trades with USD values
+  - PriceHistory: Price data for charting
+  - Alert: Notification alerts
+- DATABASE_URL already configured in .env from SETUP-006
+- Verified: npx prisma validate passes
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
 - ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
 - Run `npm test` for single run, `npm run test:watch` for watch mode
-- Next up: SETUP-008 (Set up database with Prisma)
+- Run `npx prisma db push` to sync schema with database
+- Next up: SETUP-009 (Set up Next.js frontend)
