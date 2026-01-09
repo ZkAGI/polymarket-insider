@@ -88,3 +88,29 @@ export {
 } from "./rate-limiter";
 
 export type { RateLimiterConfig, RateLimiterStats } from "./rate-limiter";
+
+// Error handling utilities
+export {
+  ErrorHandler,
+  GammaErrorType,
+  ErrorSeverity,
+  classifyError,
+  calculateBackoffDelay,
+  shouldRetry,
+  createErrorContext,
+  logError,
+  createErrorHandler,
+  getSharedErrorHandler,
+  resetSharedErrorHandler,
+  setSharedErrorHandler,
+  withErrorHandling,
+  withErrorHandlingOrThrow,
+} from "./error-handler";
+
+export type {
+  ErrorHandlerConfig,
+  ErrorLogger,
+  ErrorContext,
+  ErrorHandlerResult,
+  WrapWithErrorHandlingOptions,
+} from "./error-handler";

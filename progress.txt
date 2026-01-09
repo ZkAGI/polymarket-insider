@@ -528,4 +528,56 @@ COMPLETED: API-GAMMA-011 - Gamma API rate limiter
   - RateLimiterError class properties
 - TypeScript typecheck passes (tsc --noEmit)
 - NOTE: Tests require Node.js 20+ to run (vitest uses modern regex features)
-- Next up: API-GAMMA-012
+
+COMPLETED: API-GAMMA-012 - Gamma API error handler
+- Created src/api/gamma/error-handler.ts with comprehensive error handling:
+  - ErrorHandler class with configurable retry logic
+  - GammaErrorType enum: NETWORK, TIMEOUT, SERVER, RATE_LIMIT, AUTH, CLIENT, PARSE, UNKNOWN
+  - ErrorSeverity enum: INFO, WARN, ERROR, CRITICAL
+  - classifyError(): Classify errors by type and severity (handles GammaApiException and standard errors)
+  - calculateBackoffDelay(): Exponential backoff with configurable jitter
+  - shouldRetry(): Determine if error should be retried based on type and attempt count
+  - createErrorContext(): Create detailed error context for logging and callbacks
+  - logError(): Log errors with appropriate severity levels
+- ErrorHandler class features:
+  - execute(): Execute async function with retry logic, returns ErrorHandlerResult
+  - executeOrThrow(): Execute and throw on failure (convenience method)
+  - wrap(): Wrap async function with error handling
+  - wrapOrThrow(): Wrap function that throws on failure
+  - Configurable: maxRetries (default: 3), baseDelay (default: 1000ms), maxDelay (default: 30000ms)
+  - Jitter support to prevent thundering herd
+  - Custom logger injection
+  - onError and onMaxRetriesExceeded callbacks
+- Retry conditions:
+  - Retryable by default: SERVER (5xx), RATE_LIMIT (429), NETWORK, TIMEOUT
+  - Non-retryable: AUTH (401/403), CLIENT (4xx), PARSE errors
+  - Configurable via retryableErrors option
+- Helper functions:
+  - createErrorHandler(): Factory for custom handlers
+  - getSharedErrorHandler(): Singleton for shared use
+  - resetSharedErrorHandler(), setSharedErrorHandler(): Manage shared instance
+  - withErrorHandling(): Convenience wrapper using shared handler
+  - withErrorHandlingOrThrow(): Convenience wrapper that throws on failure
+- Updated src/api/gamma/index.ts exports:
+  - Classes: ErrorHandler
+  - Enums: GammaErrorType, ErrorSeverity
+  - Functions: classifyError, calculateBackoffDelay, shouldRetry, createErrorContext, logError,
+               createErrorHandler, getSharedErrorHandler, resetSharedErrorHandler,
+               setSharedErrorHandler, withErrorHandling, withErrorHandlingOrThrow
+  - Types: ErrorHandlerConfig, ErrorLogger, ErrorContext, ErrorHandlerResult, WrapWithErrorHandlingOptions
+- Created tests/api/gamma/error-handler.test.ts with 50+ comprehensive tests covering:
+  - classifyError for GammaApiException (429, 401, 403, 500, 502, 503, 400, 404)
+  - classifyError for standard errors (timeout, network, parse, unknown)
+  - calculateBackoffDelay (exponential, jitter, max cap)
+  - shouldRetry (retryable errors, non-retryable, custom list)
+  - createErrorContext (all fields, options, willRetry logic)
+  - logError (severity levels, enableLogging flag)
+  - ErrorHandler constructor, execute, executeOrThrow, wrap, wrapOrThrow
+  - Retry behavior with fake timers
+  - onError and onMaxRetriesExceeded callbacks
+  - Shared error handler singleton
+  - withErrorHandling and withErrorHandlingOrThrow convenience functions
+  - Enum value verification
+- TypeScript typecheck passes (tsc --noEmit)
+- NOTE: Tests require Node.js 20+ to run (vitest uses modern regex features)
+- Next up: API-GAMMA-013
