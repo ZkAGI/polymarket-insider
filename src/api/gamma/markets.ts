@@ -5,7 +5,7 @@
  */
 
 import { GammaClient, gammaClient, GammaApiException } from "./client";
-import { GammaMarket, GammaMarketsResponse } from "./types";
+import { GammaMarket, GammaMarketsResponse, MarketOutcome, MarketOutcomesResult } from "./types";
 
 /**
  * Options for fetching active markets
@@ -293,56 +293,62 @@ export function parseSlugFromUrl(urlOrSlug: string): string | null {
 
   const trimmed = urlOrSlug.trim();
 
-  // Try to parse as URL first
-  try {
-    // Handle URLs that might not have a protocol
-    const urlToParse = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
-    const url = new URL(urlToParse);
+  // First, check if this looks like a URL (has protocol or domain-like pattern)
+  const looksLikeUrl =
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("www.") ||
+    trimmed.includes("polymarket.com");
 
-    // Check if it looks like a polymarket URL
-    const pathname = url.pathname;
+  if (looksLikeUrl) {
+    // Try to parse as URL
+    try {
+      const urlToParse = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+      const url = new URL(urlToParse);
+      const pathname = url.pathname;
 
-    // Look for /event/<slug> pattern
-    const eventMatch = pathname.match(/\/event\/([^/?#]+)/);
-    if (eventMatch?.[1]) {
-      return eventMatch[1];
-    }
-
-    // If the URL has a path but no /event/, take the last path segment
-    const pathSegments = pathname.split("/").filter(Boolean);
-    if (pathSegments.length > 0) {
-      return pathSegments[pathSegments.length - 1] ?? null;
-    }
-
-    // No valid path found
-    return null;
-  } catch {
-    // Not a valid URL, treat as raw slug
-
-    // Handle /event/slug format
-    const eventMatch = trimmed.match(/^\/?event\/([^/?#]+)/);
-    if (eventMatch?.[1]) {
-      return eventMatch[1];
-    }
-
-    // Handle slug with leading slash
-    if (trimmed.startsWith("/")) {
-      const withoutSlash = trimmed.slice(1);
-      // Don't allow slugs with more slashes (likely a path)
-      if (withoutSlash.includes("/")) {
-        return null;
+      // Look for /event/<slug> pattern
+      const eventMatch = pathname.match(/\/event\/([^/?#]+)/);
+      if (eventMatch?.[1]) {
+        return eventMatch[1];
       }
-      return withoutSlash || null;
-    }
 
-    // If it contains slashes but isn't a URL or /event/ pattern, it's invalid
-    if (trimmed.includes("/")) {
+      // If the URL has a path but no /event/, take the last path segment
+      const pathSegments = pathname.split("/").filter(Boolean);
+      if (pathSegments.length > 0) {
+        return pathSegments[pathSegments.length - 1] ?? null;
+      }
+
+      // No valid path found
+      return null;
+    } catch {
+      // URL parsing failed, fall through to slug handling
+    }
+  }
+
+  // Handle /event/slug format
+  const eventMatch = trimmed.match(/^\/?event\/([^/?#]+)/);
+  if (eventMatch?.[1]) {
+    return eventMatch[1];
+  }
+
+  // Handle slug with leading slash
+  if (trimmed.startsWith("/")) {
+    const withoutSlash = trimmed.slice(1);
+    // Don't allow slugs with more slashes (likely a path)
+    if (withoutSlash.includes("/")) {
       return null;
     }
-
-    // Treat as raw slug
-    return trimmed;
+    return withoutSlash || null;
   }
+
+  // If it contains slashes but isn't a URL or /event/ pattern, it's invalid
+  if (trimmed.includes("/")) {
+    return null;
+  }
+
+  // Treat as raw slug
+  return trimmed;
 }
 
 /**
@@ -419,4 +425,128 @@ export async function getMarketBySlug(
     }
     throw error;
   }
+}
+
+/**
+ * Options for fetching market outcomes
+ */
+export interface GetMarketOutcomesOptions {
+  /**
+   * Custom Gamma client to use instead of default singleton.
+   */
+  client?: GammaClient;
+}
+
+/**
+ * Convert a raw Gamma outcome to an enhanced MarketOutcome with probability
+ */
+function toMarketOutcome(outcome: GammaMarket["outcomes"][number]): MarketOutcome {
+  return {
+    id: outcome.id,
+    name: outcome.name,
+    price: outcome.price,
+    probability: outcome.price * 100,
+    clobTokenId: outcome.clobTokenId,
+  };
+}
+
+/**
+ * Get all possible outcomes and their current probabilities for a market.
+ *
+ * This function fetches a market by ID and extracts the outcome data,
+ * calculating probability percentages from the prices.
+ *
+ * @param marketId - The unique identifier of the market
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to market outcomes result, or null if market not found
+ *
+ * @example
+ * ```typescript
+ * // Fetch outcomes for a specific market
+ * const result = await getMarketOutcomes("0x1234...");
+ * if (result) {
+ *   console.log(`Market: ${result.question}`);
+ *   console.log(`Total probability: ${result.totalProbability.toFixed(2)}%`);
+ *
+ *   for (const outcome of result.outcomes) {
+ *     console.log(`${outcome.name}: ${outcome.probability.toFixed(2)}%`);
+ *   }
+ *
+ *   // Verify probabilities sum to ~100%
+ *   if (Math.abs(result.totalProbability - 100) > 1) {
+ *     console.warn("Probabilities don't sum to 100%!");
+ *   }
+ * }
+ * ```
+ */
+export async function getMarketOutcomes(
+  marketId: string,
+  options: GetMarketOutcomesOptions = {}
+): Promise<MarketOutcomesResult | null> {
+  // Fetch the market first
+  const market = await getMarketById(marketId, { client: options.client });
+
+  if (!market) {
+    return null;
+  }
+
+  // Convert raw outcomes to enhanced MarketOutcome objects
+  const outcomes = market.outcomes.map(toMarketOutcome);
+
+  // Calculate total probability (should be close to 100%)
+  const totalProbability = outcomes.reduce((sum, outcome) => sum + outcome.probability, 0);
+
+  return {
+    marketId: market.id,
+    question: market.question,
+    active: market.active,
+    closed: market.closed,
+    outcomes,
+    totalProbability,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Get outcomes for a market by its slug.
+ *
+ * Convenience function that combines slug lookup with outcome fetching.
+ *
+ * @param slug - The market slug or Polymarket URL
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to market outcomes result, or null if market not found
+ *
+ * @example
+ * ```typescript
+ * const result = await getMarketOutcomesBySlug("will-bitcoin-reach-100k");
+ * if (result) {
+ *   for (const outcome of result.outcomes) {
+ *     console.log(`${outcome.name}: ${outcome.probability.toFixed(2)}%`);
+ *   }
+ * }
+ * ```
+ */
+export async function getMarketOutcomesBySlug(
+  slug: string,
+  options: GetMarketOutcomesOptions = {}
+): Promise<MarketOutcomesResult | null> {
+  const market = await getMarketBySlug(slug, { client: options.client });
+
+  if (!market) {
+    return null;
+  }
+
+  // Re-use the same logic as getMarketOutcomes
+  const outcomes = market.outcomes.map(toMarketOutcome);
+  const totalProbability = outcomes.reduce((sum, outcome) => sum + outcome.probability, 0);
+
+  return {
+    marketId: market.id,
+    question: market.question,
+    active: market.active,
+    closed: market.closed,
+    outcomes,
+    totalProbability,
+    fetchedAt: new Date().toISOString(),
+  };
 }

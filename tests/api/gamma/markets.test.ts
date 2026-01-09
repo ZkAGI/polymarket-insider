@@ -8,6 +8,8 @@ import {
   getAllActiveMarkets,
   getMarketById,
   getMarketBySlug,
+  getMarketOutcomes,
+  getMarketOutcomesBySlug,
   parseSlugFromUrl,
 } from "@/api/gamma/markets";
 import { GammaClient, GammaApiException } from "@/api/gamma/client";
@@ -50,10 +52,7 @@ describe("getActiveMarkets", () => {
 
   describe("basic functionality", () => {
     it("should fetch active markets with default options", async () => {
-      const mockMarkets = [
-        createMockMarket({ id: "1" }),
-        createMockMarket({ id: "2" }),
-      ];
+      const mockMarkets = [createMockMarket({ id: "1" }), createMockMarket({ id: "2" })];
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -106,10 +105,7 @@ describe("getActiveMarkets", () => {
     });
 
     it("should handle array response format", async () => {
-      const arrayResponse = [
-        createMockMarket({ id: "1" }),
-        createMockMarket({ id: "2" }),
-      ];
+      const arrayResponse = [createMockMarket({ id: "1" }), createMockMarket({ id: "2" })];
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -312,10 +308,7 @@ describe("getAllActiveMarkets", () => {
     const result = await getAllActiveMarkets({ limit: 25 });
 
     expect(result).toHaveLength(35);
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("limit=25"),
-      expect.any(Object)
-    );
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("limit=25"), expect.any(Object));
   });
 
   it("should stop at safety limit", async () => {
@@ -847,5 +840,312 @@ describe("getMarketBySlug", () => {
 
       expect(result).toEqual(mockMarket);
     });
+  });
+});
+
+describe("getMarketOutcomes", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("successful requests", () => {
+    it("should fetch market outcomes and calculate probabilities", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        question: "Will Bitcoin reach $100k?",
+        outcomes: [
+          { id: "outcome-1", name: "Yes", price: 0.6 },
+          { id: "outcome-2", name: "No", price: 0.4 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketOutcomes("market-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.marketId).toBe("market-1");
+      expect(result?.question).toBe("Will Bitcoin reach $100k?");
+      expect(result?.outcomes).toHaveLength(2);
+      expect(result?.outcomes[0]).toEqual({
+        id: "outcome-1",
+        name: "Yes",
+        price: 0.6,
+        probability: 60,
+        clobTokenId: undefined,
+      });
+      expect(result?.outcomes[1]).toEqual({
+        id: "outcome-2",
+        name: "No",
+        price: 0.4,
+        probability: 40,
+        clobTokenId: undefined,
+      });
+    });
+
+    it("should calculate total probability correctly", async () => {
+      const mockMarket = createMockMarket({
+        outcomes: [
+          { id: "1", name: "Yes", price: 0.55 },
+          { id: "2", name: "No", price: 0.45 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketOutcomes("market-1");
+
+      expect(result?.totalProbability).toBe(100);
+    });
+
+    it("should handle outcomes with clobTokenId", async () => {
+      const mockMarket = createMockMarket({
+        outcomes: [
+          { id: "1", name: "Yes", price: 0.7, clobTokenId: "token-1" },
+          { id: "2", name: "No", price: 0.3, clobTokenId: "token-2" },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketOutcomes("market-1");
+
+      expect(result?.outcomes[0]?.clobTokenId).toBe("token-1");
+      expect(result?.outcomes[1]?.clobTokenId).toBe("token-2");
+    });
+
+    it("should include market status (active/closed)", async () => {
+      const mockMarket = createMockMarket({
+        active: true,
+        closed: false,
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketOutcomes("market-1");
+
+      expect(result?.active).toBe(true);
+      expect(result?.closed).toBe(false);
+    });
+
+    it("should include fetchedAt timestamp", async () => {
+      const mockMarket = createMockMarket();
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const beforeFetch = new Date().toISOString();
+      const result = await getMarketOutcomes("market-1");
+      const afterFetch = new Date().toISOString();
+
+      expect(result?.fetchedAt).toBeDefined();
+      expect(result!.fetchedAt >= beforeFetch).toBe(true);
+      expect(result!.fetchedAt <= afterFetch).toBe(true);
+    });
+
+    it("should handle multi-outcome markets", async () => {
+      const mockMarket = createMockMarket({
+        question: "Who will win the election?",
+        outcomes: [
+          { id: "1", name: "Candidate A", price: 0.4 },
+          { id: "2", name: "Candidate B", price: 0.35 },
+          { id: "3", name: "Candidate C", price: 0.2 },
+          { id: "4", name: "Other", price: 0.05 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketOutcomes("market-1");
+
+      expect(result?.outcomes).toHaveLength(4);
+      expect(result?.totalProbability).toBe(100);
+      expect(result?.outcomes[0]?.probability).toBe(40);
+      expect(result?.outcomes[1]?.probability).toBe(35);
+      expect(result?.outcomes[2]?.probability).toBe(20);
+      expect(result?.outcomes[3]?.probability).toBe(5);
+    });
+
+    it("should handle probabilities that don't sum to 100%", async () => {
+      const mockMarket = createMockMarket({
+        outcomes: [
+          { id: "1", name: "Yes", price: 0.51 },
+          { id: "2", name: "No", price: 0.48 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketOutcomes("market-1");
+
+      expect(result?.totalProbability).toBe(99); // 51 + 48 = 99
+    });
+
+    it("should use custom client when provided", async () => {
+      const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+      const mockMarket = createMockMarket();
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      await getMarketOutcomes("market-1", { client: customClient });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("https://custom.api.com"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("not found handling", () => {
+    it("should return null for non-existent market", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketOutcomes("non-existent");
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null for empty market ID", async () => {
+      const result = await getMarketOutcomes("");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("error handling", () => {
+    it("should throw for server errors (500)", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve(JSON.stringify({ message: "Server error" })),
+      });
+
+      await expect(getMarketOutcomes("market-1")).rejects.toThrow(GammaApiException);
+    });
+  });
+});
+
+describe("getMarketOutcomesBySlug", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch market outcomes by slug", async () => {
+    const mockMarket = createMockMarket({
+      id: "market-1",
+      slug: "bitcoin-100k",
+      question: "Will Bitcoin reach $100k?",
+      outcomes: [
+        { id: "1", name: "Yes", price: 0.65 },
+        { id: "2", name: "No", price: 0.35 },
+      ],
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    const result = await getMarketOutcomesBySlug("bitcoin-100k");
+
+    expect(result).not.toBeNull();
+    expect(result?.marketId).toBe("market-1");
+    expect(result?.outcomes).toHaveLength(2);
+    expect(result?.outcomes[0]?.probability).toBe(65);
+    expect(result?.outcomes[1]?.probability).toBe(35);
+    expect(result?.totalProbability).toBe(100);
+  });
+
+  it("should fetch outcomes from Polymarket URL", async () => {
+    const mockMarket = createMockMarket({
+      slug: "election-winner",
+      outcomes: [
+        { id: "1", name: "Yes", price: 0.5 },
+        { id: "2", name: "No", price: 0.5 },
+      ],
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    const result = await getMarketOutcomesBySlug("https://polymarket.com/event/election-winner");
+
+    expect(result).not.toBeNull();
+    expect(result?.totalProbability).toBe(100);
+  });
+
+  it("should return null for non-existent slug", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve("[]"),
+    });
+
+    const result = await getMarketOutcomesBySlug("non-existent-market");
+
+    expect(result).toBeNull();
+  });
+
+  it("should return null for invalid slug", async () => {
+    const result = await getMarketOutcomesBySlug("");
+
+    expect(result).toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("should use custom client when provided", async () => {
+    const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+    const mockMarket = createMockMarket({ slug: "custom-market" });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    await getMarketOutcomesBySlug("custom-market", { client: customClient });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("https://custom.api.com"),
+      expect.any(Object)
+    );
   });
 });

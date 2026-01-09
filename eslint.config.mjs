@@ -29,6 +29,7 @@ export default tseslint.config(
       "dist/",
       ".next/",
       "coverage/",
+      "scripts/",
       "eslint.config.mjs",
       "postcss.config.js",
     ],

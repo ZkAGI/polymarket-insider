@@ -5,11 +5,7 @@
  * Uses native fetch with typed responses and error handling.
  */
 
-import {
-  GammaClientConfig,
-  GammaRequestOptions,
-  GammaApiError,
-} from "./types";
+import { GammaClientConfig, GammaRequestOptions, GammaApiError } from "./types";
 
 /**
  * Default configuration for the Gamma API client
@@ -119,16 +115,8 @@ export class GammaClient {
    * @returns Typed response data
    * @throws GammaApiException on API errors
    */
-  public async request<T>(
-    endpoint: string,
-    options: GammaRequestOptions = {}
-  ): Promise<T> {
-    const {
-      method = "GET",
-      headers: customHeaders,
-      body,
-      timeout = this.config.timeout,
-    } = options;
+  public async request<T>(endpoint: string, options: GammaRequestOptions = {}): Promise<T> {
+    const { method = "GET", headers: customHeaders, body, timeout = this.config.timeout } = options;
 
     const url = `${this.config.baseUrl}${endpoint}`;
     const headers = this.buildHeaders(customHeaders);

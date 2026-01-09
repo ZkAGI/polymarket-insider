@@ -5,18 +5,15 @@
  * the Polymarket Gamma API.
  */
 
-export {
-  GammaClient,
-  GammaApiException,
-  gammaClient,
-  createGammaClient,
-} from "./client";
+export { GammaClient, GammaApiException, gammaClient, createGammaClient } from "./client";
 
 export {
   getActiveMarkets,
   getAllActiveMarkets,
   getMarketById,
   getMarketBySlug,
+  getMarketOutcomes,
+  getMarketOutcomesBySlug,
   parseSlugFromUrl,
 } from "./markets";
 
@@ -27,6 +24,8 @@ export type {
   GammaApiError,
   GammaClientConfig,
   GammaRequestOptions,
+  MarketOutcome,
+  MarketOutcomesResult,
 } from "./types";
 
 export type {
@@ -34,4 +33,5 @@ export type {
   GetActiveMarketsResult,
   GetMarketByIdOptions,
   GetMarketBySlugOptions,
+  GetMarketOutcomesOptions,
 } from "./markets";

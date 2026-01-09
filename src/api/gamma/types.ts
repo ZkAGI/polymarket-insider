@@ -13,6 +13,52 @@ export interface GammaOutcome {
 }
 
 /**
+ * Enhanced outcome data with probability and additional calculated fields
+ */
+export interface MarketOutcome {
+  /** Unique identifier for this outcome */
+  id: string;
+
+  /** Human-readable name (e.g., "Yes", "No", "Donald Trump") */
+  name: string;
+
+  /** Current price/probability as a decimal between 0 and 1 */
+  price: number;
+
+  /** Current probability as a percentage (0-100) */
+  probability: number;
+
+  /** CLOB token ID for trading, if available */
+  clobTokenId?: string;
+}
+
+/**
+ * Result from fetching market outcomes
+ */
+export interface MarketOutcomesResult {
+  /** Market ID */
+  marketId: string;
+
+  /** Market question */
+  question: string;
+
+  /** Whether the market is active */
+  active: boolean;
+
+  /** Whether the market is closed */
+  closed: boolean;
+
+  /** All outcomes with probabilities */
+  outcomes: MarketOutcome[];
+
+  /** Sum of all outcome probabilities (should be close to 100) */
+  totalProbability: number;
+
+  /** Timestamp of when this data was fetched */
+  fetchedAt: string;
+}
+
+/**
  * Market data returned from Gamma API
  */
 export interface GammaMarket {

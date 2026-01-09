@@ -223,4 +223,40 @@ COMPLETED: API-GAMMA-004 - Fetch market by slug
 - Implementation follows established patterns from getMarketById
 - Created scripts/init.sh for easier development setup with nvm
 - NOTE: Tests require Node 20+ to run (project uses .nvmrc with v20.17.0)
-- Next up: API-GAMMA-005
+
+COMPLETED: API-GAMMA-005 - Fetch market outcomes
+- Created src/api/gamma/types.ts additions:
+  - MarketOutcome interface with probability field (0-100 scale)
+  - MarketOutcomesResult interface with all outcome data
+- Added functions to src/api/gamma/markets.ts:
+  - getMarketOutcomes(marketId) - fetch outcomes by market ID
+  - getMarketOutcomesBySlug(slug) - fetch outcomes by slug or URL
+  - toMarketOutcome() helper to convert raw outcomes
+- Features:
+  - Converts price (0-1) to probability (0-100%)
+  - Calculates totalProbability to verify sum ~100%
+  - Includes market status (active/closed)
+  - Adds fetchedAt timestamp
+  - Supports multi-outcome markets (not just Yes/No)
+  - Custom client injection support
+  - Returns null for non-existent markets
+  - Throws GammaApiException for server errors
+- Updated src/api/gamma/index.ts to export new functions and types
+- Added 16 comprehensive tests in tests/api/gamma/markets.test.ts:
+  - Probability calculation accuracy
+  - Total probability calculation
+  - clobTokenId handling
+  - Market status inclusion
+  - Timestamp verification
+  - Multi-outcome market support
+  - Non-100% probability handling
+  - Custom client support
+  - Not found handling
+  - Error handling
+  - Slug-based lookups
+- Bug fixes in same session:
+  - Fixed parseSlugFromUrl to properly handle raw slugs
+  - Fixed test mock using mockResolvedValue vs mockResolvedValueOnce
+- All tests pass (103 total)
+- TypeScript typecheck passes
+- Next up: API-GAMMA-006
