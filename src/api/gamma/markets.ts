@@ -1396,9 +1396,7 @@ function findOutcome(
   if (byName) return byName;
 
   // Try partial name match as fallback
-  const byPartialName = market.outcomes.find((o) =>
-    o.name.toLowerCase().includes(lowerSelector)
-  );
+  const byPartialName = market.outcomes.find((o) => o.name.toLowerCase().includes(lowerSelector));
   if (byPartialName) return byPartialName;
 
   return null;
@@ -1666,4 +1664,207 @@ export async function getMarketPriceHistoryBySlug(
   }
 
   return getMarketPriceHistory(market.id, options);
+}
+
+/**
+ * Sort criteria for trending markets
+ */
+export type TrendingSortBy = "volume" | "volume24hr" | "liquidity" | "createdAt" | "updatedAt";
+
+/**
+ * Options for fetching trending markets
+ */
+export interface GetTrendingMarketsOptions {
+  /**
+   * Maximum number of trending markets to return.
+   * Default: 10
+   */
+  limit?: number;
+
+  /**
+   * What field to sort by for determining "trending".
+   * - "volume": Total lifetime volume (default)
+   * - "volume24hr": Volume in last 24 hours (if available)
+   * - "liquidity": Current market liquidity
+   * - "createdAt": Most recently created
+   * - "updatedAt": Most recently updated (recent activity)
+   * Default: "volume"
+   */
+  sortBy?: TrendingSortBy;
+
+  /**
+   * Filter by category (optional).
+   */
+  category?: MarketCategory | string;
+
+  /**
+   * Whether to include only active (non-closed) markets.
+   * Default: true
+   */
+  activeOnly?: boolean;
+
+  /**
+   * Custom Gamma client to use instead of default singleton.
+   */
+  client?: GammaClient;
+}
+
+/**
+ * Result from fetching trending markets
+ */
+export interface GetTrendingMarketsResult {
+  /**
+   * Array of trending markets, sorted by the specified criteria
+   */
+  markets: GammaMarket[];
+
+  /**
+   * Number of markets returned
+   */
+  count: number;
+
+  /**
+   * Sort criteria that was used
+   */
+  sortBy: TrendingSortBy;
+
+  /**
+   * Category filter applied (if any)
+   */
+  category?: MarketCategory | string;
+
+  /**
+   * Timestamp of when this data was fetched
+   */
+  fetchedAt: string;
+}
+
+/**
+ * Get a list of markets with highest recent activity (trending markets).
+ *
+ * Trending markets are determined by sorting active markets by volume
+ * or other activity metrics. This function fetches markets and returns
+ * the top ones based on the specified sorting criteria.
+ *
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to trending markets result
+ *
+ * @example
+ * ```typescript
+ * // Fetch top 10 trending markets (sorted by volume)
+ * const result = await getTrendingMarkets();
+ * console.log(`Top ${result.count} trending markets:`);
+ * for (const market of result.markets) {
+ *   console.log(`- ${market.question} (Volume: $${market.volume.toFixed(2)})`);
+ * }
+ *
+ * // Fetch top 5 trending by liquidity
+ * const byLiquidity = await getTrendingMarkets({
+ *   limit: 5,
+ *   sortBy: "liquidity",
+ * });
+ *
+ * // Fetch top 10 trending in politics category
+ * const politicsTrending = await getTrendingMarkets({
+ *   limit: 10,
+ *   category: MarketCategory.POLITICS,
+ * });
+ *
+ * // Fetch recently created markets
+ * const newMarkets = await getTrendingMarkets({
+ *   limit: 20,
+ *   sortBy: "createdAt",
+ * });
+ * ```
+ */
+export async function getTrendingMarkets(
+  options: GetTrendingMarketsOptions = {}
+): Promise<GetTrendingMarketsResult> {
+  const limit = options.limit ?? 10;
+  const sortBy = options.sortBy ?? "volume";
+  const activeOnly = options.activeOnly ?? true;
+  const client = options.client ?? gammaClient;
+
+  // Build query parameters
+  const params = new URLSearchParams();
+
+  // Filter for active markets if requested
+  if (activeOnly) {
+    params.set("active", "true");
+    params.set("closed", "false");
+  }
+
+  // Map our sort criteria to the API's expected parameters
+  // The API uses "order" parameter for sort field
+  params.set("order", sortBy);
+  params.set("ascending", "false"); // Always descending for trending (highest first)
+
+  // Apply category filter if specified
+  if (options.category) {
+    params.set("tag", options.category.toString());
+  }
+
+  // Request more than needed to ensure we have enough after client-side filtering
+  const requestLimit = Math.min(limit * 2, 200);
+  params.set("limit", String(requestLimit));
+
+  const endpoint = `/markets?${params.toString()}`;
+
+  // Fetch markets from API
+  const response = await client.get<GammaMarket[] | GammaMarketsResponse>(endpoint);
+
+  // Handle both response formats
+  let markets: GammaMarket[];
+  if (Array.isArray(response)) {
+    markets = response;
+  } else {
+    markets = response.data;
+  }
+
+  // Client-side filtering and sorting for additional reliability
+  let filteredMarkets = markets;
+
+  // Filter by active status if required
+  if (activeOnly) {
+    filteredMarkets = filteredMarkets.filter((market) => market.active && !market.closed);
+  }
+
+  // Filter by category if specified (case-insensitive)
+  if (options.category) {
+    const categoryStr = options.category.toString().toLowerCase();
+    filteredMarkets = filteredMarkets.filter(
+      (market) => market.category?.toLowerCase() === categoryStr
+    );
+  }
+
+  // Sort by the specified criteria (client-side to ensure consistency)
+  filteredMarkets.sort((a, b) => {
+    switch (sortBy) {
+      case "volume":
+        return (b.volume ?? 0) - (a.volume ?? 0);
+      case "volume24hr":
+        // volumeNum might represent 24hr volume in some API versions
+        // Fall back to regular volume if not available
+        return (b.volumeNum ?? b.volume ?? 0) - (a.volumeNum ?? a.volume ?? 0);
+      case "liquidity":
+        return (b.liquidity ?? 0) - (a.liquidity ?? 0);
+      case "createdAt":
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case "updatedAt":
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      default:
+        return (b.volume ?? 0) - (a.volume ?? 0);
+    }
+  });
+
+  // Take only the requested limit
+  const trendingMarkets = filteredMarkets.slice(0, limit);
+
+  return {
+    markets: trendingMarkets,
+    count: trendingMarkets.length,
+    sortBy,
+    category: options.category,
+    fetchedAt: new Date().toISOString(),
+  };
 }

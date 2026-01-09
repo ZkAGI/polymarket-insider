@@ -390,3 +390,43 @@ COMPLETED: API-GAMMA-008 - Fetch markets by category
 - All tests pass (195 total, up from 167)
 - TypeScript typecheck passes
 - Next up: API-GAMMA-009
+
+COMPLETED: API-GAMMA-009 - Fetch trending markets
+- Created getTrendingMarkets function in src/api/gamma/markets.ts
+- Added TrendingSortBy type for sort criteria: "volume", "volume24hr", "liquidity", "createdAt", "updatedAt"
+- Added GetTrendingMarketsOptions interface with:
+  - limit: Maximum number of trending markets to return (default: 10)
+  - sortBy: Field to sort by for determining "trending" (default: "volume")
+  - category: Optional category filter (MarketCategory enum or string)
+  - activeOnly: Whether to include only active markets (default: true)
+  - client: Custom GammaClient injection support
+- Added GetTrendingMarketsResult interface with:
+  - markets: Array of trending GammaMarket objects
+  - count: Number of markets returned
+  - sortBy: Sort criteria used
+  - category: Category filter applied (if any)
+  - fetchedAt: ISO timestamp
+- Implementation features:
+  - Queries API with sort parameters (order, ascending)
+  - Client-side sorting for consistency across different API behaviors
+  - Client-side filtering for activeOnly and category
+  - Handles both array and paginated API response formats
+  - Requests more than limit to account for client-side filtering
+  - volume24hr uses volumeNum field, falls back to volume if unavailable
+- Updated src/api/gamma/index.ts exports:
+  - Added getTrendingMarkets function export
+  - Added GetTrendingMarketsOptions, GetTrendingMarketsResult, TrendingSortBy type exports
+- Added 32 comprehensive tests in tests/api/gamma/markets.test.ts covering:
+  - Basic functionality (default options, sorting, query parameters)
+  - Limit parameter handling (custom limit, default 10, larger than available)
+  - sortBy parameter (volume, liquidity, createdAt, updatedAt, volume24hr)
+  - Category filtering (enum, string, case-insensitive, API tag parameter)
+  - activeOnly parameter (default filtering, include inactive)
+  - Custom client injection
+  - Error handling (500, 403, 429 errors throw GammaApiException)
+  - Combined options (limit + sortBy + category)
+  - Result structure verification
+- All tests pass (227 total, up from 195)
+- TypeScript typecheck passes
+- ESLint passes
+- Next up: API-GAMMA-010

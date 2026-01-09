@@ -17,6 +17,7 @@ import {
   getMarketVolumeHistoryBySlug,
   getMarketPriceHistory,
   getMarketPriceHistoryBySlug,
+  getTrendingMarkets,
   parseSlugFromUrl,
 } from "@/api/gamma/markets";
 import { GammaClient, GammaApiException } from "@/api/gamma/client";
@@ -1741,7 +1742,9 @@ describe("getMarketVolumeHistoryBySlug", () => {
       text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
     });
 
-    const result = await getMarketVolumeHistoryBySlug("https://polymarket.com/event/election-winner");
+    const result = await getMarketVolumeHistoryBySlug(
+      "https://polymarket.com/event/election-winner"
+    );
 
     expect(result).not.toBeNull();
     expect(result?.marketId).toBe("market-1");
@@ -2180,7 +2183,7 @@ describe("getMarketPriceHistory", () => {
         outcomes: [
           { id: "outcome-1", name: "Trump", price: 0.45 },
           { id: "outcome-2", name: "Biden", price: 0.35 },
-          { id: "outcome-3", name: "Other", price: 0.20 },
+          { id: "outcome-3", name: "Other", price: 0.2 },
         ],
       });
 
@@ -2865,9 +2868,7 @@ describe("getMarketPriceHistoryBySlug", () => {
       text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
     });
 
-    const result = await getMarketPriceHistoryBySlug(
-      "https://polymarket.com/event/bitcoin-100k"
-    );
+    const result = await getMarketPriceHistoryBySlug("https://polymarket.com/event/bitcoin-100k");
 
     expect(result).not.toBeNull();
   });
@@ -3377,10 +3378,7 @@ describe("getAllMarketsByCategory", () => {
 
     await getAllMarketsByCategory(MarketCategory.POLITICS, { limit: 50 });
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("limit=50"),
-      expect.any(Object)
-    );
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("limit=50"), expect.any(Object));
   });
 
   it("should pass options to underlying getMarketsByCategory", async () => {
@@ -3501,9 +3499,7 @@ describe("getCategoryCounts", () => {
 
     // Check that at least one call didn't include active/closed filters
     const calls = mockFetch.mock.calls;
-    const hasNoActiveFilter = calls.some(
-      (call) => !String(call[0]).includes("active=true")
-    );
+    const hasNoActiveFilter = calls.some((call) => !String(call[0]).includes("active=true"));
     expect(hasNoActiveFilter).toBe(true);
   });
 
@@ -3523,5 +3519,582 @@ describe("getCategoryCounts", () => {
       expect.stringContaining("https://custom.api.com"),
       expect.any(Object)
     );
+  });
+});
+
+describe("getTrendingMarkets", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("basic functionality", () => {
+    it("should fetch trending markets with default options", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", volume: 50000 }),
+        createMockMarket({ id: "2", volume: 100000 }),
+        createMockMarket({ id: "3", volume: 75000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets();
+
+      expect(result.markets).toHaveLength(3);
+      expect(result.count).toBe(3);
+      expect(result.sortBy).toBe("volume");
+      expect(result.fetchedAt).toBeDefined();
+    });
+
+    it("should sort markets by volume (highest first) by default", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", volume: 50000 }),
+        createMockMarket({ id: "2", volume: 100000 }),
+        createMockMarket({ id: "3", volume: 75000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets();
+
+      // Should be sorted by volume descending
+      expect(result.markets[0]?.id).toBe("2"); // 100000
+      expect(result.markets[1]?.id).toBe("3"); // 75000
+      expect(result.markets[2]?.id).toBe("1"); // 50000
+    });
+
+    it("should include active=true and closed=false in query", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getTrendingMarkets();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("active=true"),
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("closed=false"),
+        expect.any(Object)
+      );
+    });
+
+    it("should include order=volume and ascending=false in query", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getTrendingMarkets();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("order=volume"),
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("ascending=false"),
+        expect.any(Object)
+      );
+    });
+
+    it("should handle paginated response format", async () => {
+      const paginatedResponse: GammaMarketsResponse = {
+        data: [
+          createMockMarket({ id: "1", volume: 100000 }),
+          createMockMarket({ id: "2", volume: 50000 }),
+        ],
+        count: 2,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(paginatedResponse)),
+      });
+
+      const result = await getTrendingMarkets();
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.count).toBe(2);
+    });
+
+    it("should handle array response format", async () => {
+      const arrayResponse = [
+        createMockMarket({ id: "1", volume: 100000 }),
+        createMockMarket({ id: "2", volume: 50000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(arrayResponse)),
+      });
+
+      const result = await getTrendingMarkets();
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.count).toBe(2);
+    });
+  });
+
+  describe("limit parameter", () => {
+    it("should respect limit option", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", volume: 100000 }),
+        createMockMarket({ id: "2", volume: 90000 }),
+        createMockMarket({ id: "3", volume: 80000 }),
+        createMockMarket({ id: "4", volume: 70000 }),
+        createMockMarket({ id: "5", volume: 60000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ limit: 3 });
+
+      expect(result.markets).toHaveLength(3);
+      expect(result.count).toBe(3);
+      // Top 3 by volume
+      expect(result.markets.map((m) => m.id)).toEqual(["1", "2", "3"]);
+    });
+
+    it("should default to limit of 10", async () => {
+      const mockMarkets = Array.from({ length: 15 }, (_, i) =>
+        createMockMarket({ id: String(i + 1), volume: 100000 - i * 1000 })
+      );
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets();
+
+      expect(result.markets).toHaveLength(10);
+    });
+
+    it("should handle limit larger than available markets", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", volume: 100000 }),
+        createMockMarket({ id: "2", volume: 50000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ limit: 100 });
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.count).toBe(2);
+    });
+  });
+
+  describe("sortBy parameter", () => {
+    it("should sort by volume when sortBy is volume", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", volume: 50000 }),
+        createMockMarket({ id: "2", volume: 100000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ sortBy: "volume" });
+
+      expect(result.markets[0]?.id).toBe("2");
+      expect(result.markets[1]?.id).toBe("1");
+      expect(result.sortBy).toBe("volume");
+    });
+
+    it("should sort by liquidity when sortBy is liquidity", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", liquidity: 5000 }),
+        createMockMarket({ id: "2", liquidity: 10000 }),
+        createMockMarket({ id: "3", liquidity: 7500 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ sortBy: "liquidity" });
+
+      expect(result.markets[0]?.id).toBe("2"); // 10000
+      expect(result.markets[1]?.id).toBe("3"); // 7500
+      expect(result.markets[2]?.id).toBe("1"); // 5000
+      expect(result.sortBy).toBe("liquidity");
+    });
+
+    it("should sort by createdAt when sortBy is createdAt", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", createdAt: "2024-01-01T00:00:00Z" }),
+        createMockMarket({ id: "2", createdAt: "2024-03-01T00:00:00Z" }),
+        createMockMarket({ id: "3", createdAt: "2024-02-01T00:00:00Z" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ sortBy: "createdAt" });
+
+      expect(result.markets[0]?.id).toBe("2"); // March (most recent)
+      expect(result.markets[1]?.id).toBe("3"); // February
+      expect(result.markets[2]?.id).toBe("1"); // January (oldest)
+      expect(result.sortBy).toBe("createdAt");
+    });
+
+    it("should sort by updatedAt when sortBy is updatedAt", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", updatedAt: "2024-01-15T00:00:00Z" }),
+        createMockMarket({ id: "2", updatedAt: "2024-01-20T00:00:00Z" }),
+        createMockMarket({ id: "3", updatedAt: "2024-01-10T00:00:00Z" }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ sortBy: "updatedAt" });
+
+      expect(result.markets[0]?.id).toBe("2"); // Jan 20 (most recent)
+      expect(result.markets[1]?.id).toBe("1"); // Jan 15
+      expect(result.markets[2]?.id).toBe("3"); // Jan 10
+      expect(result.sortBy).toBe("updatedAt");
+    });
+
+    it("should sort by volume24hr using volumeNum field", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", volume: 100000, volumeNum: 5000 }),
+        createMockMarket({ id: "2", volume: 50000, volumeNum: 10000 }),
+        createMockMarket({ id: "3", volume: 75000, volumeNum: 7500 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ sortBy: "volume24hr" });
+
+      // Should sort by volumeNum (24hr volume)
+      expect(result.markets[0]?.id).toBe("2"); // 10000
+      expect(result.markets[1]?.id).toBe("3"); // 7500
+      expect(result.markets[2]?.id).toBe("1"); // 5000
+      expect(result.sortBy).toBe("volume24hr");
+    });
+
+    it("should fall back to volume when volumeNum is not available for volume24hr", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", volume: 100000 }), // no volumeNum
+        createMockMarket({ id: "2", volume: 50000 }), // no volumeNum
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ sortBy: "volume24hr" });
+
+      // Falls back to regular volume
+      expect(result.markets[0]?.id).toBe("1"); // 100000
+      expect(result.markets[1]?.id).toBe("2"); // 50000
+    });
+
+    it("should pass sortBy to API in order parameter", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getTrendingMarkets({ sortBy: "liquidity" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("order=liquidity"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("category parameter", () => {
+    it("should filter by category when provided as enum", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", category: "politics", volume: 100000 }),
+        createMockMarket({ id: "2", category: "sports", volume: 90000 }),
+        createMockMarket({ id: "3", category: "politics", volume: 80000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ category: MarketCategory.POLITICS });
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.markets.every((m) => m.category === "politics")).toBe(true);
+      expect(result.category).toBe(MarketCategory.POLITICS);
+    });
+
+    it("should filter by category when provided as string", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", category: "crypto", volume: 100000 }),
+        createMockMarket({ id: "2", category: "politics", volume: 90000 }),
+        createMockMarket({ id: "3", category: "crypto", volume: 80000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ category: "crypto" });
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.markets.every((m) => m.category === "crypto")).toBe(true);
+      expect(result.category).toBe("crypto");
+    });
+
+    it("should include tag parameter in API request when category is specified", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getTrendingMarkets({ category: MarketCategory.SPORTS });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("tag=sports"),
+        expect.any(Object)
+      );
+    });
+
+    it("should filter case-insensitively", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", category: "Politics", volume: 100000 }),
+        createMockMarket({ id: "2", category: "POLITICS", volume: 90000 }),
+        createMockMarket({ id: "3", category: "politics", volume: 80000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ category: "politics" });
+
+      expect(result.markets).toHaveLength(3);
+    });
+
+    it("should not include category in result when not specified", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      const result = await getTrendingMarkets();
+
+      expect(result.category).toBeUndefined();
+    });
+  });
+
+  describe("activeOnly parameter", () => {
+    it("should filter out inactive markets by default", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", active: true, closed: false, volume: 100000 }),
+        createMockMarket({ id: "2", active: false, closed: false, volume: 90000 }),
+        createMockMarket({ id: "3", active: true, closed: true, volume: 80000 }),
+        createMockMarket({ id: "4", active: true, closed: false, volume: 70000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets();
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.markets.map((m) => m.id)).toEqual(["1", "4"]);
+    });
+
+    it("should include inactive markets when activeOnly is false", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", active: true, closed: false, volume: 100000 }),
+        createMockMarket({ id: "2", active: false, closed: false, volume: 90000 }),
+        createMockMarket({ id: "3", active: true, closed: true, volume: 80000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({ activeOnly: false });
+
+      expect(result.markets).toHaveLength(3);
+    });
+
+    it("should not include active/closed filters in query when activeOnly is false", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getTrendingMarkets({ activeOnly: false });
+
+      const url = mockFetch.mock.calls[0]?.[0] as string;
+      expect(url).not.toContain("active=true");
+      expect(url).not.toContain("closed=false");
+    });
+  });
+
+  describe("custom client", () => {
+    it("should use custom client when provided", async () => {
+      const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      await getTrendingMarkets({ client: customClient });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("https://custom.api.com"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("error handling", () => {
+    it("should throw GammaApiException for server errors", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve(JSON.stringify({ message: "Internal Server Error" })),
+      });
+
+      await expect(getTrendingMarkets()).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw GammaApiException for 403 forbidden", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve(JSON.stringify({ message: "Forbidden" })),
+      });
+
+      await expect(getTrendingMarkets()).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw GammaApiException for 429 rate limited", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        text: () => Promise.resolve(JSON.stringify({ message: "Rate limited" })),
+      });
+
+      await expect(getTrendingMarkets()).rejects.toThrow(GammaApiException);
+    });
+  });
+
+  describe("combined options", () => {
+    it("should apply limit, sortBy, and category together", async () => {
+      const mockMarkets = [
+        createMockMarket({ id: "1", category: "politics", liquidity: 10000 }),
+        createMockMarket({ id: "2", category: "politics", liquidity: 8000 }),
+        createMockMarket({ id: "3", category: "politics", liquidity: 6000 }),
+        createMockMarket({ id: "4", category: "sports", liquidity: 15000 }),
+        createMockMarket({ id: "5", category: "politics", liquidity: 4000 }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarkets)),
+      });
+
+      const result = await getTrendingMarkets({
+        limit: 2,
+        sortBy: "liquidity",
+        category: MarketCategory.POLITICS,
+      });
+
+      expect(result.markets).toHaveLength(2);
+      expect(result.sortBy).toBe("liquidity");
+      expect(result.category).toBe(MarketCategory.POLITICS);
+      // Top 2 politics markets by liquidity
+      expect(result.markets[0]?.id).toBe("1"); // 10000
+      expect(result.markets[1]?.id).toBe("2"); // 8000
+    });
+
+    it("should handle empty results with all options", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      const result = await getTrendingMarkets({
+        limit: 10,
+        sortBy: "volume",
+        category: MarketCategory.POLITICS,
+      });
+
+      expect(result.markets).toHaveLength(0);
+      expect(result.count).toBe(0);
+      expect(result.sortBy).toBe("volume");
+      expect(result.category).toBe(MarketCategory.POLITICS);
+    });
+  });
+
+  describe("result structure", () => {
+    it("should return correct result structure", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify([createMockMarket({ volume: 100000 })])),
+      });
+
+      const result = await getTrendingMarkets();
+
+      expect(result).toHaveProperty("markets");
+      expect(result).toHaveProperty("count");
+      expect(result).toHaveProperty("sortBy");
+      expect(result).toHaveProperty("fetchedAt");
+      expect(Array.isArray(result.markets)).toBe(true);
+      expect(typeof result.count).toBe("number");
+      expect(typeof result.sortBy).toBe("string");
+      expect(typeof result.fetchedAt).toBe("string");
+    });
+
+    it("should include fetchedAt as valid ISO timestamp", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve("[]"),
+      });
+
+      const result = await getTrendingMarkets();
+
+      const timestamp = new Date(result.fetchedAt);
+      expect(timestamp.toISOString()).toBe(result.fetchedAt);
+    });
   });
 });

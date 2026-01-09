@@ -362,7 +362,8 @@
       "priority": 19,
       "name": "Fetch trending markets",
       "description": "Get list of markets with highest recent activity",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T22:42:00Z",
       "steps": [
         "Create getTrendingMarkets function",
         "Accept limit parameter",

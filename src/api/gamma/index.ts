@@ -21,6 +21,7 @@ export {
   getMarketVolumeHistoryBySlug,
   getMarketPriceHistory,
   getMarketPriceHistoryBySlug,
+  getTrendingMarkets,
   parseSlugFromUrl,
 } from "./markets";
 
@@ -53,4 +54,7 @@ export type {
   GetMarketOutcomesOptions,
   GetMarketVolumeHistoryOptions,
   GetMarketPriceHistoryOptions,
+  GetTrendingMarketsOptions,
+  GetTrendingMarketsResult,
+  TrendingSortBy,
 } from "./markets";
