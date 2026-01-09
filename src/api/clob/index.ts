@@ -20,6 +20,21 @@ export {
 
 export type { GetOrderBookOptions } from "./orderbook";
 
+export {
+  getRecentTrades,
+  getRecentTradesForTokens,
+  calculateTotalVolume,
+  calculateVWAP,
+  getPriceRange,
+  getTradeCounts,
+  getVolumesBySide,
+  filterTradesByTimeRange,
+  filterTradesByMinSize,
+  getUniqueWallets,
+} from "./trades";
+
+export type { GetRecentTradesOptions, GetRecentTradesResult } from "./trades";
+
 export type {
   ClobClientConfig,
   ClobRequestOptions,

@@ -501,7 +501,8 @@
       "priority": 26,
       "name": "Fetch recent trades",
       "description": "Get list of recently executed trades for a market",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T00:45:00Z",
       "steps": [
         "Create getRecentTrades function",
         "Define Trade interface",

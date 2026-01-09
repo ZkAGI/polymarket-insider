@@ -735,3 +735,45 @@ COMPLETED: API-CLOB-002 - Fetch order book for market
 - Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
 - NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
 - Next up: API-CLOB-003
+
+COMPLETED: API-CLOB-003 - Fetch recent trades
+- Created src/api/clob/trades.ts with comprehensive trade functions:
+  - getRecentTrades(tokenId, options): Fetch recent trades for a specific token/market
+  - getRecentTradesForTokens(tokenIds, options): Fetch trades for multiple tokens in parallel
+  - calculateTotalVolume(trades): Calculate total volume from trades array
+  - calculateVWAP(trades): Calculate volume-weighted average price
+  - getPriceRange(trades): Get min/max prices from trades
+  - getTradeCounts(trades): Count trades by side (buy/sell)
+  - getVolumesBySide(trades): Calculate volumes by side
+  - filterTradesByTimeRange(): Filter trades within a time range
+  - filterTradesByMinSize(): Filter trades above a minimum size
+  - getUniqueWallets(): Extract unique taker/maker wallet addresses
+- Features:
+  - Parses multiple API response formats (array, trades field, data field)
+  - Handles alternative field names (trade_id, amount, taker, maker, tx_hash, etc.)
+  - Parses trade direction from various formats (buy, sell, BUY, SELL, s, ask)
+  - Handles timestamps in ISO, Unix seconds, and Unix milliseconds formats
+  - Sorts trades by timestamp descending (most recent first)
+  - Configurable limit parameter (clamped between 1 and 1000)
+  - Returns null for 404 (market not found), throws on other errors
+  - URL encodes token ID for safe API requests
+  - Supports custom ClobClient injection for testing
+- Updated src/api/clob/index.ts to export all new functions and types
+- Created tests/api/clob/trades.test.ts with 40+ test cases covering:
+  - Basic trade fetching and parsing
+  - Timestamp sorting verification
+  - Multiple API response formats (array, trades, data)
+  - Alternative field name handling
+  - Unix timestamp parsing (seconds and milliseconds)
+  - Limit parameter handling (clamping, API query string)
+  - Invalid/empty token ID handling
+  - 404 and error handling
+  - URL encoding
+  - Trade direction parsing
+  - Match ID and bucket index handling
+  - Multiple token fetching in parallel
+  - All helper functions (volume, VWAP, price range, counts, filtering)
+  - Unique wallet extraction
+- Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
+- NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
+- Next up: API-CLOB-004
