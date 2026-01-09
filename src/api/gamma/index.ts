@@ -12,7 +12,7 @@ export {
   createGammaClient,
 } from "./client";
 
-export { getActiveMarkets, getAllActiveMarkets } from "./markets";
+export { getActiveMarkets, getAllActiveMarkets, getMarketById } from "./markets";
 
 export type {
   GammaOutcome,
@@ -23,4 +23,4 @@ export type {
   GammaRequestOptions,
 } from "./types";
 
-export type { GetActiveMarketsOptions, GetActiveMarketsResult } from "./markets";
+export type { GetActiveMarketsOptions, GetActiveMarketsResult, GetMarketByIdOptions } from "./markets";

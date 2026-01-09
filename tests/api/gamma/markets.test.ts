@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getActiveMarkets, getAllActiveMarkets } from "@/api/gamma/markets";
-import { GammaClient } from "@/api/gamma/client";
+import { getActiveMarkets, getAllActiveMarkets, getMarketById } from "@/api/gamma/markets";
+import { GammaClient, GammaApiException } from "@/api/gamma/client";
 import type { GammaMarket, GammaMarketsResponse } from "@/api/gamma/types";
 
 // Mock fetch globally
@@ -354,5 +354,157 @@ describe("getAllActiveMarkets", () => {
 
     expect(result).toHaveLength(0);
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("getMarketById", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("successful requests", () => {
+    it("should fetch market by ID", async () => {
+      const mockMarket = createMockMarket({ id: "market-123" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketById("market-123");
+
+      expect(result).toEqual(mockMarket);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/markets/market-123"),
+        expect.any(Object)
+      );
+    });
+
+    it("should URL encode market ID", async () => {
+      const mockMarket = createMockMarket({ id: "market/with/slashes" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      await getMarketById("market/with/slashes");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/markets/market%2Fwith%2Fslashes"),
+        expect.any(Object)
+      );
+    });
+
+    it("should return full market details", async () => {
+      const mockMarket = createMockMarket({
+        id: "detailed-market",
+        question: "Detailed market question?",
+        description: "Full market description with details",
+        category: "sports",
+        volume: 500000,
+        outcomes: [
+          { id: "yes", name: "Yes", price: 0.75 },
+          { id: "no", name: "No", price: 0.25 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketById("detailed-market");
+
+      expect(result?.question).toBe("Detailed market question?");
+      expect(result?.category).toBe("sports");
+      expect(result?.volume).toBe(500000);
+      expect(result?.outcomes).toHaveLength(2);
+    });
+
+    it("should use custom client when provided", async () => {
+      const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+      const mockMarket = createMockMarket({ id: "custom-market" });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      await getMarketById("custom-market", { client: customClient });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("https://custom.api.com/markets/custom-market"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("404 handling", () => {
+    it("should return null for non-existent market (404)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Market not found" })),
+      });
+
+      const result = await getMarketById("non-existent-market");
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null for empty market ID", async () => {
+      const result = await getMarketById("");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should return null for whitespace-only market ID", async () => {
+      const result = await getMarketById("   ");
+
+      expect(result).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("error handling", () => {
+    it("should throw for server errors (500)", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve(JSON.stringify({ message: "Server error" })),
+      });
+
+      await expect(getMarketById("some-market")).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw for forbidden errors (403)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve(JSON.stringify({ message: "Access denied" })),
+      });
+
+      await expect(getMarketById("forbidden-market")).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw for bad request errors (400)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        text: () => Promise.resolve(JSON.stringify({ message: "Invalid market ID" })),
+      });
+
+      await expect(getMarketById("invalid!market")).rejects.toThrow(GammaApiException);
+    });
   });
 });

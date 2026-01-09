@@ -4,7 +4,7 @@
  * Functions for fetching and managing market data from the Gamma API.
  */
 
-import { GammaClient, gammaClient } from "./client";
+import { GammaClient, gammaClient, GammaApiException } from "./client";
 import { GammaMarket, GammaMarketsResponse } from "./types";
 
 /**
@@ -210,4 +210,55 @@ export async function getAllActiveMarkets(
   }
 
   return allMarkets;
+}
+
+/**
+ * Options for fetching a single market by ID
+ */
+export interface GetMarketByIdOptions {
+  /**
+   * Custom Gamma client to use instead of default singleton.
+   */
+  client?: GammaClient;
+}
+
+/**
+ * Fetch a specific market by its unique ID.
+ *
+ * @param marketId - The unique identifier of the market to fetch
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to the market, or null if not found
+ *
+ * @example
+ * ```typescript
+ * // Fetch a specific market
+ * const market = await getMarketById("0x1234...");
+ * if (market) {
+ *   console.log(`Market: ${market.question}`);
+ * } else {
+ *   console.log("Market not found");
+ * }
+ * ```
+ */
+export async function getMarketById(
+  marketId: string,
+  options: GetMarketByIdOptions = {}
+): Promise<GammaMarket | null> {
+  if (!marketId || marketId.trim() === "") {
+    return null;
+  }
+
+  const client = options.client ?? gammaClient;
+  const endpoint = `/markets/${encodeURIComponent(marketId)}`;
+
+  try {
+    const market = await client.get<GammaMarket>(endpoint);
+    return market;
+  } catch (error) {
+    // Return null for 404 (not found), re-throw other errors
+    if (error instanceof GammaApiException && error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
 }

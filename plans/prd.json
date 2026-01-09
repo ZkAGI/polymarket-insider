@@ -244,7 +244,8 @@
       "priority": 13,
       "name": "Fetch market by ID",
       "description": "Retrieve detailed information for a specific market by its ID",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T15:35:00Z",
       "steps": [
         "Create getMarketById function",
         "Accept market ID as parameter",

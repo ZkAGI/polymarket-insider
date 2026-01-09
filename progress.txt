@@ -157,4 +157,29 @@ COMPLETED: API-GAMMA-002 - Fetch all active markets
   - hasMore calculation logic
   - getAllActiveMarkets pagination and safety limit
 - Verified: TypeScript types are correct
-- Next up: API-GAMMA-003
+
+COMPLETED: API-GAMMA-003 - Fetch market by ID
+- Added getMarketById() function to src/api/gamma/markets.ts
+- Accepts marketId string parameter
+- Returns GammaMarket or null if not found
+- Features:
+  - URL encodes market ID for safe API requests
+  - Returns null for empty/whitespace-only IDs (no API call made)
+  - Returns null for 404 responses (market not found)
+  - Re-throws other API errors (5xx, 403, 400, etc.)
+  - Supports custom GammaClient via options parameter
+- Created GetMarketByIdOptions interface for configuration
+- Updated src/api/gamma/index.ts to export new function and type
+- Added 10 test cases to tests/api/gamma/markets.test.ts:
+  - Successful fetch by ID
+  - URL encoding for special characters in IDs
+  - Full market details verification
+  - Custom client injection
+  - 404 handling (returns null)
+  - Empty ID handling (returns null, no API call)
+  - Whitespace-only ID handling (returns null, no API call)
+  - Server error handling (throws GammaApiException)
+  - Forbidden error handling (throws GammaApiException)
+  - Bad request error handling (throws GammaApiException)
+- Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
+- Next up: API-GAMMA-004
