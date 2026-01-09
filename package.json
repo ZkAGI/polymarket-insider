@@ -1,0 +1,30 @@
+{
+  "name": "polymarket-tracker",
+  "version": "1.0.0",
+  "description": "Polymarket Insider/Whale Tracker - Track and analyze large trades and insider activity on Polymarket prediction markets",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "polymarket",
+    "prediction-markets",
+    "whale-tracking",
+    "crypto",
+    "analytics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
