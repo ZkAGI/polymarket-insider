@@ -22,6 +22,16 @@ COMPLETED: SETUP-003 - Configure TypeScript
 - Created src/index.ts as test file
 - Verified: tsc --noEmit passes with no errors
 
+COMPLETED: SETUP-004 - Configure ESLint and Prettier
+- Installed eslint, prettier, typescript-eslint, and related plugins
+- Created eslint.config.mjs (flat config for ESLint 9.x)
+- Created .prettierrc with formatting preferences (semi, double quotes, 100 print width)
+- Created .prettierignore to exclude node_modules, dist, etc.
+- Updated lint scripts in package.json for ESLint 9.x compatibility
+- Verified: npm run lint passes with no errors
+- Verified: npm run format works correctly
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
-- Next up: SETUP-004 (Configure ESLint and Prettier)
+- ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
+- Next up: SETUP-005 (Set up project directory structure)

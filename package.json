@@ -9,8 +9,8 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit"
@@ -28,7 +28,15 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^25.0.3",
-    "typescript": "^5.9.3"
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
+    "@typescript-eslint/parser": "^8.52.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0"
   }
 }
