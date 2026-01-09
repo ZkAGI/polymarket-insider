@@ -132,4 +132,29 @@ NOTES:
 - Run `npm run dev` to start Next.js dev server
 - Tailwind CSS v4 uses @import "tailwindcss" and CSS-based config (@theme directive)
 - IMPORTANT: Ensure Node.js v20.17.0 is active before running npm commands
-- Next up: API-GAMMA-002
+
+COMPLETED: API-GAMMA-002 - Fetch all active markets
+- Created src/api/gamma/markets.ts with:
+  - getActiveMarkets() function for fetching paginated active markets
+  - getAllActiveMarkets() function for fetching all pages automatically
+  - GetActiveMarketsOptions interface for request configuration
+  - GetActiveMarketsResult interface for typed responses
+- Features:
+  - Automatic filtering for active=true, closed=false
+  - Pagination support with limit/offset
+  - Category filtering support
+  - Sort options (sortBy, order)
+  - Custom client injection for testing
+  - Handles both array and paginated response formats
+  - Safety limit in getAllActiveMarkets to prevent infinite loops
+- Updated src/api/gamma/index.ts to export new functions and types
+- Created tests/api/gamma/markets.test.ts with 18 test cases covering:
+  - Basic functionality with default options
+  - Query string building for filtering
+  - Paginated and array response format handling
+  - Inactive market filtering
+  - All options (limit, offset, category, sortBy, order, client)
+  - hasMore calculation logic
+  - getAllActiveMarkets pagination and safety limit
+- Verified: TypeScript types are correct
+- Next up: API-GAMMA-003

@@ -224,7 +224,8 @@
       "priority": 12,
       "name": "Fetch all active markets",
       "description": "Retrieve list of all currently active prediction markets",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T14:45:00Z",
       "steps": [
         "Create getActiveMarkets function",
         "Define Market type interface",
