@@ -93,6 +93,37 @@ COMPLETED: SETUP-010 - Configure Tailwind CSS
 - Verified: Styling works correctly in browser, classes rendered in HTML
 - Verified: typecheck, lint, and tests all pass
 
+COMPLETED: API-GAMMA-001 - Gamma API client initialization
+- Created src/api/gamma/ directory structure with modular architecture
+- Created src/api/gamma/types.ts with comprehensive type definitions:
+  - GammaOutcome: Market outcome with price/probability data
+  - GammaMarket: Full market data structure
+  - GammaMarketsResponse: Paginated response wrapper
+  - GammaApiError: Error response type
+  - GammaClientConfig: Client configuration options
+  - GammaRequestOptions: Request options type
+- Created src/api/gamma/client.ts with GammaClient class:
+  - Uses native fetch API (no axios dependency needed)
+  - Configurable base URL, API key, timeout, and retry count
+  - Default config: baseUrl="https://gamma-api.polymarket.com", timeout=30s, retries=3
+  - Automatic Authorization header when API key provided
+  - Exponential backoff retry logic for 5xx errors
+  - Does not retry on 4xx client errors
+  - Custom GammaApiException class for typed error handling
+  - get<T>() and post<T>() convenience methods
+  - Singleton gammaClient export for convenience
+  - createGammaClient() factory function for custom instances
+- Created src/api/gamma/index.ts exporting all types and classes
+- Created tests/api/gamma/client.test.ts with 15 test cases covering:
+  - Constructor and configuration
+  - Factory function and singleton
+  - GET and POST requests
+  - Authorization header handling
+  - Error handling and retry logic
+  - Empty response handling
+- Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
+- NOTE: Tests require Node 18+ to run (vitest uses modern regex features)
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
 - ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
@@ -100,4 +131,5 @@ NOTES:
 - Run `npx prisma db push` to sync schema with database
 - Run `npm run dev` to start Next.js dev server
 - Tailwind CSS v4 uses @import "tailwindcss" and CSS-based config (@theme directive)
-- Next up: SETUP-011
+- IMPORTANT: Ensure Node.js v20.17.0 is active before running npm commands
+- Next up: API-GAMMA-002

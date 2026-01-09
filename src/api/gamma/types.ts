@@ -1,0 +1,78 @@
+/**
+ * Type definitions for Polymarket Gamma API responses
+ */
+
+/**
+ * Market outcome with price/probability data
+ */
+export interface GammaOutcome {
+  id: string;
+  name: string;
+  price: number;
+  clobTokenId?: string;
+}
+
+/**
+ * Market data returned from Gamma API
+ */
+export interface GammaMarket {
+  id: string;
+  question: string;
+  slug: string;
+  description: string;
+  category: string;
+  active: boolean;
+  closed: boolean;
+  archived: boolean;
+  outcomes: GammaOutcome[];
+  volume: number;
+  volumeNum?: number;
+  liquidity?: number;
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  resolutionSource?: string;
+  resolvedBy?: string;
+  image?: string;
+  icon?: string;
+}
+
+/**
+ * Paginated response wrapper for markets list
+ */
+export interface GammaMarketsResponse {
+  data: GammaMarket[];
+  count?: number;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * API error response
+ */
+export interface GammaApiError {
+  message: string;
+  code?: string;
+  statusCode: number;
+}
+
+/**
+ * Client configuration options
+ */
+export interface GammaClientConfig {
+  baseUrl?: string;
+  apiKey?: string;
+  timeout?: number;
+  retries?: number;
+}
+
+/**
+ * Request options for API calls
+ */
+export interface GammaRequestOptions {
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  headers?: Record<string, string>;
+  body?: unknown;
+  timeout?: number;
+}
