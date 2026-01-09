@@ -47,7 +47,18 @@ COMPLETED: SETUP-006 - Configure environment variables
 - Verified: typecheck passes on config/env.ts
 - Verified: .env.example can be copied to .env successfully
 
+COMPLETED: SETUP-007 - Set up testing framework
+- Installed vitest and @vitest/coverage-v8 as dev dependencies
+- Created vitest.config.ts with:
+  - Node environment, globals enabled
+  - Test file patterns: tests/**/*.test.ts, tests/**/*.spec.ts
+  - Coverage with v8 provider
+  - Path aliases matching tsconfig.json
+- Created tests/index.test.ts with 7 sample tests
+- Verified: npm test runs successfully with all 7 tests passing
+
 NOTES:
 - Project uses Node.js v20.17.0 (run `nvm use` to switch)
 - ESLint 9.x uses flat config (eslint.config.mjs) instead of .eslintrc.js
-- Next up: SETUP-007 (Set up testing framework)
+- Run `npm test` for single run, `npm run test:watch` for watch mode
+- Next up: SETUP-008 (Set up database with Prisma)
