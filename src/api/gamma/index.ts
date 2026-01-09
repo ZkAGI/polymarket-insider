@@ -58,3 +58,20 @@ export type {
   GetTrendingMarketsResult,
   TrendingSortBy,
 } from "./markets";
+
+// Pagination utilities
+export {
+  paginate,
+  paginateEndpoint,
+  paginateStream,
+  paginateParallel,
+  createPaginator,
+} from "./paginate";
+
+export type {
+  PaginationConfig,
+  PageFetchParams,
+  PageResult,
+  PaginatedResult,
+  PaginateEndpointConfig,
+} from "./paginate";
