@@ -580,4 +580,77 @@ COMPLETED: API-GAMMA-012 - Gamma API error handler
   - Enum value verification
 - TypeScript typecheck passes (tsc --noEmit)
 - NOTE: Tests require Node.js 20+ to run (vitest uses modern regex features)
-- Next up: API-GAMMA-013
+
+COMPLETED: API-GAMMA-013 - Gamma API response caching
+- Created src/api/gamma/cache.ts with comprehensive caching implementation:
+  - ResponseCache class with in-memory storage using Map
+  - TTL (Time-To-Live) configuration per entry or default (60s)
+  - Maximum entries limit with LRU eviction (default: 1000)
+  - Automatic cleanup interval for expired entries
+  - Tag-based invalidation support
+  - Pattern-based invalidation (glob-like with *)
+  - Cache hit/miss tracking and statistics
+  - Memory usage estimation
+- Cache configuration options:
+  - defaultTTL: Default time-to-live in milliseconds
+  - maxEntries: Maximum cache size with LRU eviction
+  - enableLogging: Toggle cache hit/miss logging
+  - logger: Custom logger injection
+  - cleanupInterval: Auto-cleanup interval (0 to disable)
+- CacheEntry structure includes:
+  - value: The cached data
+  - createdAt/expiresAt: Timestamps
+  - hitCount: Access tracking
+  - ttl: Entry-specific TTL
+  - tags: For grouped invalidation
+- Cache operations:
+  - get<T>(key): Retrieve cached value
+  - set<T>(key, value, options): Store value with optional TTL/tags
+  - has(key): Check if key exists and is valid
+  - delete/invalidate(key): Remove specific key
+  - invalidateByTag(tag): Remove all entries with tag
+  - invalidateByPattern(pattern): Remove by glob pattern
+  - getOrFetch<T>(key, fetchFn, options): Get cached or fetch and cache
+  - getOrFetchSync<T>(key, fetchFn, options): Synchronous version
+  - cleanup(): Remove expired entries
+  - clear(): Remove all entries
+  - getStats(): Get cache statistics (hits, misses, hitRate, etc.)
+- Helper utilities:
+  - createCache(): Factory function
+  - getSharedCache/resetSharedCache/setSharedCache: Singleton management
+  - CacheTTL: Predefined TTL constants (SHORT, DEFAULT, MEDIUM, LONG, VERY_LONG, DAY)
+  - CacheKeyPrefix: Standard key prefixes (MARKET, MARKETS, OUTCOMES, etc.)
+  - Key generators: marketCacheKey, activeMarketsCacheKey, trendingMarketsCacheKey, etc.
+  - withCache/withSharedCache: Function decorators for automatic caching
+- Updated src/api/gamma/index.ts with all new exports
+- Created tests/api/gamma/cache.test.ts with 60+ test cases covering:
+  - Constructor and configuration
+  - get/set operations with TTL
+  - Cache expiration behavior
+  - Hit count tracking
+  - Tag storage and retrieval
+  - refreshOnHit option
+  - has() method
+  - delete/invalidate methods
+  - invalidateByTag functionality
+  - invalidateByPattern with wildcards
+  - getOrFetch async caching
+  - getOrFetchSync synchronous caching
+  - LRU eviction on max size
+  - cleanup of expired entries
+  - Statistics tracking (hits, misses, hitRate, evictions, expirations)
+  - Memory usage estimation
+  - Keys and size properties
+  - Entry metadata retrieval
+  - Custom logger support
+  - dispose cleanup
+  - createCache factory
+  - Shared cache singleton
+  - CacheTTL and CacheKeyPrefix constants
+  - All key generator functions
+  - withCache decorator
+  - withSharedCache decorator
+  - Automatic cleanup interval
+  - Edge cases (null, undefined, complex objects, special chars)
+- Implementation follows established patterns from rate-limiter and error-handler
+- Next up: API-CLOB-001

@@ -114,3 +114,31 @@ export type {
   ErrorHandlerResult,
   WrapWithErrorHandlingOptions,
 } from "./error-handler";
+
+// Caching utilities
+export {
+  ResponseCache,
+  createCache,
+  getSharedCache,
+  resetSharedCache,
+  setSharedCache,
+  CacheTTL,
+  CacheKeyPrefix,
+  marketCacheKey,
+  marketBySlugCacheKey,
+  activeMarketsCacheKey,
+  trendingMarketsCacheKey,
+  outcomesCacheKey,
+  volumeHistoryCacheKey,
+  priceHistoryCacheKey,
+  withCache,
+  withSharedCache,
+} from "./cache";
+
+export type {
+  CacheConfig,
+  CacheEntry,
+  CacheStats,
+  CacheOptions,
+  CacheLogger,
+} from "./cache";
