@@ -12,6 +12,8 @@ import {
   getMarketOutcomesBySlug,
   getMarketVolumeHistory,
   getMarketVolumeHistoryBySlug,
+  getMarketPriceHistory,
+  getMarketPriceHistoryBySlug,
   parseSlugFromUrl,
 } from "@/api/gamma/markets";
 import { GammaClient, GammaApiException } from "@/api/gamma/client";
@@ -1818,6 +1820,1148 @@ describe("getMarketVolumeHistoryBySlug", () => {
     await getMarketVolumeHistoryBySlug("custom-market", { client: customClient });
 
     // All three API calls should use custom client
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("https://custom.api.com"),
+      expect.any(Object)
+    );
+  });
+});
+
+// =============================================================================
+// PRICE HISTORY TESTS
+// =============================================================================
+
+describe("getMarketPriceHistory", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("basic functionality", () => {
+    it("should fetch price history and calculate probability from price", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-1", name: "Yes", price: 0.75, clobTokenId: "token-1" },
+          { id: "outcome-2", name: "No", price: 0.25, clobTokenId: "token-2" },
+        ],
+      });
+
+      const mockPriceHistory = {
+        history: [
+          { t: 1704067200, p: 0.5 }, // 2024-01-01
+          { t: 1704153600, p: 0.6 }, // 2024-01-02
+          { t: 1704240000, p: 0.75 }, // 2024-01-03
+        ],
+      };
+
+      // First call: getMarketById
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Second call: price timeseries endpoint
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.dataPoints).toHaveLength(3);
+      expect(result?.dataPoints[0]?.price).toBe(0.5);
+      expect(result?.dataPoints[0]?.probability).toBe(50);
+      expect(result?.dataPoints[2]?.price).toBe(0.75);
+      expect(result?.dataPoints[2]?.probability).toBe(75);
+    });
+
+    it("should calculate statistics correctly (min, max, change)", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.8 }],
+      });
+
+      const mockPriceHistory = {
+        history: [
+          { t: 1704067200, p: 0.4 },
+          { t: 1704153600, p: 0.2 },
+          { t: 1704240000, p: 0.6 },
+          { t: 1704326400, p: 0.8 },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.minPrice).toBe(0.2);
+      expect(result?.maxPrice).toBe(0.8);
+      expect(result?.priceChange).toBe(0.4); // 0.8 - 0.4
+      expect(result?.priceChangePercent).toBe(100); // (0.4 / 0.4) * 100
+    });
+
+    it("should include current price and probability from market data", async () => {
+      // No clobTokenId - 2 price endpoints will be tried
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.65 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints - both return 404, will use synthetic data
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.currentPrice).toBe(0.65);
+      expect(result?.currentProbability).toBe(65);
+    });
+
+    it("should include clobTokenId when available", async () => {
+      // Has clobTokenId - 3 price endpoints will be tried
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.5, clobTokenId: "clob-token-123" }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Three price endpoints - all return 404, will use synthetic data
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.clobTokenId).toBe("clob-token-123");
+    });
+  });
+
+  describe("outcome selection", () => {
+    it("should default to first outcome when no selector provided", async () => {
+      // No clobTokenId - 2 price endpoints will be tried
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-1", name: "Yes", price: 0.6 },
+          { id: "outcome-2", name: "No", price: 0.4 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints (no clobTokenId)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.outcomeId).toBe("outcome-1");
+      expect(result?.outcomeName).toBe("Yes");
+    });
+
+    it("should select outcome by name (case-insensitive)", async () => {
+      // No clobTokenId - 2 price endpoints
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-1", name: "Yes", price: 0.6 },
+          { id: "outcome-2", name: "No", price: 0.4 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1", { outcome: "no" });
+
+      expect(result?.outcomeId).toBe("outcome-2");
+      expect(result?.outcomeName).toBe("No");
+    });
+
+    it("should select outcome by index", async () => {
+      // No clobTokenId - 2 price endpoints
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-1", name: "Yes", price: 0.6 },
+          { id: "outcome-2", name: "No", price: 0.4 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1", { outcome: 1 });
+
+      expect(result?.outcomeId).toBe("outcome-2");
+      expect(result?.outcomeName).toBe("No");
+    });
+
+    it("should select outcome by ID", async () => {
+      // No clobTokenId - 2 price endpoints
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-abc", name: "Yes", price: 0.6 },
+          { id: "outcome-xyz", name: "No", price: 0.4 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1", { outcome: "outcome-xyz" });
+
+      expect(result?.outcomeId).toBe("outcome-xyz");
+      expect(result?.outcomeName).toBe("No");
+    });
+
+    it("should return null for invalid outcome selector", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-1", name: "Yes", price: 0.6 },
+          { id: "outcome-2", name: "No", price: 0.4 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketPriceHistory("market-1", { outcome: "invalid-outcome" });
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null for out-of-bounds index", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-1", name: "Yes", price: 0.6 },
+          { id: "outcome-2", name: "No", price: 0.4 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      const result = await getMarketPriceHistory("market-1", { outcome: 5 });
+
+      expect(result).toBeNull();
+    });
+
+    it("should handle multi-outcome markets", async () => {
+      // No clobTokenId - 2 price endpoints
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [
+          { id: "outcome-1", name: "Trump", price: 0.45 },
+          { id: "outcome-2", name: "Biden", price: 0.35 },
+          { id: "outcome-3", name: "Other", price: 0.20 },
+        ],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1", { outcome: "Biden" });
+
+      expect(result?.outcomeId).toBe("outcome-2");
+      expect(result?.outcomeName).toBe("Biden");
+      expect(result?.currentPrice).toBe(0.35);
+    });
+  });
+
+  describe("API response parsing", () => {
+    it("should parse 'history' format correctly", async () => {
+      const mockMarket = createMockMarket();
+
+      const mockPriceHistory = {
+        history: [
+          { t: 1704067200, p: 0.5, v: 1000 },
+          { t: 1704153600, p: 0.6, v: 2000 },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.dataPoints).toHaveLength(2);
+      expect(result?.dataPoints[0]?.volume).toBe(1000);
+      expect(result?.dataPoints[1]?.volume).toBe(2000);
+    });
+
+    it("should parse 'prices' format correctly", async () => {
+      const mockMarket = createMockMarket();
+
+      const mockPriceHistory = {
+        prices: [
+          { t: 1704067200, p: 0.45 },
+          { t: 1704153600, p: 0.55 },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.dataPoints).toHaveLength(2);
+      expect(result?.dataPoints[0]?.price).toBe(0.45);
+      expect(result?.dataPoints[1]?.price).toBe(0.55);
+    });
+
+    it("should parse 'data' format with numeric timestamp", async () => {
+      const mockMarket = createMockMarket();
+
+      const mockPriceHistory = {
+        data: [
+          { timestamp: 1704067200, price: 0.5, volume: 100 },
+          { timestamp: 1704153600, price: 0.6, volume: 200 },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.dataPoints).toHaveLength(2);
+      expect(result?.dataPoints[0]?.price).toBe(0.5);
+      expect(result?.dataPoints[0]?.volume).toBe(100);
+    });
+
+    it("should parse 'data' format with ISO timestamp", async () => {
+      const mockMarket = createMockMarket();
+
+      const mockPriceHistory = {
+        data: [
+          { timestamp: "2024-01-01T00:00:00.000Z", price: 0.5 },
+          { timestamp: "2024-01-02T00:00:00.000Z", price: 0.6 },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.dataPoints).toHaveLength(2);
+      expect(result?.dataPoints[0]?.timestamp).toBe("2024-01-01T00:00:00.000Z");
+    });
+
+    it("should handle probability field in data format", async () => {
+      const mockMarket = createMockMarket();
+
+      const mockPriceHistory = {
+        data: [
+          { timestamp: 1704067200, probability: 50 }, // 50% = 0.5 price
+          { timestamp: 1704153600, probability: 75 }, // 75% = 0.75 price
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.dataPoints).toHaveLength(2);
+      expect(result?.dataPoints[0]?.price).toBe(0.5);
+      expect(result?.dataPoints[0]?.probability).toBe(50);
+      expect(result?.dataPoints[1]?.price).toBe(0.75);
+      expect(result?.dataPoints[1]?.probability).toBe(75);
+    });
+
+    it("should convert unix timestamp to ISO string", async () => {
+      const mockMarket = createMockMarket();
+
+      const mockPriceHistory = {
+        history: [{ t: 1704067200, p: 0.5 }], // 2024-01-01T00:00:00Z
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockPriceHistory)),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.dataPoints[0]?.timestamp).toBe("2024-01-01T00:00:00.000Z");
+    });
+  });
+
+  describe("fallback to synthetic data", () => {
+    it("should generate synthetic data when API returns 404", async () => {
+      const mockMarket = createMockMarket({
+        id: "market-1",
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.7 }],
+        createdAt: "2024-01-01T00:00:00Z",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // All price endpoints return 404
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.dataPoints.length).toBeGreaterThan(0);
+      // Last data point should match current price
+      expect(result?.dataPoints[result.dataPoints.length - 1]?.price).toBe(0.7);
+    });
+
+    it("should generate synthetic data when API returns empty response", async () => {
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // First endpoint returns empty, second also fails
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ history: [] })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ history: [] })),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.dataPoints.length).toBeGreaterThan(0);
+    });
+
+    it("should respect market creation date in synthetic data", async () => {
+      const marketCreatedAt = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+        createdAt: marketCreatedAt.toISOString(),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints (no clobTokenId)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1", {
+        timeRange: {
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+          endDate: new Date(),
+        },
+      });
+
+      expect(result).not.toBeNull();
+      // First data point should be after market creation, not 30 days ago
+      const firstTimestamp = new Date(result?.dataPoints[0]?.timestamp ?? "");
+      expect(firstTimestamp.getTime()).toBeGreaterThanOrEqual(marketCreatedAt.getTime());
+    });
+  });
+
+  describe("time range and interval options", () => {
+    it("should use default time range (30 days) when not specified", async () => {
+      // Market without clobTokenId - 2 price endpoints
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.interval).toBe("1d");
+
+      // Verify date range is approximately 30 days
+      const start = new Date(result?.startDate ?? "");
+      const end = new Date(result?.endDate ?? "");
+      const daysDiff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+      expect(daysDiff).toBeCloseTo(30, 0);
+    });
+
+    it("should use custom time range when provided", async () => {
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1", {
+        timeRange: {
+          startDate: "2024-01-01T00:00:00Z",
+          endDate: "2024-01-10T00:00:00Z",
+        },
+      });
+
+      expect(result?.startDate).toBe("2024-01-01T00:00:00.000Z");
+      expect(result?.endDate).toBe("2024-01-10T00:00:00.000Z");
+    });
+
+    it("should accept Date objects for time range", async () => {
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const startDate = new Date("2024-02-01");
+      const endDate = new Date("2024-02-15");
+
+      const result = await getMarketPriceHistory("market-1", {
+        timeRange: { startDate, endDate },
+      });
+
+      expect(result).not.toBeNull();
+      expect(new Date(result?.startDate ?? "").getTime()).toBe(startDate.getTime());
+      expect(new Date(result?.endDate ?? "").getTime()).toBe(endDate.getTime());
+    });
+
+    it("should use custom interval when provided", async () => {
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1", {
+        interval: "1h",
+      });
+
+      expect(result?.interval).toBe("1h");
+    });
+  });
+
+  describe("error handling", () => {
+    it("should return null for empty market ID", async () => {
+      const result = await getMarketPriceHistory("");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for whitespace-only market ID", async () => {
+      const result = await getMarketPriceHistory("   ");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for non-existent market", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Market not found" })),
+      });
+
+      const result = await getMarketPriceHistory("non-existent-market");
+
+      expect(result).toBeNull();
+    });
+
+    it("should throw for server errors (500)", async () => {
+      // Server error on getMarketById - will retry 3 times (default retries)
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve(JSON.stringify({ message: "Server error" })),
+      });
+
+      await expect(getMarketPriceHistory("market-1")).rejects.toThrow(GammaApiException);
+    });
+
+    it("should throw for forbidden errors (403)", async () => {
+      // Forbidden error on getMarketById - first API call
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve(JSON.stringify({ message: "Access denied" })),
+      });
+
+      await expect(getMarketPriceHistory("market-1")).rejects.toThrow(GammaApiException);
+    });
+  });
+
+  describe("custom client", () => {
+    it("should use custom client when provided", async () => {
+      const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+      // Market without clobTokenId - only 2 endpoints will be tried
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints (no clobTokenId means no /prices/token endpoint)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      await getMarketPriceHistory("market-1", { client: customClient });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("https://custom.api.com"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("result metadata", () => {
+    it("should include fetchedAt timestamp", async () => {
+      // Market without clobTokenId - only 2 endpoints will be tried
+      const mockMarket = createMockMarket({
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const before = Date.now();
+      const result = await getMarketPriceHistory("market-1");
+      const after = Date.now();
+
+      expect(result?.fetchedAt).toBeDefined();
+      const fetchedAt = new Date(result?.fetchedAt ?? "").getTime();
+      expect(fetchedAt).toBeGreaterThanOrEqual(before);
+      expect(fetchedAt).toBeLessThanOrEqual(after);
+    });
+
+    it("should include market question", async () => {
+      const mockMarket = createMockMarket({
+        question: "Will Bitcoin reach $100k?",
+        outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockMarket)),
+      });
+
+      // Two price endpoints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+      });
+
+      const result = await getMarketPriceHistory("market-1");
+
+      expect(result?.question).toBe("Will Bitcoin reach $100k?");
+    });
+  });
+});
+
+describe("getMarketPriceHistoryBySlug", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch price history by slug", async () => {
+    // Use market without clobTokenId for simpler mocking
+    const mockMarket = createMockMarket({
+      slug: "bitcoin-100k",
+      outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+    });
+
+    // First call: slug lookup
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    // Second call: get market by id
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    // Two price endpoints (no clobTokenId)
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    const result = await getMarketPriceHistoryBySlug("bitcoin-100k");
+
+    expect(result).not.toBeNull();
+    expect(result?.marketId).toBe("market-1");
+  });
+
+  it("should fetch price history from Polymarket URL", async () => {
+    const mockMarket = createMockMarket({
+      slug: "bitcoin-100k",
+      outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    // Two price endpoints
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    const result = await getMarketPriceHistoryBySlug(
+      "https://polymarket.com/event/bitcoin-100k"
+    );
+
+    expect(result).not.toBeNull();
+  });
+
+  it("should return null for non-existent market slug", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([])),
+    });
+
+    const result = await getMarketPriceHistoryBySlug("non-existent-slug");
+
+    expect(result).toBeNull();
+  });
+
+  it("should pass options to getMarketPriceHistory", async () => {
+    const mockMarket = createMockMarket({
+      slug: "test-market",
+      outcomes: [
+        { id: "outcome-1", name: "Yes", price: 0.6 },
+        { id: "outcome-2", name: "No", price: 0.4 },
+      ],
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    // Two price endpoints
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    const result = await getMarketPriceHistoryBySlug("test-market", {
+      outcome: "No",
+      interval: "4h",
+      timeRange: {
+        startDate: "2024-01-01T00:00:00Z",
+        endDate: "2024-01-03T00:00:00Z",
+      },
+    });
+
+    expect(result?.outcomeName).toBe("No");
+    expect(result?.interval).toBe("4h");
+    expect(result?.startDate).toBe("2024-01-01T00:00:00.000Z");
+    expect(result?.endDate).toBe("2024-01-03T00:00:00.000Z");
+  });
+
+  it("should use custom client when provided", async () => {
+    const customClient = new GammaClient({ baseUrl: "https://custom.api.com" });
+    const mockMarket = createMockMarket({
+      slug: "custom-market",
+      outcomes: [{ id: "outcome-1", name: "Yes", price: 0.6 }],
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify([mockMarket])),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockMarket)),
+    });
+
+    // Two price endpoints
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: () => Promise.resolve(JSON.stringify({ message: "Not found" })),
+    });
+
+    await getMarketPriceHistoryBySlug("custom-market", { client: customClient });
+
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("https://custom.api.com"),
       expect.any(Object)

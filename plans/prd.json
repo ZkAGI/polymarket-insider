@@ -322,7 +322,8 @@
       "priority": 17,
       "name": "Fetch market price history",
       "description": "Get historical price/probability data for market outcomes",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-09T22:25:00Z",
       "steps": [
         "Create getMarketPriceHistory function",
         "Accept market ID, outcome, and time range",

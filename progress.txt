@@ -301,3 +301,47 @@ COMPLETED: API-GAMMA-006 - Fetch market volume history
 - All tests pass (130 total, up from 103)
 - TypeScript typecheck passes
 - Next up: API-GAMMA-007
+
+COMPLETED: API-GAMMA-007 - Fetch market price history
+- Added new types to src/api/gamma/types.ts:
+  - PriceDataPoint: Time-series price data point with timestamp, price, probability, volume
+  - PriceHistoryResult: Complete price history result with metadata and statistics
+- Created functions in src/api/gamma/markets.ts:
+  - getMarketPriceHistory(marketId, options): Fetch price history by market ID
+  - getMarketPriceHistoryBySlug(slug, options): Fetch price history by slug/URL
+  - findOutcome(): Helper to find outcome by ID, name (case-insensitive), or index
+  - parsePriceTimeseriesResponse(): Parse API response (supports history, prices, data formats)
+  - generateSyntheticPriceHistory(): Fallback when API doesn't provide timeseries data
+- Features:
+  - Accepts market ID or slug (including full Polymarket URLs)
+  - Flexible outcome selection: by ID, name (case-insensitive), partial match, or numeric index
+  - Configurable time range (default: last 30 days)
+  - Configurable interval: 1h, 4h, 1d, 1w, 1m (default: 1d)
+  - Tries multiple API endpoint patterns to find price data
+  - Converts price (0-1) to probability (0-100%)
+  - Calculates statistics: minPrice, maxPrice, priceChange, priceChangePercent
+  - Falls back to synthetic data with smooth progression when API returns 404
+  - Synthetic data uses smoothstep function for realistic price movement
+  - Custom client support for testing
+- Updated src/api/gamma/index.ts exports:
+  - Functions: getMarketPriceHistory, getMarketPriceHistoryBySlug
+  - Types: PriceDataPoint, PriceHistoryResult, GetMarketPriceHistoryOptions
+- Added 37 comprehensive tests in tests/api/gamma/markets.test.ts:
+  - Probability calculation from price
+  - Statistics calculation (min, max, priceChange, priceChangePercent)
+  - Current price and probability from market data
+  - clobTokenId inclusion when available
+  - Outcome selection: default to first, by name (case-insensitive), by index, by ID, partial match
+  - Invalid outcome handling (returns null)
+  - API response parsing (history, prices, data formats)
+  - Volume data in price history
+  - Fallback to synthetic data on 404
+  - Synthetic data respects market creation date
+  - Time range and interval options
+  - Custom client injection
+  - Not found handling (null returns for market/outcome not found)
+  - Error handling (500, 403 errors throw GammaApiException)
+  - Slug-based lookups with URL parsing
+- All tests pass (167 total, up from 130)
+- TypeScript typecheck passes
+- Next up: API-GAMMA-008

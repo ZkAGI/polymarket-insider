@@ -187,3 +187,73 @@ export interface VolumeHistoryResult {
   /** Timestamp of when this data was fetched */
   fetchedAt: string;
 }
+
+/**
+ * A single data point in price history time series
+ */
+export interface PriceDataPoint {
+  /** Timestamp for this data point (ISO string) */
+  timestamp: string;
+
+  /** Price at this point (0-1 scale representing probability) */
+  price: number;
+
+  /** Probability as percentage (0-100 scale) */
+  probability: number;
+
+  /** Trading volume at this timestamp (if available) */
+  volume?: number;
+}
+
+/**
+ * Result from fetching market price history for a specific outcome
+ */
+export interface PriceHistoryResult {
+  /** Market ID */
+  marketId: string;
+
+  /** Market question for reference */
+  question: string;
+
+  /** Outcome ID for which price history was fetched */
+  outcomeId: string;
+
+  /** Outcome name (e.g., "Yes", "No", "Donald Trump") */
+  outcomeName: string;
+
+  /** CLOB token ID for this outcome (if available) */
+  clobTokenId?: string;
+
+  /** Start of the time range */
+  startDate: string;
+
+  /** End of the time range */
+  endDate: string;
+
+  /** Time interval used for aggregation */
+  interval: TimeInterval;
+
+  /** Array of price data points */
+  dataPoints: PriceDataPoint[];
+
+  /** Current price (most recent data point) */
+  currentPrice: number;
+
+  /** Current probability as percentage */
+  currentProbability: number;
+
+  /** Minimum price over the time range */
+  minPrice: number;
+
+  /** Maximum price over the time range */
+  maxPrice: number;
+
+  /** Price change from start to end (absolute) */
+  priceChange: number;
+
+  /** Price change as percentage */
+  priceChangePercent: number;
+
+  /** Timestamp of when this data was fetched */
+  fetchedAt: string;
+}

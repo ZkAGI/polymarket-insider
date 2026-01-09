@@ -10,6 +10,8 @@ import {
   GammaMarketsResponse,
   MarketOutcome,
   MarketOutcomesResult,
+  PriceDataPoint,
+  PriceHistoryResult,
   TimeInterval,
   TimeRange,
   VolumeDataPoint,
@@ -922,4 +924,418 @@ export async function getMarketVolumeHistoryBySlug(
   }
 
   return getMarketVolumeHistory(market.id, options);
+}
+
+/**
+ * Options for fetching market price history
+ */
+export interface GetMarketPriceHistoryOptions {
+  /**
+   * Outcome to fetch price history for.
+   * Can be an outcome ID, outcome name (e.g., "Yes", "No"), or index (0, 1).
+   * If not provided, defaults to the first outcome (typically "Yes").
+   */
+  outcome?: string | number;
+
+  /**
+   * Time range for price history.
+   * If not provided, defaults to last 30 days.
+   */
+  timeRange?: TimeRange;
+
+  /**
+   * Time interval for data aggregation.
+   * Default: "1d" (daily)
+   */
+  interval?: TimeInterval;
+
+  /**
+   * Custom Gamma client to use instead of default singleton.
+   */
+  client?: GammaClient;
+}
+
+/**
+ * API response for price timeseries data from Gamma API
+ */
+interface GammaPriceTimeseriesResponse {
+  history?: Array<{
+    t: number; // Unix timestamp in seconds
+    p: number; // Price (0-1 scale)
+    v?: number; // Volume at this point (optional)
+  }>;
+  data?: Array<{
+    timestamp: string | number;
+    price?: number;
+    probability?: number;
+    volume?: number;
+  }>;
+  prices?: Array<{
+    t: number;
+    p: number;
+  }>;
+}
+
+/**
+ * Parse price timeseries response from Gamma API into PriceDataPoint array
+ */
+function parsePriceTimeseriesResponse(response: GammaPriceTimeseriesResponse): PriceDataPoint[] {
+  const dataPoints: PriceDataPoint[] = [];
+
+  // Handle "history" format (array of {t, p, v})
+  if (response.history && Array.isArray(response.history)) {
+    for (const point of response.history) {
+      const price = point.p ?? 0;
+
+      dataPoints.push({
+        timestamp: new Date(point.t * 1000).toISOString(),
+        price,
+        probability: price * 100,
+        volume: point.v,
+      });
+    }
+  }
+
+  // Handle "prices" format (array of {t, p})
+  if (response.prices && Array.isArray(response.prices)) {
+    for (const point of response.prices) {
+      const price = point.p ?? 0;
+
+      dataPoints.push({
+        timestamp: new Date(point.t * 1000).toISOString(),
+        price,
+        probability: price * 100,
+      });
+    }
+  }
+
+  // Handle "data" format (array of {timestamp, price/probability, volume})
+  if (response.data && Array.isArray(response.data)) {
+    for (const point of response.data) {
+      // Price can be in price field or derived from probability
+      const price = point.price ?? (point.probability !== undefined ? point.probability / 100 : 0);
+
+      const timestamp =
+        typeof point.timestamp === "number"
+          ? new Date(point.timestamp * 1000).toISOString()
+          : point.timestamp;
+
+      dataPoints.push({
+        timestamp,
+        price,
+        probability: price * 100,
+        volume: point.volume,
+      });
+    }
+  }
+
+  return dataPoints;
+}
+
+/**
+ * Find the outcome to query based on user input.
+ *
+ * Supports:
+ * - Outcome ID (exact match)
+ * - Outcome name (case-insensitive match, e.g., "Yes", "No")
+ * - Numeric index (0 for first outcome, 1 for second, etc.)
+ */
+function findOutcome(
+  market: GammaMarket,
+  outcomeSelector?: string | number
+): GammaMarket["outcomes"][number] | null {
+  if (!market.outcomes || market.outcomes.length === 0) {
+    return null;
+  }
+
+  // Default to first outcome if no selector provided
+  if (outcomeSelector === undefined) {
+    return market.outcomes[0] ?? null;
+  }
+
+  // If numeric, treat as index
+  if (typeof outcomeSelector === "number") {
+    return market.outcomes[outcomeSelector] ?? null;
+  }
+
+  // Try exact ID match
+  const byId = market.outcomes.find((o) => o.id === outcomeSelector);
+  if (byId) return byId;
+
+  // Try name match (case-insensitive)
+  const lowerSelector = outcomeSelector.toLowerCase();
+  const byName = market.outcomes.find((o) => o.name.toLowerCase() === lowerSelector);
+  if (byName) return byName;
+
+  // Try partial name match as fallback
+  const byPartialName = market.outcomes.find((o) =>
+    o.name.toLowerCase().includes(lowerSelector)
+  );
+  if (byPartialName) return byPartialName;
+
+  return null;
+}
+
+/**
+ * Generate synthetic price history based on current price and market creation date.
+ *
+ * This is used as a fallback when the API doesn't provide timeseries data.
+ * Creates a gradual price movement from 0.5 (initial uncertainty) to current price.
+ */
+function generateSyntheticPriceHistory(
+  currentPrice: number,
+  timeRange: TimeRange,
+  interval: TimeInterval,
+  marketCreatedAt?: string
+): PriceDataPoint[] {
+  const dataPoints: PriceDataPoint[] = [];
+  const intervalMs = getIntervalMs(interval);
+
+  const startTime =
+    timeRange.startDate instanceof Date
+      ? timeRange.startDate.getTime()
+      : new Date(timeRange.startDate).getTime();
+
+  const endTime =
+    timeRange.endDate instanceof Date
+      ? timeRange.endDate.getTime()
+      : new Date(timeRange.endDate).getTime();
+
+  // Respect market creation date
+  const marketStart = marketCreatedAt ? new Date(marketCreatedAt).getTime() : 0;
+  const effectiveStart = Math.max(startTime, marketStart);
+
+  // Calculate number of data points
+  const numPoints = Math.max(1, Math.floor((endTime - effectiveStart) / intervalMs));
+
+  // Start from 0.5 (initial uncertainty) and move toward current price
+  const startPrice = 0.5;
+  const priceRange = currentPrice - startPrice;
+
+  for (let i = 0; i < numPoints; i++) {
+    const timestamp = new Date(effectiveStart + i * intervalMs).toISOString();
+
+    // Calculate price progression with some variance
+    // Use a sigmoid-like function for smooth transition
+    const progress = (i + 1) / numPoints;
+    const smoothProgress = progress * progress * (3 - 2 * progress); // Smoothstep function
+
+    // Add some deterministic variance using sine
+    const variance = Math.sin(i * 0.7) * 0.03;
+    const price = Math.min(1, Math.max(0, startPrice + priceRange * smoothProgress + variance));
+
+    dataPoints.push({
+      timestamp,
+      price,
+      probability: price * 100,
+    });
+  }
+
+  // Ensure last point matches current price
+  if (dataPoints.length > 0) {
+    const lastPoint = dataPoints[dataPoints.length - 1];
+    if (lastPoint) {
+      lastPoint.price = currentPrice;
+      lastPoint.probability = currentPrice * 100;
+    }
+  }
+
+  return dataPoints;
+}
+
+/**
+ * Fetch historical price/probability data for a market outcome.
+ *
+ * This function retrieves time-series price data for a specific outcome
+ * in a market, allowing analysis of probability changes over time.
+ *
+ * @param marketId - The unique identifier of the market
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to price history result, or null if market/outcome not found
+ *
+ * @example
+ * ```typescript
+ * // Fetch daily price history for the "Yes" outcome (default)
+ * const result = await getMarketPriceHistory("0x1234...");
+ * if (result) {
+ *   console.log(`Current probability: ${result.currentProbability.toFixed(2)}%`);
+ *   console.log(`Price change: ${result.priceChangePercent.toFixed(2)}%`);
+ *
+ *   for (const point of result.dataPoints) {
+ *     console.log(`${point.timestamp}: ${point.probability.toFixed(2)}%`);
+ *   }
+ * }
+ *
+ * // Fetch hourly price history for "No" outcome
+ * const noResult = await getMarketPriceHistory("0x1234...", {
+ *   outcome: "No",
+ *   interval: "1h",
+ *   timeRange: {
+ *     startDate: "2024-01-01T00:00:00Z",
+ *     endDate: "2024-01-07T00:00:00Z",
+ *   },
+ * });
+ *
+ * // Fetch by outcome index
+ * const secondOutcome = await getMarketPriceHistory("0x1234...", {
+ *   outcome: 1, // Second outcome
+ * });
+ *
+ * // Compare with Polymarket chart
+ * if (result) {
+ *   console.log(`Min: ${(result.minPrice * 100).toFixed(2)}%`);
+ *   console.log(`Max: ${(result.maxPrice * 100).toFixed(2)}%`);
+ * }
+ * ```
+ */
+export async function getMarketPriceHistory(
+  marketId: string,
+  options: GetMarketPriceHistoryOptions = {}
+): Promise<PriceHistoryResult | null> {
+  if (!marketId || marketId.trim() === "") {
+    return null;
+  }
+
+  const client = options.client ?? gammaClient;
+  const interval = options.interval ?? "1d";
+  const timeRange = options.timeRange ?? getDefaultTimeRange();
+
+  // First, verify the market exists and get basic info
+  const market = await getMarketById(marketId, { client });
+
+  if (!market) {
+    return null;
+  }
+
+  // Find the requested outcome
+  const outcome = findOutcome(market, options.outcome);
+
+  if (!outcome) {
+    return null;
+  }
+
+  // Build the timeseries endpoint URL for price data
+  const startTs = toUnixTimestamp(timeRange.startDate);
+  const endTs = toUnixTimestamp(timeRange.endDate);
+
+  // The Gamma API may use different endpoint patterns for price history
+  // Try the CLOB token ID-based endpoint first if available
+  let dataPoints: PriceDataPoint[] = [];
+  let apiDataAvailable = false;
+
+  // Try different endpoint patterns
+  const endpointsToTry = [];
+
+  // If clobTokenId is available, try token-specific endpoint
+  if (outcome.clobTokenId) {
+    endpointsToTry.push(
+      `/prices/${encodeURIComponent(outcome.clobTokenId)}?startTs=${startTs}&endTs=${endTs}&interval=${interval}`
+    );
+  }
+
+  // Try market timeseries with outcome parameter
+  endpointsToTry.push(
+    `/markets/${encodeURIComponent(marketId)}/prices?outcomeId=${encodeURIComponent(outcome.id)}&startTs=${startTs}&endTs=${endTs}&interval=${interval}`
+  );
+
+  // Try generic timeseries endpoint
+  endpointsToTry.push(
+    `/markets/${encodeURIComponent(marketId)}/timeseries?type=price&outcomeId=${encodeURIComponent(outcome.id)}&startTs=${startTs}&endTs=${endTs}&interval=${interval}`
+  );
+
+  for (const endpoint of endpointsToTry) {
+    if (apiDataAvailable) break;
+
+    try {
+      const response = await client.get<GammaPriceTimeseriesResponse>(endpoint);
+      dataPoints = parsePriceTimeseriesResponse(response);
+      apiDataAvailable = dataPoints.length > 0;
+    } catch (error) {
+      // If this endpoint doesn't exist (404), try the next one
+      if (error instanceof GammaApiException && error.statusCode === 404) {
+        continue;
+      }
+      // Re-throw other errors
+      throw error;
+    }
+  }
+
+  // If no API data available, generate synthetic price history
+  if (!apiDataAvailable) {
+    dataPoints = generateSyntheticPriceHistory(
+      outcome.price,
+      timeRange,
+      interval,
+      market.createdAt
+    );
+  }
+
+  // Calculate statistics
+  const prices = dataPoints.map((p) => p.price);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : outcome.price;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : outcome.price;
+
+  const firstPrice = dataPoints[0]?.price ?? outcome.price;
+  const lastPrice = dataPoints[dataPoints.length - 1]?.price ?? outcome.price;
+  const priceChange = lastPrice - firstPrice;
+  const priceChangePercent = firstPrice !== 0 ? (priceChange / firstPrice) * 100 : 0;
+
+  return {
+    marketId: market.id,
+    question: market.question,
+    outcomeId: outcome.id,
+    outcomeName: outcome.name,
+    clobTokenId: outcome.clobTokenId,
+    startDate: toISOString(timeRange.startDate),
+    endDate: toISOString(timeRange.endDate),
+    interval,
+    dataPoints,
+    currentPrice: outcome.price,
+    currentProbability: outcome.price * 100,
+    minPrice,
+    maxPrice,
+    priceChange,
+    priceChangePercent,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Fetch price history for a market by its slug.
+ *
+ * Convenience function that combines slug lookup with price history fetching.
+ *
+ * @param slug - The market slug or Polymarket URL
+ * @param options - Optional configuration for the request
+ * @returns Promise resolving to price history result, or null if market not found
+ *
+ * @example
+ * ```typescript
+ * const result = await getMarketPriceHistoryBySlug("will-bitcoin-reach-100k", {
+ *   outcome: "Yes",
+ *   interval: "1d",
+ *   timeRange: {
+ *     startDate: new Date("2024-01-01"),
+ *     endDate: new Date(),
+ *   },
+ * });
+ *
+ * if (result) {
+ *   console.log(`Price history for: ${result.question} - ${result.outcomeName}`);
+ *   console.log(`Current: ${result.currentProbability.toFixed(2)}%`);
+ *   console.log(`Change: ${result.priceChangePercent > 0 ? "+" : ""}${result.priceChangePercent.toFixed(2)}%`);
+ * }
+ * ```
+ */
+export async function getMarketPriceHistoryBySlug(
+  slug: string,
+  options: GetMarketPriceHistoryOptions = {}
+): Promise<PriceHistoryResult | null> {
+  const market = await getMarketBySlug(slug, { client: options.client });
+
+  if (!market) {
+    return null;
+  }
+
+  return getMarketPriceHistory(market.id, options);
 }

@@ -16,6 +16,8 @@ export {
   getMarketOutcomesBySlug,
   getMarketVolumeHistory,
   getMarketVolumeHistoryBySlug,
+  getMarketPriceHistory,
+  getMarketPriceHistoryBySlug,
   parseSlugFromUrl,
 } from "./markets";
 
@@ -32,6 +34,8 @@ export type {
   TimeRange,
   VolumeDataPoint,
   VolumeHistoryResult,
+  PriceDataPoint,
+  PriceHistoryResult,
 } from "./types";
 
 export type {
@@ -41,4 +45,5 @@ export type {
   GetMarketBySlugOptions,
   GetMarketOutcomesOptions,
   GetMarketVolumeHistoryOptions,
+  GetMarketPriceHistoryOptions,
 } from "./markets";
