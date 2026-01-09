@@ -7,6 +7,19 @@
 
 export { ClobClient, ClobApiException, clobClient, createClobClient, validateCredentials } from "./client";
 
+export {
+  getOrderBook,
+  getOrderBooks,
+  calculateLiquidityAtPrice,
+  getMidPrice,
+  getSpreadPercentage,
+  getTotalBidVolume,
+  getTotalAskVolume,
+  getVolumeImbalance,
+} from "./orderbook";
+
+export type { GetOrderBookOptions } from "./orderbook";
+
 export type {
   ClobClientConfig,
   ClobRequestOptions,

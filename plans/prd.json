@@ -481,7 +481,8 @@
       "priority": 25,
       "name": "Fetch order book for market",
       "description": "Retrieve current buy/sell orders for a specific market",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T00:30:00Z",
       "steps": [
         "Create getOrderBook function",
         "Define OrderBook interface",

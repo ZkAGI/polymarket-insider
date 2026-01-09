@@ -696,3 +696,42 @@ COMPLETED: API-CLOB-001 - CLOB API client initialization
 - Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
 - NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
 - Next up: API-CLOB-002
+
+COMPLETED: API-CLOB-002 - Fetch order book for market
+- Created src/api/clob/orderbook.ts with comprehensive order book functions:
+  - getOrderBook(tokenId, options): Fetch order book for a specific token/market
+  - getOrderBooks(tokenIds, options): Fetch multiple order books in parallel
+  - calculateLiquidityAtPrice(): Calculate liquidity at a given price threshold
+  - getMidPrice(): Calculate mid price between best bid and ask
+  - getSpreadPercentage(): Calculate bid-ask spread as percentage
+  - getTotalBidVolume(): Sum all bid volumes
+  - getTotalAskVolume(): Sum all ask volumes
+  - getVolumeImbalance(): Calculate volume imbalance ratio (bid/ask)
+- Features:
+  - Parses both array format [price, size] and object format {price, size}
+  - Sorts bids descending (highest price first) and asks ascending (lowest price first)
+  - Calculates best_bid, best_ask, and spread automatically
+  - Handles various timestamp formats (ISO, Unix seconds, Unix milliseconds)
+  - Returns null for 404 (market not found), throws on other errors
+  - URL encodes token ID for safe API requests
+  - Supports custom ClobClient injection for testing
+- Updated src/api/clob/index.ts to export all new functions and types
+- Created tests/api/clob/orderbook.test.ts with 40+ test cases covering:
+  - Basic order book fetching
+  - Bid/ask sorting verification
+  - Best bid/ask calculation
+  - Spread calculation
+  - Object and array format parsing
+  - Empty order book handling
+  - Invalid token ID handling (empty, whitespace)
+  - 404 and error handling
+  - URL encoding
+  - Timestamp parsing (Unix seconds, milliseconds, ISO)
+  - Asset ID fallback logic
+  - Multiple order book fetching
+  - Liquidity calculation
+  - Mid price and spread percentage calculation
+  - Volume calculations and imbalance
+- Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
+- NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
+- Next up: API-CLOB-003
