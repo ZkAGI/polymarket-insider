@@ -653,4 +653,46 @@ COMPLETED: API-GAMMA-013 - Gamma API response caching
   - Automatic cleanup interval
   - Edge cases (null, undefined, complex objects, special chars)
 - Implementation follows established patterns from rate-limiter and error-handler
-- Next up: API-CLOB-001
+
+COMPLETED: API-CLOB-001 - CLOB API client initialization
+- Created src/api/clob/client.ts with ClobClient class for interacting with Polymarket CLOB API
+- Created src/api/clob/types.ts with comprehensive type definitions:
+  - ClobClientConfig: Client configuration options (baseUrl, apiKey, apiSecret, apiPassphrase, timeout, retries)
+  - ClobRequestOptions: Request options with requiresAuth support
+  - ClobApiError: Error response type
+  - OrderSide, OrderType, OrderStatus, TradeDirection: Trading enums
+  - Order, OrderBookLevel, OrderBook: Order book types
+  - Trade, TradeExecution: Trade types
+  - TradeFilter, TradesResponse: Query filter and response types
+  - ClobCredentials, SignedHeaders: Authentication types
+  - ClobMarket, TickSize, OrderBookDepth: Market info types
+- Created src/api/clob/index.ts exporting all types and classes
+- ClobClient class features:
+  - Uses native fetch API (consistent with GammaClient)
+  - Default configuration: baseUrl="https://clob.polymarket.com", timeout=30s, retries=3
+  - Support for both public and authenticated endpoints
+  - HMAC-SHA256 signature generation for authenticated requests using Web Crypto API
+  - Automatic retry logic with exponential backoff
+  - Retries on 5xx errors and 429 rate limits
+  - Does not retry on 4xx client errors (except 429)
+  - Custom ClobApiException class for typed error handling
+  - get, post, put, delete convenience methods
+  - generateAuthHeaders() for creating signed request headers
+  - hasCredentials(), hasApiKey(), getCredentials() helper methods
+  - Singleton clobClient export for convenience
+  - createClobClient() factory function for custom instances
+  - validateCredentials() helper to test API credentials
+- Created tests/api/clob/client.test.ts with 45+ test cases covering:
+  - Constructor and configuration (defaults, custom, partial overrides)
+  - Credentials handling (hasCredentials, hasApiKey, getCredentials)
+  - Factory function and singleton
+  - GET, POST, PUT, DELETE requests
+  - Authentication headers generation (POLY-API-KEY, POLY-SIGNATURE, POLY-TIMESTAMP, POLY-PASSPHRASE)
+  - Error handling (4xx, 5xx, network errors, non-JSON responses)
+  - Retry behavior (429 retry, 5xx retry, no retry on 4xx)
+  - validateCredentials helper
+  - Custom headers merging
+  - Timeout handling
+- Verified: TypeScript typecheck (tsc --noEmit) passes with no errors
+- NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
+- Next up: API-CLOB-002
