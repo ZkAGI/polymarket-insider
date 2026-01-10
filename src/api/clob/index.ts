@@ -155,6 +155,48 @@ export type {
   RateLimiterStats,
 } from "./rate-limiter";
 
+// CLOB Error Handler (API-CLOB-010)
+export {
+  // Enums
+  ClobErrorType,
+  ClobErrorSeverity,
+  ClobErrorCodes,
+  RecoveryAction,
+  // Classification functions
+  classifyClobError,
+  getRecoveryAction,
+  // Utility functions
+  calculateClobBackoffDelay,
+  shouldRetryClobError,
+  createClobErrorContext,
+  logClobError,
+  // Type checking functions
+  isClobErrorType,
+  isRetryableClobError,
+  hasRecoveryAction,
+  // Error handler class
+  ClobErrorHandler,
+  createClobErrorHandler,
+  // Shared handler management
+  getSharedClobErrorHandler,
+  resetSharedClobErrorHandler,
+  setSharedClobErrorHandler,
+  // Convenience wrappers
+  withClobErrorHandling,
+  withClobErrorHandlingOrThrow,
+  // Formatting
+  formatClobErrorMessage,
+} from "./error-handler";
+
+export type {
+  ClobErrorCode,
+  ClobErrorHandlerConfig,
+  ClobErrorLogger,
+  ClobErrorContext,
+  ClobErrorHandlerResult,
+  ClobWrapOptions,
+} from "./error-handler";
+
 export type {
   ClobClientConfig,
   ClobRequestOptions,

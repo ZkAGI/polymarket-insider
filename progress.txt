@@ -1064,3 +1064,94 @@ COMPLETED: API-CLOB-009 - CLOB API rate limiter
 - Browser smoke test passes
 - App loads correctly at localhost:3000
 - Next up: API-CLOB-010
+
+COMPLETED: API-CLOB-010 - CLOB API error handler
+- Created src/api/clob/error-handler.ts with comprehensive error handling:
+  - ClobErrorType enum with 19 CLOB-specific error types:
+    - NETWORK, TIMEOUT, SERVER, RATE_LIMIT (common errors)
+    - AUTH, FORBIDDEN (authentication/authorization errors)
+    - NOT_FOUND, VALIDATION (resource and validation errors)
+    - INSUFFICIENT_BALANCE, DUPLICATE_ORDER, ORDER_NOT_FOUND (order-specific)
+    - MARKET_CLOSED, NONCE_ERROR, SIGNATURE_ERROR (trading errors)
+    - INVALID_PRICE, INVALID_SIZE (validation errors)
+    - PARSE, CLIENT, UNKNOWN (general errors)
+  - ClobErrorSeverity enum: INFO, WARN, ERROR, CRITICAL
+  - ClobErrorCodes constants for all known CLOB API error codes:
+    - Authentication: MISSING_CREDENTIALS, INVALID_API_KEY, INVALID_SIGNATURE, EXPIRED_TIMESTAMP
+    - Order: ORDER_NOT_FOUND, DUPLICATE_ORDER, ORDER_ALREADY_FILLED, ORDER_ALREADY_CANCELLED
+    - Balance: INSUFFICIENT_BALANCE, INSUFFICIENT_ALLOWANCE
+    - Validation: INVALID_PRICE, INVALID_SIZE, SIZE_TOO_SMALL, SIZE_TOO_LARGE
+    - Market: MARKET_NOT_FOUND, MARKET_CLOSED, MARKET_PAUSED, MARKET_NOT_TRADEABLE
+    - Nonce: INVALID_NONCE, NONCE_TOO_LOW, NONCE_ALREADY_USED
+    - Rate: RATE_LIMITED, TOO_MANY_REQUESTS
+    - Server: INTERNAL_ERROR, SERVICE_UNAVAILABLE
+  - RecoveryAction enum for automated recovery:
+    - NONE, REFRESH_AUTH, WAIT_RATE_LIMIT, REFRESH_NONCE
+    - RESIGN_REQUEST, REFRESH_BALANCE, REFRESH_MARKET, RESUBMIT_ORDER
+- Error classification functions:
+  - classifyClobError(): Classify ClobApiException and standard errors by type, severity, status code
+  - getRecoveryAction(): Get suggested recovery action for error type
+  - Error code mapping for all known CLOB error codes
+  - Message pattern matching for common error scenarios
+  - getSeverityForType(): Map error types to appropriate severity levels
+- Backoff and retry logic:
+  - calculateClobBackoffDelay(): Exponential backoff with jitter
+  - shouldRetryClobError(): Check if error should be retried based on type and attempt count
+  - Default retryable errors: SERVER, RATE_LIMIT, NETWORK, TIMEOUT, NONCE_ERROR
+- Error context and logging:
+  - createClobErrorContext(): Build comprehensive error context with all metadata
+  - logClobError(): Log errors with appropriate severity levels
+  - Context includes: errorType, severity, statusCode, errorCode, attempt, retryDelay, operation, tokenId, orderId, recoveryAction
+  - formatClobErrorMessage(): Generate user-friendly error messages
+- ClobErrorHandler class:
+  - execute<T>(): Execute async function with retry logic, returns ClobErrorHandlerResult
+  - executeOrThrow<T>(): Execute and throw on failure
+  - wrap(), wrapOrThrow(): Function decorators for automatic error handling
+  - onError callback for error events
+  - onMaxRetriesExceeded callback for retry exhaustion
+  - onRecoverableError callback for recovery attempts
+  - Recovery flow: call recovery handler, retry if recovery succeeds
+- Type checking helpers:
+  - isClobErrorType(): Check if error is specific type(s)
+  - isRetryableClobError(): Check if error is retryable by default
+  - hasRecoveryAction(): Check if error has a recovery action
+- Singleton management:
+  - createClobErrorHandler(), getSharedClobErrorHandler()
+  - setSharedClobErrorHandler(), resetSharedClobErrorHandler()
+- Convenience wrappers:
+  - withClobErrorHandling(): Use shared handler for single operations
+  - withClobErrorHandlingOrThrow(): Use shared handler, throw on failure
+- Updated src/api/clob/index.ts with all new exports:
+  - Enums: ClobErrorType, ClobErrorSeverity, ClobErrorCodes, RecoveryAction
+  - Functions: classifyClobError, getRecoveryAction, calculateClobBackoffDelay, shouldRetryClobError,
+    createClobErrorContext, logClobError, isClobErrorType, isRetryableClobError, hasRecoveryAction,
+    createClobErrorHandler, getSharedClobErrorHandler, resetSharedClobErrorHandler, setSharedClobErrorHandler,
+    withClobErrorHandling, withClobErrorHandlingOrThrow, formatClobErrorMessage
+  - Class: ClobErrorHandler
+  - Types: ClobErrorCode, ClobErrorHandlerConfig, ClobErrorLogger, ClobErrorContext, ClobErrorHandlerResult, ClobWrapOptions
+- Created tests/api/clob/error-handler.test.ts with 111 comprehensive tests:
+  - Enum value verification (ClobErrorType, ClobErrorSeverity, ClobErrorCodes, RecoveryAction)
+  - ClobApiException classification (all status codes: 429, 401, 403, 404, 500, 502, 503, 400)
+  - Error code classification (all known CLOB error codes)
+  - Message-based classification (insufficient balance, order not found, market closed, nonce, signature, price, size, duplicate, rate limit)
+  - Standard Error classification (timeout, AbortError, network, ECONNREFUSED, ENOTFOUND, fetch failed, JSON parse, SyntaxError, unknown)
+  - Recovery action mapping for all error types
+  - Backoff delay calculation (exponential, max cap, jitter)
+  - shouldRetryClobError logic (retryable, max retries, custom list)
+  - createClobErrorContext (all fields, willRetry, recovery action)
+  - logClobError (severity levels, enableLogging, operation in message, tokenId/orderId in data)
+  - Type checking helpers (isClobErrorType, isRetryableClobError, hasRecoveryAction)
+  - ClobErrorHandler constructor (default config, custom config, custom logger)
+  - execute (success, non-retryable failure, retry on retryable, fail after max retries)
+  - Callbacks (onError, onMaxRetriesExceeded, onRecoverableError)
+  - Recovery flow (retry after successful recovery)
+  - executeOrThrow, wrap, wrapOrThrow methods
+  - createClobErrorHandler factory
+  - Shared handler singleton tests
+  - withClobErrorHandling and withClobErrorHandlingOrThrow
+  - formatClobErrorMessage for all error types
+- All 1003 tests pass (111 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes
+- App loads correctly at localhost:3000
+- Next up: API-CLOB-011
