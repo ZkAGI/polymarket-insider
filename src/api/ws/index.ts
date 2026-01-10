@@ -244,3 +244,48 @@ export type {
   MessageParserConfig,
   ParserStats,
 } from "./message-parser";
+
+// Heartbeat Handler (API-WS-007)
+export {
+  HeartbeatHandler,
+  createHeartbeatHandler,
+  getSharedHeartbeatHandler,
+  setSharedHeartbeatHandler,
+  resetSharedHeartbeatHandler,
+  attachHeartbeatHandler,
+  // Constants
+  DEFAULT_PING_INTERVAL,
+  DEFAULT_PONG_TIMEOUT,
+  DEFAULT_MISSED_PONGS_THRESHOLD,
+  DEFAULT_LATENCY_HISTORY_SIZE,
+  DEFAULT_STALE_THRESHOLD,
+  HeartbeatMessageType,
+  HeartbeatEventType,
+  // Utility functions
+  isPingMessage,
+  isPongMessage,
+  createPingMessage,
+  createPongMessage,
+  calculateAverage,
+} from "./heartbeat-handler";
+
+// Heartbeat Handler Types (API-WS-007)
+export type {
+  HeartbeatMessageTypeValue,
+  HeartbeatConfig,
+  HeartbeatStats,
+  HeartbeatEventTypeValue,
+  HeartbeatEvent,
+  PingSentEvent,
+  PongReceivedEvent,
+  PongTimeoutEvent,
+  StaleDetectedEvent,
+  HeartbeatFailureEvent,
+  HeartbeatStartedEvent,
+  HeartbeatStoppedEvent,
+  HeartbeatEventUnion,
+  HeartbeatEventListenerMap,
+  SendFunction,
+  ReconnectFunction,
+  AttachHeartbeatOptions,
+} from "./heartbeat-handler";

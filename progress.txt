@@ -1752,3 +1752,89 @@ COMPLETED: API-WS-006 - WebSocket message parser
 - TypeScript typecheck passes
 - Dev server verified running at localhost:3000
 - Next up: API-WS-007
+
+COMPLETED: API-WS-007 - WebSocket heartbeat handler
+- Created src/api/ws/heartbeat-handler.ts with comprehensive heartbeat management:
+  - Constants: DEFAULT_PING_INTERVAL (30000ms), DEFAULT_PONG_TIMEOUT (10000ms), DEFAULT_MISSED_PONGS_THRESHOLD (2), DEFAULT_LATENCY_HISTORY_SIZE (10), DEFAULT_STALE_THRESHOLD (60000ms)
+  - HeartbeatMessageType: PING, PONG, HEARTBEAT
+  - HeartbeatEventType: PING_SENT, PONG_RECEIVED, PONG_TIMEOUT, STALE_DETECTED, HEARTBEAT_FAILURE, HEARTBEAT_STARTED, HEARTBEAT_STOPPED
+- Type definitions:
+  - HeartbeatConfig: pingInterval, pongTimeout, missedPongsThreshold, latencyHistorySize, staleThreshold, autoStart, pingMessage, useJsonFormat, pongMatcher, debug, logger
+  - HeartbeatStats: totalPingsSent, totalPongsReceived, totalMissedPongs, consecutiveMissedPongs, avgLatencyMs, minLatencyMs, maxLatencyMs, lastPingAt, lastPongAt, lastActivityAt, isActive, isPongPending, isStale, latencyHistory
+  - Event types: PingSentEvent, PongReceivedEvent, PongTimeoutEvent, StaleDetectedEvent, HeartbeatFailureEvent, HeartbeatStartedEvent, HeartbeatStoppedEvent
+  - SendFunction and ReconnectFunction types
+- Utility functions:
+  - isPingMessage(): Check if message is a ping (plain text or JSON)
+  - isPongMessage(): Check if message is a pong (plain text or JSON)
+  - createPingMessage(useJson): Create ping message in plain or JSON format
+  - createPongMessage(useJson): Create pong message in plain or JSON format
+  - calculateAverage(values): Calculate average of number array
+- HeartbeatHandler class with full feature set:
+  - Constructor accepts HeartbeatConfig
+  - setSendFunction(fn): Set the function to send ping messages
+  - setReconnectFunction(fn): Set the function to trigger reconnection
+  - getConfig(): Get current configuration
+  - start(): Start heartbeat with ping interval and stale check
+  - stop(reason): Stop heartbeat and clear timers
+  - restart(): Stop and start heartbeat
+  - dispose(): Clean up all resources
+  - getIsDisposed(): Check if handler is disposed
+  - sendPing(): Manually send a ping
+  - handleMessage(message): Handle incoming message and check for pong
+  - notifyActivity(): Manually update last activity timestamp
+  - getStats(): Get current heartbeat statistics
+  - resetStats(): Reset all statistics
+  - getCurrentLatency(): Get most recent latency measurement
+  - getAverageLatency(): Get average latency
+  - isConnectionStale(): Check if connection is stale
+  - getIsActive(): Check if heartbeat is active
+- Event handling:
+  - on(event, listener): Add event listener with unsubscribe function
+  - off(event, listener): Remove event listener
+  - once(event, listener): Add one-time listener
+  - removeAllListeners(event?): Remove all listeners
+- Features:
+  - Configurable ping interval with customizable ping message (string or function)
+  - Pong timeout detection with configurable threshold
+  - Consecutive missed pongs tracking with failure threshold
+  - Stale connection detection based on inactivity
+  - Latency tracking with history and statistics (min, max, avg)
+  - Automatic reconnection trigger on heartbeat failure
+  - Support for both plain text and JSON ping/pong formats
+  - Custom pong message matcher support
+  - Debug logging support
+- Singleton management:
+  - createHeartbeatHandler(): Factory function
+  - getSharedHeartbeatHandler(), setSharedHeartbeatHandler(), resetSharedHeartbeatHandler()
+- Integration helper:
+  - attachHeartbeatHandler(options): Create and attach handler to connection
+- Updated src/api/ws/index.ts with all new exports
+- Created tests/api/ws/heartbeat-handler.test.ts with 96 comprehensive tests:
+  - Default constants tests
+  - HeartbeatMessageType constants tests
+  - HeartbeatEventType constants tests
+  - isPingMessage tests (plain, case insensitive, JSON, heartbeat, non-ping, invalid JSON)
+  - isPongMessage tests (plain, case insensitive, JSON, non-pong)
+  - createPingMessage tests (plain and JSON)
+  - createPongMessage tests (plain and JSON)
+  - calculateAverage tests (empty, single, multiple, decimals)
+  - HeartbeatHandler constructor tests (default, custom config, custom ping message)
+  - Lifecycle tests (start, stop, restart, dispose, events)
+  - Ping/pong tests (intervals, events, JSON format, custom messages)
+  - Pong timeout tests (timeout event, consecutive tracking, failure threshold, reconnect)
+  - Stale detection tests (detection, failure event, activity reset)
+  - Statistics tests (ping/pong counts, latency tracking, min/max, history limits, reset)
+  - Event handling tests (add, remove, once, removeAll, error handling)
+  - Send failure tests
+  - Factory and singleton tests
+  - attachHeartbeatHandler helper tests
+  - Edge cases (pong without pending, non-pong message, multiple dispose)
+  - Integration tests (ping-pong sequence, intermittent failures, recovery workflow)
+- Bug fixes during implementation:
+  - Fixed getCurrentLatency to handle undefined array access
+  - Fixed test type issues with SendFunction type annotation
+  - Adjusted stale detection tests timing for accurate threshold checks
+- All 1849 tests pass (96 new tests added)
+- TypeScript typecheck passes
+- Dev server verified running at localhost:3000
+- Next up: API-WS-008

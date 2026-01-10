@@ -31,11 +31,7 @@ import {
   setSharedMessageParser,
   resetSharedMessageParser,
 } from "../../../src/api/ws/message-parser";
-import type {
-  MessageSchema,
-  ParsedMessage,
-  ParserStats,
-} from "../../../src/api/ws/message-parser";
+import type { MessageSchema } from "../../../src/api/ws/message-parser";
 
 // ============================================================================
 // Constants Tests

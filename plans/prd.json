@@ -821,7 +821,8 @@
       "priority": 42,
       "name": "WebSocket heartbeat handler",
       "description": "Handle ping/pong heartbeat to maintain connection",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T19:48:00Z",
       "steps": [
         "Implement ping interval",
         "Handle pong responses",
