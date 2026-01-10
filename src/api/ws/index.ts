@@ -73,3 +73,43 @@ export type {
   ReconnectionState,
   ReconnectEventListenerMap,
 } from "./auto-reconnect";
+
+// Market Subscriptions (API-WS-003)
+export {
+  MarketSubscriptionClient,
+  createMarketSubscriptionClient,
+  getSharedMarketSubscriptionClient,
+  setSharedMarketSubscriptionClient,
+  resetSharedMarketSubscriptionClient,
+  // Constants
+  POLYMARKET_WS_URL,
+  SubscriptionMessageType,
+  SubscriptionChannel,
+  // Utility functions
+  generateSubscriptionId,
+  normalizeTokenIds,
+  buildSubscriptionMessage,
+  parseMessageTimestamp,
+  parsePriceUpdate,
+  isSubscriptionConfirmation,
+  isPriceUpdateMessage,
+  isErrorMessage,
+} from "./market-subscriptions";
+
+// Market Subscription Types (API-WS-003)
+export type {
+  SubscriptionMessageTypeValue,
+  SubscriptionChannelValue,
+  MarketSubscriptionRequest,
+  SubscriptionMessage,
+  SubscriptionConfirmation,
+  PriceUpdate,
+  ParsedPriceUpdate,
+  MarketSubscriptionInfo,
+  PriceUpdateEvent,
+  SubscriptionConfirmedEvent,
+  SubscriptionErrorEvent,
+  SignificantPriceChangeEvent,
+  MarketSubscriptionConfig,
+  MarketSubscriptionEventListenerMap,
+} from "./market-subscriptions";

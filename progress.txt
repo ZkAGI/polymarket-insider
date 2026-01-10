@@ -1403,4 +1403,75 @@ COMPLETED: API-WS-002 - WebSocket auto-reconnection
   - Fixed test for unhandled promise rejections using .catch() pattern
 - All 1301 tests pass (51 new tests added)
 - TypeScript typecheck passes
-- Next up: API-WS-003
+
+COMPLETED: API-WS-003 - Subscribe to market updates
+- Created src/api/ws/market-subscriptions.ts with comprehensive market subscription functionality:
+  - MarketSubscriptionClient class: Main client for subscribing to real-time price updates
+  - subscribe(): Subscribe to one or more market token IDs
+  - unsubscribe(), unsubscribeToken(), unsubscribeAll(): Unsubscribe from markets
+  - resubscribeAll(): Re-subscribe to all active subscriptions after reconnect
+  - getCurrentPrice(), getAllCurrentPrices(): Get current price data
+  - getSubscription(), getSubscriptionForToken(), getAllSubscriptions(): Query subscriptions
+  - Subscription tracking: count, token count, subscribed token IDs
+- Constants and types:
+  - POLYMARKET_WS_URL: "wss://ws-subscriptions-clob.polymarket.com/ws/market"
+  - SubscriptionMessageType: subscribe, unsubscribe, subscribed, unsubscribed, price_update, book, trade, error, ping, pong
+  - SubscriptionChannel: market, price, book, trades
+  - MarketSubscriptionRequest: Request config with tokenIds, channel, includeBook, includeTrades
+  - PriceUpdate: Raw price update from WebSocket
+  - ParsedPriceUpdate: Enriched with probability, midPrice, isSignificant, parsedTimestamp, receivedAt
+  - MarketSubscriptionInfo: Subscription state with prices map, update count, confirmed status
+  - Event types: PriceUpdateEvent, SubscriptionConfirmedEvent, SubscriptionErrorEvent, SignificantPriceChangeEvent
+- Utility functions:
+  - generateSubscriptionId(): Generate unique subscription ID
+  - normalizeTokenIds(): Convert string or array to array
+  - buildSubscriptionMessage(): Build Polymarket-compatible subscription message
+  - parseMessageTimestamp(): Parse ISO or Unix timestamps
+  - parsePriceUpdate(): Parse raw update into ParsedPriceUpdate with computed fields
+  - isSubscriptionConfirmation(), isPriceUpdateMessage(), isErrorMessage(): Type guards
+- Configuration options:
+  - wsUrl: Custom WebSocket URL
+  - significantChangeThreshold: Threshold for significant price changes (default 0.01 = 1%)
+  - autoSubscribe: Auto-subscribe on connect
+  - autoSubscribeTokenIds: Token IDs for auto-subscribe
+  - pingInterval: Heartbeat interval
+  - debug: Enable debug logging
+- Event system:
+  - priceUpdate: Emitted on price update
+  - subscriptionConfirmed: Emitted when subscription confirmed
+  - subscriptionError: Emitted on subscription error
+  - significantPriceChange: Emitted on price change above threshold
+  - connected, disconnected, reconnecting: Connection state events
+  - on(), off(), once(), removeAllListeners(): Event listener management
+- Integration with auto-reconnect:
+  - Uses ReconnectableConnection for auto-reconnection
+  - Subscription restoration after reconnect
+  - Pending confirmation tracking with timeout
+- Singleton management:
+  - createMarketSubscriptionClient(): Factory function
+  - getSharedMarketSubscriptionClient(), setSharedMarketSubscriptionClient(), resetSharedMarketSubscriptionClient()
+- Updated src/api/ws/index.ts with all new exports
+- Created tests/api/ws/market-subscriptions.test.ts with 88 comprehensive tests:
+  - Constants tests (POLYMARKET_WS_URL, SubscriptionMessageType, SubscriptionChannel)
+  - generateSubscriptionId tests (uniqueness, format)
+  - normalizeTokenIds tests (string, array, empty)
+  - buildSubscriptionMessage tests (single token, multiple, unsubscribe, channel, subscription ID)
+  - parseMessageTimestamp tests (ISO, Unix seconds/milliseconds, invalid)
+  - parsePriceUpdate tests (probability calculation, price change, significant detection, fallback fields, mid price, edge cases)
+  - isSubscriptionConfirmation, isPriceUpdateMessage, isErrorMessage tests
+  - MarketSubscriptionClient constructor tests (default config, custom URL)
+  - connect/disconnect tests (events, state transitions, disposed client)
+  - subscribe tests (single token, multiple, message format, errors, confirmation events, tracking)
+  - unsubscribe tests (by ID, by token, unknown, unsubscribe all)
+  - price update tests (events, price tracking, significant changes, update count)
+  - error handling tests (error messages)
+  - event handling tests (add/remove listeners, once, removeAllListeners)
+  - dispose tests (cleanup, idempotent)
+  - Shared client singleton tests
+- Bug fixes during implementation:
+  - Fixed floating-point precision issues in tests using toBeCloseTo()
+  - Removed unused type imports (PriceUpdate, SubscriptionConfirmation)
+- All 1389 tests pass (88 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes
+- Next up: API-WS-004
