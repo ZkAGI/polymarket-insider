@@ -540,3 +540,118 @@ export class PolygonscanError extends Error {
     }
   }
 }
+
+// ============================================================================
+// Token Balance Types (API-CHAIN-003)
+// ============================================================================
+
+/**
+ * Token information with balance
+ */
+export interface TokenBalance {
+  /** Token contract address */
+  contractAddress: string;
+
+  /** Token symbol (e.g., "USDC", "WETH") */
+  tokenSymbol: string;
+
+  /** Token name (e.g., "USD Coin", "Wrapped Ether") */
+  tokenName: string;
+
+  /** Token decimal places */
+  tokenDecimal: number;
+
+  /** Raw balance in smallest unit (wei for 18 decimals) */
+  balance: bigint;
+
+  /** Human-readable balance with decimals applied */
+  formattedBalance: string;
+}
+
+/**
+ * Native token (MATIC) balance
+ */
+export interface NativeBalance {
+  /** Balance in wei */
+  balance: bigint;
+
+  /** Human-readable balance in MATIC */
+  formattedBalance: string;
+}
+
+/**
+ * ERC721 NFT token
+ */
+export interface NFTToken {
+  /** Token contract address */
+  contractAddress: string;
+
+  /** Token ID */
+  tokenId: string;
+
+  /** Token name */
+  tokenName: string;
+
+  /** Token symbol */
+  tokenSymbol: string;
+
+  /** Token URI (metadata URL) */
+  tokenUri?: string;
+}
+
+/**
+ * ERC1155 multi-token balance
+ */
+export interface ERC1155Balance {
+  /** Token contract address */
+  contractAddress: string;
+
+  /** Token ID */
+  tokenId: string;
+
+  /** Token name */
+  tokenName: string;
+
+  /** Token symbol */
+  tokenSymbol: string;
+
+  /** Token value/amount */
+  tokenValue: bigint;
+}
+
+/**
+ * Complete wallet balance summary
+ */
+export interface WalletBalanceSummary {
+  /** Wallet address */
+  address: string;
+
+  /** Native MATIC balance */
+  nativeBalance: NativeBalance;
+
+  /** ERC20 token balances */
+  tokens: TokenBalance[];
+
+  /** Total number of unique tokens held */
+  tokenCount: number;
+}
+
+/**
+ * Options for fetching token balances
+ */
+export interface TokenBalanceOptions {
+  /** Specific contract address to query (for single token balance) */
+  contractAddress?: string;
+
+  /** Include zero balances (default: false) */
+  includeZeroBalances?: boolean;
+
+  /** Page number for pagination (1-indexed) */
+  page?: number;
+
+  /** Number of results per page (max 10000) */
+  pageSize?: number;
+
+  /** Sort order */
+  sort?: "asc" | "desc";
+}

@@ -2112,3 +2112,41 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - All 2189 tests pass (49 new tests added)
 - TypeScript typecheck passes
 - Next up: API-CHAIN-003 (Fetch wallet token balances)
+
+
+## API-CHAIN-003: Fetch Wallet Token Balances - COMPLETED
+- Created src/api/chain/balances.ts with TokenBalanceClient class:
+  - getNativeBalance: Fetch native MATIC balance for a wallet
+  - getTokenBalance: Fetch specific ERC20 token balance for a wallet
+  - getTokenBalances: Fetch all ERC20 token balances (via transfer history discovery)
+  - getNFTTokens: Fetch ERC721 NFT tokens held by a wallet
+  - getERC1155Balances: Fetch ERC1155 multi-token balances
+  - getWalletBalanceSummary: Complete wallet balance summary (native + tokens)
+  - Retry logic with exponential backoff
+  - API key support for higher rate limits
+  - Token transfer history analysis to discover held tokens
+  - NFT ownership tracking (handles transfers in/out)
+  - ERC1155 balance calculation from transfer history
+- Updated src/api/chain/types.ts with new types:
+  - TokenBalance: ERC20 token with balance and formatted value
+  - NativeBalance: Native MATIC balance with formatted value
+  - NFTToken: ERC721 NFT token data
+  - ERC1155Balance: ERC1155 multi-token balance
+  - WalletBalanceSummary: Complete wallet balance overview
+  - TokenBalanceOptions: Options for balance queries
+- Updated src/api/chain/index.ts to export new types and functions
+- Created tests/api/chain/balances.test.ts with 51 test cases covering:
+  - TokenBalanceClient constructor and configuration
+  - getNativeBalance (MATIC balance, formatting, zero balance, validation)
+  - getTokenBalance (specific token, decimals, zero balance handling)
+  - getTokenBalances (token discovery, pagination, zero balance filtering)
+  - getNFTTokens (ownership tracking, transfer out handling)
+  - getERC1155Balances (balance calculation, multiple tokens)
+  - getWalletBalanceSummary (complete summary)
+  - Error handling (HTTP errors, rate limits, retry logic)
+  - Factory functions and singleton management
+  - Convenience functions with shared/custom client
+- All 2240 tests pass (51 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes - app loads correctly at localhost:3000
+- Next up: API-CHAIN-004 (Fetch wallet creation date)

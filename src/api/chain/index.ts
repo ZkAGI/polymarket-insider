@@ -1,5 +1,5 @@
 /**
- * Polygon Chain API Exports (API-CHAIN-001, API-CHAIN-002)
+ * Polygon Chain API Exports (API-CHAIN-001, API-CHAIN-002, API-CHAIN-003)
  *
  * This module provides blockchain interaction capabilities for the Polygon network.
  */
@@ -27,6 +27,13 @@ export type {
   WalletHistoryOptions,
   WalletHistoryResult,
   PolygonscanConfig,
+  // API-CHAIN-003: Token Balance Types
+  TokenBalance,
+  NativeBalance,
+  NFTToken,
+  ERC1155Balance,
+  WalletBalanceSummary,
+  TokenBalanceOptions,
 } from "./types";
 
 export { PolygonClientError, PolygonscanError } from "./types";
@@ -53,3 +60,18 @@ export {
   getInternalTransactions,
   getTransactionCount,
 } from "./history";
+
+// API-CHAIN-003: Token Balances
+export {
+  TokenBalanceClient,
+  createTokenBalanceClient,
+  getSharedTokenBalanceClient,
+  setSharedTokenBalanceClient,
+  resetSharedTokenBalanceClient,
+  getNativeBalance,
+  getTokenBalance,
+  getTokenBalances,
+  getNFTTokens,
+  getERC1155Balances,
+  getWalletBalanceSummary,
+} from "./balances";
