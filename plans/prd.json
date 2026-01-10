@@ -1042,7 +1042,8 @@
       "priority": 53,
       "name": "Identify wallet funding sources",
       "description": "Trace where wallet funds originated from",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T00:45:00Z",
       "steps": [
         "Trace incoming transfers",
         "Identify exchange wallets",

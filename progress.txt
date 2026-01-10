@@ -2411,3 +2411,106 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - TypeScript typecheck passes
 - Browser smoke test passes
 - Next up: API-CHAIN-008 (Identify wallet funding sources)
+
+
+## API-CHAIN-008: Identify Wallet Funding Sources - COMPLETED
+- Created src/api/chain/funding-source.ts with FundingSourceTracker class:
+  - Trace where wallet funds originated from
+  - Identify known exchange wallets (CEX addresses)
+  - Flag mixer/privacy tools (Tornado Cash, Railgun, etc.)
+  - Build funding graph for visualization
+  - Calculate risk scores and risk levels
+- Constants defined:
+  - KNOWN_EXCHANGES: Record of known CEX addresses (Binance, Coinbase, Kraken, OKX, KuCoin, Gate.io, Huobi, Bybit, Gemini, Bitfinex)
+  - KNOWN_MIXERS: Record of known mixer/privacy tool addresses (Tornado Cash pools, Railgun)
+  - KNOWN_DEFI_PROTOCOLS: Record of known DeFi protocols (Uniswap, QuickSwap, SushiSwap, 1inch, Aave, Curve, Stargate, Multichain, Polygon Bridge)
+- Types defined:
+  - ExchangeInfo: Exchange wallet information (name, type, subtype, trustLevel)
+  - MixerInfo: Mixer/privacy tool info (name, type, riskLevel, sanctioned, description)
+  - DefiProtocolInfo: DeFi protocol info (name, type, trustLevel)
+  - FundingSourceType: "exchange" | "mixer" | "defi" | "contract" | "eoa" | "unknown"
+  - FundingRiskLevel: "critical" | "high" | "medium" | "low" | "none"
+  - FundingSource: Individual funding source details
+  - FundingEdge: Edge in the funding graph
+  - FundingGraph: Complete graph with nodes and edges
+  - FundingGraphNode: Node in the funding graph
+  - FundingAnalysis: Complete analysis result
+  - RiskFactor: Risk factor detail with points
+  - FundingSummary: Summary statistics
+  - FundingSourceConfig: Tracker configuration
+  - FundingSourceEvent: Event data
+- FundingSourceTracker class features:
+  - analyzeFundingSources(): Full analysis of wallet funding with graph, risk, summary
+  - getIncomingTransfers(): Get incoming transfers to a wallet
+  - isExchange(): Check if address is a known exchange
+  - getExchangeInfo(): Get exchange info for address
+  - isMixer(): Check if address is a known mixer
+  - getMixerInfo(): Get mixer info for address
+  - isDefiProtocol(): Check if address is a known DeFi protocol
+  - getDefiProtocolInfo(): Get DeFi protocol info for address
+  - isSanctioned(): Check if address is sanctioned (OFAC)
+  - identifyAddressType(): Identify the type of an address
+  - getRiskLevel(): Get risk level for an address
+  - getStats(): Get tracker statistics
+- Risk calculation:
+  - 50 points for sanctioned sources (critical)
+  - 30 points for non-sanctioned mixer sources (high)
+  - 15 points for high unknown ratio (>50%)
+  - 10 points for deep funding chains (depth > 2)
+  - Risk levels: critical (>=50), high (>=30), medium (>=15), low (>0), none (0)
+- Event emission:
+  - "sourceIdentified": When a funding source is identified
+  - "mixerDetected": When mixer/privacy tool is detected
+  - "exchangeDetected": When exchange wallet is detected
+  - "analysisComplete": When analysis completes
+  - "error": On errors
+- Configurable options:
+  - polygonscanClient: Custom client for fetching transactions
+  - maxDepth: Maximum depth to trace (default: 3)
+  - minTransferAmount: Minimum transfer amount to consider (default: 1 USDC)
+  - maxFundingSources: Maximum sources to return (default: 50)
+  - lookbackBlocks: Number of blocks to look back
+  - additionalExchanges: Custom exchange addresses to track
+  - additionalMixers: Custom mixer addresses to track
+  - additionalDefiProtocols: Custom DeFi protocol addresses to track
+  - debug: Enable debug logging
+  - logger: Custom logger implementation
+- Factory functions:
+  - createFundingSourceTracker(): Create new instance
+  - getSharedFundingSourceTracker(): Get singleton instance
+  - setSharedFundingSourceTracker(): Set singleton instance
+  - resetSharedFundingSourceTracker(): Reset singleton
+- Convenience functions:
+  - analyzeFundingSources(): Analyze wallet funding
+  - getWalletFundingTransfers(): Get incoming transfers
+  - isKnownExchange(): Check if known exchange
+  - isKnownMixer(): Check if known mixer
+  - isSanctionedAddress(): Check if sanctioned
+  - getExchangeInfoForAddress(): Get exchange info
+  - getMixerInfoForAddress(): Get mixer info
+  - identifyAddress(): Identify address type
+  - getAddressRiskLevel(): Get risk level
+- Updated src/api/chain/index.ts to export all new types and functions
+- Created tests/api/chain/funding-source.test.ts with 106 test cases covering:
+  - Constructor (default config, custom config, additional addresses, custom logger)
+  - isExchange (Binance, Coinbase, Kraken, non-exchange, case-insensitive)
+  - getExchangeInfo (Binance, Coinbase, unknown)
+  - isMixer (Tornado Cash pools, Railgun, non-mixer, case-insensitive)
+  - getMixerInfo (Tornado Cash sanctioned, Railgun not sanctioned)
+  - isDefiProtocol (Uniswap, Polygon Bridge, Aave, case-insensitive)
+  - getDefiProtocolInfo (Uniswap, Polygon Bridge)
+  - isSanctioned (Tornado Cash true, Railgun false, exchange false)
+  - identifyAddressType (exchange, mixer, defi, eoa, unknown)
+  - getRiskLevel (critical for sanctioned, high for mixers, low for exchanges)
+  - getStats (counts for all known addresses)
+  - getIncomingTransfers (validation, filtering, pagination)
+  - analyzeFundingSources (exchange sources, mixer sources, summaries, events, graphs)
+  - Risk calculation (sanctioned points, mixer points, risk levels)
+  - Factory functions and singleton management
+  - Convenience functions
+  - Constants (KNOWN_EXCHANGES, KNOWN_MIXERS, KNOWN_DEFI_PROTOCOLS)
+  - Edge cases (mixed case, large amounts, zero transfers, self-transfers, multiple transfers)
+  - Real-world scenarios (multiple exchanges, mixer funding, DeFi protocols, bridges)
+- All 2622 tests pass (106 new tests added)
+- TypeScript typecheck passes
+- Next up: API-DB-001 (Database schema design)

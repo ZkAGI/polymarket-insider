@@ -194,3 +194,44 @@ export {
   formatUSDCAmount,
   parseUSDCAmount,
 } from "./usdc-tracker";
+
+// API-CHAIN-008: Wallet Funding Source Identification
+export type {
+  ExchangeInfo,
+  MixerInfo,
+  DefiProtocolInfo,
+  FundingSourceType,
+  FundingRiskLevel,
+  FundingSource,
+  FundingEdge,
+  FundingGraph,
+  FundingGraphNode,
+  FundingAnalysis,
+  RiskFactor,
+  FundingSummary,
+  FundingSourceConfig,
+  FundingSourceLogger,
+  FundingSourceEventType,
+  FundingSourceEvent,
+  FundingSourceEventListener,
+} from "./funding-source";
+
+export {
+  KNOWN_EXCHANGES,
+  KNOWN_MIXERS,
+  KNOWN_DEFI_PROTOCOLS,
+  FundingSourceTracker,
+  createFundingSourceTracker,
+  getSharedFundingSourceTracker,
+  setSharedFundingSourceTracker,
+  resetSharedFundingSourceTracker,
+  analyzeFundingSources,
+  getWalletFundingTransfers,
+  isKnownExchange,
+  isKnownMixer,
+  isSanctionedAddress,
+  getExchangeInfoForAddress,
+  getMixerInfoForAddress,
+  identifyAddress,
+  getAddressRiskLevel,
+} from "./funding-source";
