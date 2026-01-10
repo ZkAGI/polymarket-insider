@@ -62,7 +62,7 @@ describe("CleanupService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     service = createCleanupService({
-      prisma: mockPrismaClient as unknown as Parameters<typeof createCleanupService>[0]["prisma"],
+      prisma: mockPrismaClient as unknown as NonNullable<Parameters<typeof createCleanupService>[0]>["prisma"],
       logger: mockLogger,
     });
   });
@@ -80,7 +80,7 @@ describe("CleanupService", () => {
 
     it("should create service with custom configuration", () => {
       const customService = createCleanupService({
-        prisma: mockPrismaClient as unknown as Parameters<typeof createCleanupService>[0]["prisma"],
+        prisma: mockPrismaClient as unknown as NonNullable<Parameters<typeof createCleanupService>[0]>["prisma"],
         defaultBatchSize: 500,
         logger: mockLogger,
       });
@@ -97,7 +97,7 @@ describe("CleanupService", () => {
         },
       ];
       const customService = createCleanupServiceWithConfigs(customConfigs, {
-        prisma: mockPrismaClient as unknown as Parameters<typeof createCleanupService>[0]["prisma"],
+        prisma: mockPrismaClient as unknown as NonNullable<Parameters<typeof createCleanupService>[0]>["prisma"],
         logger: mockLogger,
       });
       expect(customService.getAllRetentionConfigs()).toHaveLength(1);
@@ -179,7 +179,7 @@ describe("CleanupService", () => {
     it("should create new retention config if not exists", () => {
       // First remove all configs
       const customService = createCleanupServiceWithConfigs([], {
-        prisma: mockPrismaClient as unknown as Parameters<typeof createCleanupService>[0]["prisma"],
+        prisma: mockPrismaClient as unknown as NonNullable<Parameters<typeof createCleanupService>[0]>["prisma"],
         logger: mockLogger,
       });
 
@@ -285,7 +285,7 @@ describe("CleanupService", () => {
 
     it("should return error for missing retention config", async () => {
       const customService = createCleanupServiceWithConfigs([], {
-        prisma: mockPrismaClient as unknown as Parameters<typeof createCleanupService>[0]["prisma"],
+        prisma: mockPrismaClient as unknown as NonNullable<Parameters<typeof createCleanupService>[0]>["prisma"],
         logger: mockLogger,
       });
 
@@ -455,7 +455,7 @@ describe("CleanupService", () => {
 
       const archives = service.getArchiveRecords();
       expect(archives).toHaveLength(1);
-      expect(archives[0].dataType).toBe("trades");
+      expect(archives[0]!.dataType).toBe("trades");
     });
   });
 
@@ -484,7 +484,7 @@ describe("CleanupService", () => {
       await service.cleanupDataType("trades");
 
       const archives = service.getArchiveRecords();
-      const archive = service.getArchiveRecord(archives[0].id);
+      const archive = service.getArchiveRecord(archives[0]!.id);
       expect(archive).toBeDefined();
     });
 
@@ -516,9 +516,9 @@ describe("CleanupService", () => {
 
       const logs = service.getCleanupLogs();
       expect(logs).toHaveLength(1);
-      expect(logs[0].dataType).toBe("trades");
-      expect(logs[0].success).toBe(true);
-      expect(logs[0].recordCount).toBe(5);
+      expect(logs[0]!.dataType).toBe("trades");
+      expect(logs[0]!.success).toBe(true);
+      expect(logs[0]!.recordCount).toBe(5);
     });
 
     it("should log failed operations", async () => {
@@ -528,8 +528,8 @@ describe("CleanupService", () => {
 
       const logs = service.getCleanupLogs();
       expect(logs).toHaveLength(1);
-      expect(logs[0].success).toBe(false);
-      expect(logs[0].error).toBe("DB error");
+      expect(logs[0]!.success).toBe(false);
+      expect(logs[0]!.error).toBe("DB error");
     });
   });
 
@@ -556,7 +556,7 @@ describe("CleanupService", () => {
 
       const tradeLogs = service.getCleanupLogsByType("trades");
       expect(tradeLogs).toHaveLength(1);
-      expect(tradeLogs[0].dataType).toBe("trades");
+      expect(tradeLogs[0]!.dataType).toBe("trades");
     });
   });
 

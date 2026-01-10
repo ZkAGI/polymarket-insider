@@ -3251,3 +3251,112 @@ NOTES:
 - Batch processing support via batchSize option
 - Next up: API-DB-009 (Database indexing optimization)
 
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: API-DB-009 - Database indexing optimization
+- Implemented comprehensive index optimization service
+
+INDEX SERVICE (src/db/indexes.ts):
+- IndexService class for analyzing and documenting database indexes
+- Comprehensive INDEX_CATALOG with 74 documented index definitions
+- QUERY_PATTERNS catalog with 10 common query patterns
+
+TYPES AND INTERFACES:
+- IndexType: btree, hash, gin, gist, brin
+- IndexDefinition: Full index documentation including:
+  - table, indexName, columns, isUnique, type
+  - description, queryPatterns, isComposite
+  - priority (1-3), sizeCategory (small/medium/large)
+- QueryPlan: EXPLAIN output parsing
+- QueryPerformance: EXPLAIN ANALYZE results with recommendations
+- IndexUsageStats: pg_stat_user_indexes data
+- TableStats: pg_stat_user_tables data
+- IndexRecommendation: Automated optimization suggestions
+- QueryPattern: Common query pattern documentation
+
+INDEX CATALOG COVERAGE (74 indexes documented):
+- Market: 10 indexes (category, active, volume, endDate, composite)
+- Outcome: 3 indexes (marketId, clobTokenId, price)
+- Wallet: 17 indexes (isWhale, isInsider, isFresh, suspicionScore, composite)
+- Trade: 12 indexes (marketId, walletId, timestamp, isWhale, composite)
+- PriceHistory: 5 indexes (market+timestamp, outcome+timestamp, interval)
+- MarketSnapshot: 3 indexes (marketId, timestamp, composite)
+- WalletSnapshot: 3 indexes (walletId, timestamp, composite)
+- Alert: 9 indexes (type, severity, read, acknowledged, composite)
+- SyncLog: 4 indexes (syncType, entityType, status, startedAt)
+- JobQueue: 5 indexes (jobType, status, priority, scheduledFor, composite)
+- WalletFundingSource: 5 indexes (walletId, sourceAddress, sourceType, riskLevel)
+- WalletCluster: 3 indexes (clusterType, confidence, totalVolume)
+- WalletClusterMember: 2 indexes (clusterId, walletId)
+
+QUERY PATTERN DOCUMENTATION (10 patterns):
+- active_markets_by_category (very_high frequency)
+- wallet_trade_history (very_high frequency)
+- market_trade_feed (very_high frequency)
+- whale_trade_alerts (high frequency)
+- unread_alerts (very_high frequency)
+- market_price_chart (very_high frequency)
+- top_whales_leaderboard (high frequency)
+- pending_jobs (very_high frequency)
+- high_risk_wallets (high frequency)
+- wallet_positions_in_market (high frequency)
+
+INDEX SERVICE FEATURES:
+Catalog Access:
+- getAllIndexes(): Get all documented indexes
+- getIndexesForTable(): Get indexes for a specific table
+- getCompositeIndexes(): Get composite indexes only
+- getIndexesByPriority(): Filter by priority level
+- getIndexesForQueryPattern(): Find indexes for a query pattern
+- getIndexById(): Get index by ID
+
+Query Pattern Access:
+- getAllQueryPatterns(): Get all query patterns
+- getQueryPatternById(): Get pattern by ID
+- getQueryPatternsByFrequency(): Filter by frequency
+- getQueryPatternsForTable(): Get patterns for a table
+
+Query Analysis:
+- analyzeQuery(): Run EXPLAIN and parse results
+- analyzeQueryWithExecution(): Run EXPLAIN ANALYZE with metrics
+
+Database Statistics:
+- getIndexUsageStats(): Get pg_stat_user_indexes data
+- getTableStats(): Get pg_stat_user_tables data
+- getUnusedIndexes(): Find indexes with zero scans
+- getIndexEfficiencyRanking(): Rank by efficiency score
+
+Recommendations:
+- generateRecommendations(): Automated optimization suggestions
+- getSummary(): Get index/pattern summary statistics
+
+INDEX EXPORTS (src/db/index.ts):
+- IndexService, indexService, createIndexService
+- INDEX_CATALOG, QUERY_PATTERNS
+- All type exports for index module
+
+TESTS:
+- Created tests/db/indexes.test.ts with 59 comprehensive tests:
+  - Constructor and configuration tests
+  - INDEX_CATALOG validation tests
+  - QUERY_PATTERNS validation tests
+  - Catalog access method tests
+  - Query pattern access tests
+  - Query analysis tests
+  - Database statistics tests
+  - Recommendation generation tests
+  - Coverage verification for all tables
+- All 3250 tests pass (59 new + 3191 existing)
+
+BUGFIX:
+- Fixed TypeScript errors in tests/db/cleanup.test.ts (NonNullable types)
+
+NOTES:
+- Indexes are documented but not created by this service
+- Schema already has all indexes defined in prisma/schema.prisma
+- Service provides analysis and documentation utilities
+- Recommendations help identify missing or unused indexes
+- Query performance analysis uses PostgreSQL EXPLAIN
+- Next up: API-DB-010 (Time-series data storage)
+

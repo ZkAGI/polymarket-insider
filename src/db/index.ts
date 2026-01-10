@@ -180,3 +180,23 @@ export type {
   CleanupServiceConfig,
   ScheduledCleanupConfig,
 } from "./cleanup";
+
+// Index optimization service exports
+export {
+  IndexService,
+  indexService,
+  createIndexService,
+  INDEX_CATALOG,
+  QUERY_PATTERNS,
+} from "./indexes";
+export type {
+  IndexType,
+  IndexDefinition,
+  QueryPlan,
+  QueryPerformance,
+  IndexUsageStats,
+  TableStats,
+  IndexRecommendation,
+  QueryPattern,
+  IndexServiceConfig,
+} from "./indexes";
