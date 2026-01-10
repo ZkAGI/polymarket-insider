@@ -962,7 +962,8 @@
       "priority": 49,
       "name": "Fetch wallet creation date",
       "description": "Determine when a wallet address was first used on-chain",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T22:00:00Z",
       "steps": [
         "Find first transaction",
         "Parse block timestamp",

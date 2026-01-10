@@ -75,3 +75,22 @@ export {
   getERC1155Balances,
   getWalletBalanceSummary,
 } from "./balances";
+
+// API-CHAIN-004: Wallet Creation Date
+export type {
+  WalletCreationDate,
+  WalletCreationDateOptions,
+  WalletCreationDateCacheConfig,
+} from "./creation-date";
+
+export {
+  WalletCreationDateClient,
+  createWalletCreationDateClient,
+  getSharedWalletCreationDateClient,
+  setSharedWalletCreationDateClient,
+  resetSharedWalletCreationDateClient,
+  getWalletCreationDate,
+  getWalletAgeInDays,
+  isWalletFresh,
+  batchGetCreationDates,
+} from "./creation-date";

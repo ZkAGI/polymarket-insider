@@ -2150,3 +2150,36 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - TypeScript typecheck passes
 - Browser smoke test passes - app loads correctly at localhost:3000
 - Next up: API-CHAIN-004 (Fetch wallet creation date)
+
+
+## API-CHAIN-004: Fetch Wallet Creation Date - COMPLETED
+- Created src/api/chain/creation-date.ts with WalletCreationDateClient class:
+  - getWalletCreationDate: Find first transaction and return creation date/timestamp
+  - getWalletAgeInDays: Convenience method to get wallet age in days
+  - isWalletFresh: Check if wallet is newer than a threshold (default: 30 days)
+  - batchGetCreationDates: Batch fetch creation dates for multiple addresses
+  - In-memory caching with configurable TTL (default: 1 hour)
+  - Cache eviction when max entries reached (evicts at least 1 or 10% oldest entries)
+  - Support for including internal transactions in search
+  - Handle empty wallets (no transactions)
+  - Cache statistics and invalidation methods
+- Updated src/api/chain/index.ts to export new types and functions:
+  - WalletCreationDate type (creation date, timestamp, first tx hash, age)
+  - WalletCreationDateOptions type (client, bypassCache, includeInternalTransactions)
+  - WalletCreationDateCacheConfig type (ttlMs, maxEntries, enabled)
+  - Factory functions (createWalletCreationDateClient, getSharedWalletCreationDateClient, etc.)
+  - Convenience functions (getWalletCreationDate, getWalletAgeInDays, isWalletFresh, batchGetCreationDates)
+- Created tests/api/chain/creation-date.test.ts with 42 test cases covering:
+  - WalletCreationDateClient constructor and configuration
+  - getWalletCreationDate (successful fetch, age calculation, empty wallet, internal txs)
+  - getWalletAgeInDays (age calculation, empty wallet handling)
+  - isWalletFresh (threshold checking, empty wallet as fresh, default threshold)
+  - batchGetCreationDates (multiple addresses, invalid address skipping)
+  - Caching (cache hits, bypass, clear, invalidate, eviction)
+  - Cache statistics
+  - Factory functions and singleton management
+  - Convenience functions with shared/custom client
+  - Edge cases (zero timestamp, very old wallet, internal-only transactions, lowercase address)
+- All 2282 tests pass (42 new tests added)
+- TypeScript typecheck passes
+- Next up: API-CHAIN-005 (Monitor wallet for new transactions)
