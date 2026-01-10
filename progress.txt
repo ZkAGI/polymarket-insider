@@ -2769,3 +2769,118 @@ NOTES:
 - Relations (market, outcome, wallet) can be optionally included in queries
 - Time-series grouping done in memory for simplicity (can optimize with DB functions)
 
+
+COMPLETED: API-DB-004 - Wallets table and model
+- Created src/db/wallets.ts with comprehensive WalletService class
+- WalletService provides full CRUD operations for the Wallet model:
+  - create(): Create a new wallet with address normalization
+  - findById(): Find wallet by ID with optional relation includes
+  - findByAddress(): Find wallet by address (normalized to lowercase)
+  - findByIds(): Find multiple wallets by ID array
+  - findByAddresses(): Find multiple wallets by address array
+  - update(): Update wallet fields
+  - updateByAddress(): Update wallet by address
+  - upsertByAddress(): Create or update wallet by address
+  - delete(): Delete single wallet by ID
+  - deleteByAddress(): Delete wallet by address
+  - deleteMany(): Delete multiple wallets by IDs
+  - findMany(): Query wallets with filters, sorting, pagination
+  - findWhales(): Find whale wallets
+  - findInsiders(): Find insider wallets
+  - findFresh(): Find fresh/new wallets
+  - findMonitored(): Find monitored wallets
+  - findFlagged(): Find flagged wallets
+  - findSanctioned(): Find sanctioned wallets
+  - findByRiskLevel(): Find wallets by risk level
+  - findHighRisk(): Find MEDIUM, HIGH, CRITICAL risk wallets
+  - getTopByVolume(): Top wallets by total volume
+  - getTopBySuspicionScore(): Top wallets by suspicion score
+  - getTopByTradeCount(): Top wallets by trade count
+  - getTopByPnl(): Top wallets by PnL
+  - getRecentlyActive(): Recently active wallets
+  - getNewest(): Newest wallets
+  - count(): Count wallets matching filters
+  - exists(): Check if wallet exists by ID
+  - existsByAddress(): Check if wallet exists by address
+  - createMany(): Bulk create wallets (skip duplicates)
+  - markAsWhale(): Flag wallet as whale
+  - markAsInsider(): Flag wallet as insider
+  - markAsFresh(): Flag wallet as fresh
+  - markAsMonitored(): Flag wallet for monitoring
+  - markAsFlagged(): Flag wallet for suspicious activity
+  - markAsSanctioned(): Flag wallet as sanctioned (sets CRITICAL risk)
+  - unmark(): Remove a flag from wallet
+  - updateSuspicionScore(): Update score with auto risk level calculation
+  - updateRiskLevel(): Update risk level directly
+  - incrementTradeStats(): Increment trade count, volume, etc.
+  - updateOnChainData(): Update wallet creation date, tx count, age
+  - getStats(): Aggregate statistics (count, volume, suspicion, flags)
+  - getCountByRiskLevel(): Wallet counts grouped by risk level
+  - getCountByWalletType(): Wallet counts grouped by wallet type
+  - search(): Search wallets by address or label
+  - findOrCreate(): Find or create wallet by address
+- Type exports:
+  - Wallet, WalletType, RiskLevel, FundingSourceType (from Prisma)
+  - WalletWithTrades, WalletWithAlerts, WalletWithFundingSources
+  - WalletWithSnapshots, WalletWithClusters, WalletWithRelations
+  - CreateWalletInput, UpdateWalletInput
+  - WalletFilters, WalletSortOptions
+  - PaginationOptions, PaginatedWalletResult
+  - WalletIncludeOptions, WalletServiceConfig, WalletStats
+- Filter support:
+  - walletType, isWhale, isInsider, isFresh, isMonitored, isFlagged, isSanctioned
+  - riskLevel, primaryFundingSource
+  - minSuspicionScore, maxSuspicionScore
+  - minTotalVolume, maxTotalVolume
+  - minTradeCount, maxTradeCount
+  - minWinRate, maxWinRate
+  - firstTradeAfter, firstTradeBefore
+  - lastTradeAfter, lastTradeBefore
+  - walletCreatedAfter, walletCreatedBefore
+  - labelContains, addressContains
+- Sort support: suspicionScore, totalVolume, totalPnl, tradeCount, winRate,
+  firstTradeAt, lastTradeAt, walletCreatedAt, createdAt, updatedAt
+- Created tests/db/wallets.test.ts with 122 comprehensive unit tests:
+  - Constructor tests
+  - Create tests (required fields, all fields, address normalization)
+  - FindById tests (found, not found, with each relation, all relations)
+  - FindByAddress tests (found, not found, normalization)
+  - FindByIds, FindByAddresses tests
+  - Update tests (fields, nullable to null)
+  - UpdateByAddress tests
+  - UpsertByAddress tests (create new, update existing)
+  - Delete tests (by ID, by address, deleteMany)
+  - FindMany tests (all filters, sorting, pagination, hasMore)
+  - FindWhales, FindInsiders, FindFresh, FindMonitored, FindFlagged, FindSanctioned tests
+  - FindByRiskLevel, FindHighRisk tests
+  - GetTopBy* tests (volume, suspicionScore, tradeCount, PnL)
+  - GetRecentlyActive, GetNewest tests
+  - Count tests (no filters, with filters)
+  - Exists/ExistsByAddress tests
+  - CreateMany tests
+  - Mark* tests (whale, insider, fresh, monitored, flagged, sanctioned)
+  - Unmark tests
+  - UpdateSuspicionScore tests (all risk levels, clamping)
+  - UpdateRiskLevel tests
+  - IncrementTradeStats tests (stats update, max size, win tracking, firstTradeAt)
+  - UpdateOnChainData tests
+  - GetStats tests (aggregates, null handling)
+  - GetCountByRiskLevel, GetCountByWalletType tests
+  - Search tests (by address, by label)
+  - FindOrCreate tests (existing, new, with defaults)
+  - All sort field variations
+- Updated src/db/index.ts to export WalletService and types
+- All 2884 tests pass (122 new tests added)
+- TypeScript typecheck passes
+- Next up: API-DB-005 (Alerts table and model)
+
+NOTES:
+- Wallet model was already defined in Prisma schema from API-DB-001
+- This feature focuses on the service layer for database operations
+- Tests use mocked Prisma client to avoid database dependency
+- WalletService can be injected with custom Prisma client for testing
+- Default singleton instance available via walletService export
+- Address normalization ensures consistent lowercase storage/lookup
+- SuspicionScore auto-determines riskLevel based on thresholds (0-20:NONE, 20-40:LOW, 40-60:MEDIUM, 60-80:HIGH, 80+:CRITICAL)
+- Relations (trades, alerts, fundingSources, snapshots, walletClusters) can be optionally included in queries
+

@@ -58,3 +58,30 @@ export type {
   TradeServiceConfig,
   TradeStats,
 } from "./trades";
+
+// Wallet service exports
+export {
+  WalletService,
+  walletService,
+  createWalletService,
+  WalletType,
+  RiskLevel,
+  FundingSourceType,
+} from "./wallets";
+export type {
+  Wallet,
+  WalletWithTrades,
+  WalletWithAlerts,
+  WalletWithFundingSources,
+  WalletWithSnapshots,
+  WalletWithClusters,
+  WalletWithRelations,
+  CreateWalletInput,
+  UpdateWalletInput,
+  WalletFilters,
+  WalletSortOptions,
+  PaginatedWalletResult,
+  WalletIncludeOptions,
+  WalletServiceConfig,
+  WalletStats,
+} from "./wallets";
