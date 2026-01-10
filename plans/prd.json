@@ -701,7 +701,8 @@
       "priority": 36,
       "name": "WebSocket connection manager",
       "description": "Establish and manage WebSocket connection to Polymarket",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T05:20:00Z",
       "steps": [
         "Create WebSocketManager class",
         "Handle connection lifecycle",
@@ -887,6 +888,538 @@
       }
     },
 
+    {
+      "id": "API-CHAIN-001",
+      "priority": 46,
+      "name": "Polygon RPC client setup",
+      "description": "Initialize connection to Polygon network RPC endpoint",
+      "passes": false,
+      "steps": [
+        "Install ethers.js or viem",
+        "Configure RPC provider",
+        "Handle multiple RPC endpoints",
+        "Test connection"
+      ],
+      "test_instructions": {
+        "unit": "Test provider configuration",
+        "typecheck": "Verify types",
+        "e2e": "Fetch block number",
+        "manual_verification": "Verify RPC connection"
+      }
+    },
+    {
+      "id": "API-CHAIN-002",
+      "priority": 47,
+      "name": "Fetch wallet transaction history",
+      "description": "Retrieve on-chain transaction history for a wallet",
+      "passes": false,
+      "steps": [
+        "Create getWalletHistory function",
+        "Use Polygonscan API or RPC",
+        "Parse transaction data",
+        "Handle pagination"
+      ],
+      "test_instructions": {
+        "unit": "Test history parsing",
+        "typecheck": "Verify types",
+        "e2e": "Fetch known wallet history",
+        "manual_verification": "Cross-reference Polygonscan"
+      }
+    },
+    {
+      "id": "API-CHAIN-003",
+      "priority": 48,
+      "name": "Fetch wallet token balances",
+      "description": "Get current token balances for a wallet address",
+      "passes": false,
+      "steps": [
+        "Create getTokenBalances function",
+        "Query relevant token contracts",
+        "Parse balance data",
+        "Return formatted balances"
+      ],
+      "test_instructions": {
+        "unit": "Test balance parsing",
+        "typecheck": "Verify types",
+        "e2e": "Fetch live balances",
+        "manual_verification": "Verify balance accuracy"
+      }
+    },
+    {
+      "id": "API-CHAIN-004",
+      "priority": 49,
+      "name": "Fetch wallet creation date",
+      "description": "Determine when a wallet address was first used on-chain",
+      "passes": false,
+      "steps": [
+        "Find first transaction",
+        "Parse block timestamp",
+        "Cache results",
+        "Handle empty wallets"
+      ],
+      "test_instructions": {
+        "unit": "Test timestamp parsing",
+        "typecheck": "Verify types",
+        "e2e": "Get creation date for wallet",
+        "manual_verification": "Verify date accuracy"
+      }
+    },
+    {
+      "id": "API-CHAIN-005",
+      "priority": 50,
+      "name": "Monitor wallet for new transactions",
+      "description": "Set up real-time monitoring for wallet activity",
+      "passes": false,
+      "steps": [
+        "Create wallet monitor",
+        "Use WebSocket or polling",
+        "Emit new transaction events",
+        "Handle multiple wallets"
+      ],
+      "test_instructions": {
+        "unit": "Test monitor logic",
+        "typecheck": "Verify types",
+        "e2e": "Monitor active wallet",
+        "manual_verification": "Verify real-time detection"
+      }
+    },
+    {
+      "id": "API-CHAIN-006",
+      "priority": 51,
+      "name": "Decode Polymarket contract interactions",
+      "description": "Parse and decode Polymarket smart contract calls",
+      "passes": false,
+      "steps": [
+        "Get contract ABIs",
+        "Create decoder functions",
+        "Parse method calls and params",
+        "Extract relevant data"
+      ],
+      "test_instructions": {
+        "unit": "Test decoding sample transactions",
+        "typecheck": "Verify types",
+        "e2e": "Decode live transaction",
+        "manual_verification": "Verify decoded data"
+      }
+    },
+    {
+      "id": "API-CHAIN-007",
+      "priority": 52,
+      "name": "Track USDC transfers to Polymarket",
+      "description": "Monitor USDC deposits from wallets to Polymarket contracts",
+      "passes": false,
+      "steps": [
+        "Identify Polymarket contract addresses",
+        "Filter USDC transfers",
+        "Track deposit amounts",
+        "Emit deposit events"
+      ],
+      "test_instructions": {
+        "unit": "Test transfer detection",
+        "typecheck": "Verify types",
+        "e2e": "Track live deposits",
+        "manual_verification": "Verify deposit tracking"
+      }
+    },
+    {
+      "id": "API-CHAIN-008",
+      "priority": 53,
+      "name": "Identify wallet funding sources",
+      "description": "Trace where wallet funds originated from",
+      "passes": false,
+      "steps": [
+        "Trace incoming transfers",
+        "Identify exchange wallets",
+        "Flag mixer/privacy tools",
+        "Build funding graph"
+      ],
+      "test_instructions": {
+        "unit": "Test tracing logic",
+        "typecheck": "Verify types",
+        "e2e": "Trace wallet funding",
+        "manual_verification": "Verify source identification"
+      }
+    },
+    {
+      "id": "API-DB-001",
+      "priority": 54,
+      "name": "Database schema design",
+      "description": "Design database schema for markets, trades, wallets, and alerts",
+      "passes": false,
+      "steps": [
+        "Design entity relationships",
+        "Define indexes",
+        "Plan partitioning strategy",
+        "Document schema"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Review schema diagram"
+      }
+    },
+    {
+      "id": "API-DB-002",
+      "priority": 55,
+      "name": "Markets table and model",
+      "description": "Create table and ORM model for market data",
+      "passes": false,
+      "steps": [
+        "Define Market model in Prisma",
+        "Add all market fields",
+        "Create indexes",
+        "Run migration"
+      ],
+      "test_instructions": {
+        "unit": "Test model CRUD",
+        "typecheck": "Verify Prisma types",
+        "e2e": "Insert and query markets",
+        "manual_verification": "Verify table structure"
+      }
+    },
+    {
+      "id": "API-DB-003",
+      "priority": 56,
+      "name": "Trades table and model",
+      "description": "Create table and ORM model for trade data",
+      "passes": false,
+      "steps": [
+        "Define Trade model",
+        "Add relations to Market and Wallet",
+        "Index by timestamp and wallet",
+        "Run migration"
+      ],
+      "test_instructions": {
+        "unit": "Test model CRUD",
+        "typecheck": "Verify types",
+        "e2e": "Insert and query trades",
+        "manual_verification": "Verify table structure"
+      }
+    },
+    {
+      "id": "API-DB-004",
+      "priority": 57,
+      "name": "Wallets table and model",
+      "description": "Create table and ORM model for wallet profiles",
+      "passes": false,
+      "steps": [
+        "Define Wallet model",
+        "Add profile fields",
+        "Add suspicion score field",
+        "Run migration"
+      ],
+      "test_instructions": {
+        "unit": "Test model CRUD",
+        "typecheck": "Verify types",
+        "e2e": "Insert and query wallets",
+        "manual_verification": "Verify table structure"
+      }
+    },
+    {
+      "id": "API-DB-005",
+      "priority": 58,
+      "name": "Alerts table and model",
+      "description": "Create table and ORM model for generated alerts",
+      "passes": false,
+      "steps": [
+        "Define Alert model",
+        "Add alert type enum",
+        "Add relations to Wallet/Market",
+        "Run migration"
+      ],
+      "test_instructions": {
+        "unit": "Test model CRUD",
+        "typecheck": "Verify types",
+        "e2e": "Insert and query alerts",
+        "manual_verification": "Verify table structure"
+      }
+    },
+    {
+      "id": "API-DB-006",
+      "priority": 59,
+      "name": "Historical snapshots table",
+      "description": "Store periodic snapshots of market state for analysis",
+      "passes": false,
+      "steps": [
+        "Define Snapshot model",
+        "Store market state JSON",
+        "Add timestamp index",
+        "Plan retention policy"
+      ],
+      "test_instructions": {
+        "unit": "Test snapshot storage",
+        "typecheck": "Verify types",
+        "e2e": "Store and retrieve snapshots",
+        "manual_verification": "Verify snapshot data"
+      }
+    },
+    {
+      "id": "API-DB-007",
+      "priority": 60,
+      "name": "Database connection pooling",
+      "description": "Implement connection pooling for efficient database access",
+      "passes": false,
+      "steps": [
+        "Configure Prisma connection pool",
+        "Set pool size based on load",
+        "Add connection timeout",
+        "Monitor pool usage"
+      ],
+      "test_instructions": {
+        "unit": "Test pool configuration",
+        "typecheck": null,
+        "e2e": "Test under concurrent load",
+        "manual_verification": "Monitor pool metrics"
+      }
+    },
+    {
+      "id": "API-DB-008",
+      "priority": 61,
+      "name": "Data retention and cleanup jobs",
+      "description": "Automated cleanup of old data to manage storage",
+      "passes": false,
+      "steps": [
+        "Create cleanup cron job",
+        "Define retention periods",
+        "Archive before delete",
+        "Log cleanup operations"
+      ],
+      "test_instructions": {
+        "unit": "Test cleanup logic",
+        "typecheck": "Verify types",
+        "e2e": "Run cleanup on test data",
+        "manual_verification": "Verify data removed"
+      }
+    },
+    {
+      "id": "API-DB-009",
+      "priority": 62,
+      "name": "Database indexing optimization",
+      "description": "Create indexes for frequently queried fields",
+      "passes": false,
+      "steps": [
+        "Analyze query patterns",
+        "Add composite indexes",
+        "Test query performance",
+        "Document indexes"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": "Benchmark queries",
+        "manual_verification": "Check EXPLAIN output"
+      }
+    },
+    {
+      "id": "API-DB-010",
+      "priority": 63,
+      "name": "Time-series data storage",
+      "description": "Optimize storage for time-series market data",
+      "passes": false,
+      "steps": [
+        "Consider TimescaleDB extension",
+        "Implement chunking",
+        "Add compression",
+        "Optimize range queries"
+      ],
+      "test_instructions": {
+        "unit": "Test time-series queries",
+        "typecheck": null,
+        "e2e": "Query large date ranges",
+        "manual_verification": "Verify query performance"
+      }
+    },
+    {
+      "id": "DET-FRESH-001",
+      "priority": 64,
+      "name": "Wallet age calculator",
+      "description": "Calculate wallet age from first on-chain transaction",
+      "passes": false,
+      "steps": [
+        "Fetch first transaction timestamp",
+        "Calculate age in days",
+        "Cache results",
+        "Handle new wallets"
+      ],
+      "test_instructions": {
+        "unit": "Test age calculation",
+        "typecheck": "Verify types",
+        "e2e": "Calculate for known wallets",
+        "manual_verification": "Verify age accuracy"
+      }
+    },
+    {
+      "id": "DET-FRESH-002",
+      "priority": 65,
+      "name": "Fresh wallet threshold configuration",
+      "description": "Configurable thresholds for what constitutes a fresh wallet",
+      "passes": false,
+      "steps": [
+        "Define threshold config",
+        "Support age and tx count thresholds",
+        "Allow per-category thresholds",
+        "Store in config"
+      ],
+      "test_instructions": {
+        "unit": "Test threshold logic",
+        "typecheck": "Verify config types",
+        "e2e": "Apply different thresholds",
+        "manual_verification": "Verify threshold behavior"
+      }
+    },
+    {
+      "id": "DET-FRESH-003",
+      "priority": 66,
+      "name": "Zero trading history detector",
+      "description": "Identify wallets with no prior Polymarket trading history",
+      "passes": false,
+      "steps": [
+        "Check Polymarket trade count",
+        "Distinguish from general blockchain age",
+        "Flag first-time traders",
+        "Track status changes"
+      ],
+      "test_instructions": {
+        "unit": "Test detection logic",
+        "typecheck": "Verify types",
+        "e2e": "Check known wallets",
+        "manual_verification": "Verify detection accuracy"
+      }
+    },
+    {
+      "id": "DET-FRESH-004",
+      "priority": 67,
+      "name": "First trade size analyzer",
+      "description": "Flag when first trade from wallet is unusually large",
+      "passes": false,
+      "steps": [
+        "Track first trade per wallet",
+        "Compare to average first trades",
+        "Calculate size percentile",
+        "Flag outliers"
+      ],
+      "test_instructions": {
+        "unit": "Test size analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze first trades",
+        "manual_verification": "Verify flagging accuracy"
+      }
+    },
+    {
+      "id": "DET-FRESH-005",
+      "priority": 68,
+      "name": "Wallet funding pattern analyzer",
+      "description": "Analyze how fresh wallets are funded before trading",
+      "passes": false,
+      "steps": [
+        "Track pre-trade deposits",
+        "Identify funding timing",
+        "Flag immediate trading after funding",
+        "Score funding patterns"
+      ],
+      "test_instructions": {
+        "unit": "Test pattern analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze funding patterns",
+        "manual_verification": "Verify pattern detection"
+      }
+    },
+    {
+      "id": "DET-FRESH-006",
+      "priority": 69,
+      "name": "Fresh wallet clustering",
+      "description": "Detect multiple fresh wallets potentially controlled by same entity",
+      "passes": false,
+      "steps": [
+        "Identify similar funding sources",
+        "Detect coordinated creation times",
+        "Cluster by trading patterns",
+        "Calculate cluster confidence"
+      ],
+      "test_instructions": {
+        "unit": "Test clustering algorithm",
+        "typecheck": "Verify types",
+        "e2e": "Cluster known related wallets",
+        "manual_verification": "Verify cluster accuracy"
+      }
+    },
+    {
+      "id": "DET-FRESH-007",
+      "priority": 70,
+      "name": "Wallet reactivation detector",
+      "description": "Detect dormant wallets suddenly becoming active",
+      "passes": false,
+      "steps": [
+        "Track last activity timestamp",
+        "Define dormancy threshold",
+        "Detect activity after dormancy",
+        "Flag reactivation events"
+      ],
+      "test_instructions": {
+        "unit": "Test reactivation logic",
+        "typecheck": "Verify types",
+        "e2e": "Detect reactivated wallets",
+        "manual_verification": "Verify detection accuracy"
+      }
+    },
+    {
+      "id": "DET-FRESH-008",
+      "priority": 71,
+      "name": "Fresh wallet confidence scorer",
+      "description": "Score likelihood that fresh wallet activity is suspicious",
+      "passes": false,
+      "steps": [
+        "Combine multiple signals",
+        "Weight by signal importance",
+        "Normalize to 0-100 scale",
+        "Provide confidence breakdown"
+      ],
+      "test_instructions": {
+        "unit": "Test scoring algorithm",
+        "typecheck": "Verify types",
+        "e2e": "Score known wallets",
+        "manual_verification": "Verify score reasonableness"
+      }
+    },
+    {
+      "id": "DET-FRESH-009",
+      "priority": 72,
+      "name": "Wallet history depth analyzer",
+      "description": "Analyze depth of wallet transaction history across chains",
+      "passes": false,
+      "steps": [
+        "Query multiple chains if possible",
+        "Count total transactions",
+        "Analyze transaction types",
+        "Score history depth"
+      ],
+      "test_instructions": {
+        "unit": "Test depth analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze multi-chain history",
+        "manual_verification": "Verify depth accuracy"
+      }
+    },
+    {
+      "id": "DET-FRESH-010",
+      "priority": 73,
+      "name": "Fresh wallet alert generator",
+      "description": "Generate alerts when fresh wallet criteria are met",
+      "passes": false,
+      "steps": [
+        "Define alert conditions",
+        "Create alert with context",
+        "Set alert severity",
+        "Store and emit alert"
+      ],
+      "test_instructions": {
+        "unit": "Test alert generation",
+        "typecheck": "Verify Alert type",
+        "e2e": "Trigger fresh wallet alert",
+        "manual_verification": "Verify alert content"
+      }
+    },
     {
       "id": "TEST-PERF-001",
       "priority": 200,

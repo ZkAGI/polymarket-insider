@@ -1298,3 +1298,60 @@ COMPLETED: API-CLOB-012 - Calculate trade sizes in USD
 - Browser smoke test passes
 - App loads correctly at localhost:3000
 - Next up: API-WS-001
+
+COMPLETED: API-WS-001 - WebSocket connection manager
+- Created src/api/ws/ directory structure for WebSocket functionality
+- Created src/api/ws/types.ts with comprehensive type definitions:
+  - ConnectionState: 6 states (disconnected, connecting, connected, reconnecting, disconnecting, error)
+  - WebSocketConfig: Connection configuration (url, protocols, timeouts, reconnect settings)
+  - WebSocketManagerConfig: Manager-level configuration (maxConnections, defaults)
+  - Event types: ConnectionOpenEvent, ConnectionCloseEvent, ConnectionErrorEvent, MessageEvent, ReconnectEvent, StateChangeEvent
+  - EventListenerMap: Type-safe event listener registration
+  - ConnectionStats: Statistics tracking (messages sent/received, bytes, latency)
+  - ConnectionInfo: Full connection information
+  - IWebSocket: Interface for WebSocket abstraction (enables testing)
+  - WebSocketConstructor: Constructor type for dependency injection
+  - Constants: CloseCode (standard WebSocket close codes), WebSocketReadyState
+- Created src/api/ws/connection-manager.ts with full implementation:
+  - WebSocketConnection class:
+    - Full connection lifecycle management (connect, disconnect)
+    - Configurable connection timeout with rejection on timeout
+    - Automatic reconnection with exponential backoff
+    - Ping/pong heartbeat mechanism for connection health
+    - Event-driven architecture with typed event emitters
+    - Connection statistics tracking
+    - Proper state machine transitions
+  - WebSocketManager class:
+    - Manages multiple concurrent connections
+    - Configurable max connections limit
+    - Connection creation with default config inheritance
+    - Broadcast messaging to all connections
+    - Connection retrieval by ID
+    - Bulk disconnect and disposal
+  - Factory functions: createWebSocketConnection, createWebSocketManager
+  - Singleton: getSharedWebSocketManager, setSharedWebSocketManager, resetSharedWebSocketManager
+- Created src/api/ws/index.ts with exports for all public APIs
+- Created tests/api/ws/connection-manager.test.ts with 50 comprehensive tests:
+  - Constructor tests (default config, custom ID, config merging)
+  - Connect tests (successful connection, state transitions, open event, timeout handling, error handling)
+  - Disconnect tests (clean disconnect, close event, idempotent disconnect)
+  - Send tests (string messages, JSON messages, connected check, stats update)
+  - Message handling tests (event emission, JSON parsing, non-JSON handling, stats update)
+  - Event listener tests (add/remove, once listeners, removeAllListeners)
+  - Reconnection tests (abnormal close triggers reconnect, clean close no reconnect, max attempts, exponential backoff)
+  - Connection info tests
+  - WebSocketManager tests (creation, connection management, limits, broadcast)
+  - Shared manager tests (singleton, reset)
+  - Constants export tests
+- Mock WebSocket implementation for Node.js testing:
+  - MockWebSocket class implementing IWebSocket interface
+  - MockEvent and MockCloseEvent for Node.js compatibility
+  - Configurable connection delays and error injection
+  - Simulated message, close, and error events
+- Bug fixes during implementation:
+  - Fixed type issue with optional protocols in WebSocketConfig
+  - Fixed state check in onerror handler (save state before handleError changes it)
+- All 1250 tests pass (50 new tests added)
+- TypeScript typecheck passes
+- Build compiles successfully
+- Next up: API-WS-002
