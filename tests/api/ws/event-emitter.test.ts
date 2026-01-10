@@ -92,7 +92,7 @@ describe("WebSocketEventEmitter", () => {
       });
 
       expect(callback).toHaveBeenCalledTimes(1);
-      const event = callback.mock.calls[0][0] as BaseEvent;
+      const event = callback.mock.calls[0]![0] as BaseEvent;
       expect(event.id).toBeDefined();
       expect(event.id).toMatch(/^evt_/);
       expect(event.timestamp).toBeInstanceOf(Date);
@@ -116,7 +116,7 @@ describe("WebSocketEventEmitter", () => {
       });
 
       expect(callback).toHaveBeenCalledTimes(1);
-      const event = callback.mock.calls[0][0] as BaseEvent;
+      const event = callback.mock.calls[0]![0] as BaseEvent;
       expect(event.id).toBe(customId);
       expect(event.timestamp).toEqual(customTimestamp);
     });
@@ -470,7 +470,7 @@ describe("WebSocketEventEmitter", () => {
         WebSocketEventTypes.PRICE_UPDATE,
         callback,
         {
-          filter: (event) => event.price > 0.5,
+          filter: (event) => (event as PriceUpdateEventData).price > 0.5,
         }
       );
 
@@ -491,13 +491,13 @@ describe("WebSocketEventEmitter", () => {
       });
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect((callback.mock.calls[0][0] as PriceUpdateEventData).price).toBe(0.75);
+      expect((callback.mock.calls[0]![0] as PriceUpdateEventData).price).toBe(0.75);
     });
 
     it("should filter events for category listeners", () => {
       const callback = vi.fn();
       emitter.onCategory<TradeEventData>(EventCategory.TRADE, callback, {
-        filter: (event) => event.size > 500,
+        filter: (event) => (event as TradeEventData).size > 500,
       });
 
       emitter.emit({
@@ -523,7 +523,7 @@ describe("WebSocketEventEmitter", () => {
       });
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect((callback.mock.calls[0][0] as TradeEventData).size).toBe(1000);
+      expect((callback.mock.calls[0]![0] as TradeEventData).size).toBe(1000);
     });
 
     it("should filter events for global listeners", () => {
@@ -552,7 +552,7 @@ describe("WebSocketEventEmitter", () => {
       });
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback.mock.calls[0][0].type).toBe(WebSocketEventTypes.TRADE);
+      expect(callback.mock.calls[0]![0].type).toBe(WebSocketEventTypes.TRADE);
     });
   });
 
@@ -563,9 +563,9 @@ describe("WebSocketEventEmitter", () => {
     it("should call listeners in priority order", () => {
       const callOrder: number[] = [];
 
-      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => callOrder.push(3), { priority: 3 });
-      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => callOrder.push(1), { priority: 1 });
-      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => callOrder.push(2), { priority: 2 });
+      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => { callOrder.push(3); }, { priority: 3 });
+      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => { callOrder.push(1); }, { priority: 1 });
+      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => { callOrder.push(2); }, { priority: 2 });
 
       emitter.emit({
         type: WebSocketEventTypes.PRICE_UPDATE,
@@ -581,8 +581,8 @@ describe("WebSocketEventEmitter", () => {
     it("should use default priority of 100 when not specified", () => {
       const callOrder: number[] = [];
 
-      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => callOrder.push(2));
-      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => callOrder.push(1), { priority: 50 });
+      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => { callOrder.push(2); });
+      emitter.on(WebSocketEventTypes.PRICE_UPDATE, () => { callOrder.push(1); }, { priority: 50 });
 
       emitter.emit({
         type: WebSocketEventTypes.PRICE_UPDATE,
@@ -638,7 +638,7 @@ describe("WebSocketEventEmitter", () => {
       });
 
       expect(errorCallback).toHaveBeenCalledTimes(1);
-      expect(errorCallback.mock.calls[0][0].error.message).toBe("Test error");
+      expect(errorCallback.mock.calls[0]![0].error.message).toBe("Test error");
     });
 
     it("should not emit HANDLER_ERROR for errors in HANDLER_ERROR handlers", () => {
@@ -738,8 +738,8 @@ describe("WebSocketEventEmitter", () => {
 
       const history = em.getHistory();
       expect(history.length).toBe(2);
-      expect(history[0].type).toBe(WebSocketEventTypes.PRICE_UPDATE);
-      expect(history[1].type).toBe(WebSocketEventTypes.TRADE);
+      expect(history[0]!.type).toBe(WebSocketEventTypes.PRICE_UPDATE);
+      expect(history[1]!.type).toBe(WebSocketEventTypes.TRADE);
 
       em.dispose();
     });
@@ -810,7 +810,7 @@ describe("WebSocketEventEmitter", () => {
 
       const priceHistory = em.getHistoryByType(WebSocketEventTypes.PRICE_UPDATE);
       expect(priceHistory.length).toBe(1);
-      expect(priceHistory[0].type).toBe(WebSocketEventTypes.PRICE_UPDATE);
+      expect(priceHistory[0]!.type).toBe(WebSocketEventTypes.PRICE_UPDATE);
 
       em.dispose();
     });
@@ -839,7 +839,7 @@ describe("WebSocketEventEmitter", () => {
 
       const tradeHistory = em.getHistoryByCategory(EventCategory.TRADE);
       expect(tradeHistory.length).toBe(1);
-      expect(tradeHistory[0].category).toBe(EventCategory.TRADE);
+      expect(tradeHistory[0]!.category).toBe(EventCategory.TRADE);
 
       em.dispose();
     });
@@ -1235,17 +1235,17 @@ describe("createBatchingListener", () => {
       maxWaitMs: 1000,
     });
 
-    const events = [
+    const events: BaseEvent[] = [
       { id: "1", type: "test", category: EventCategory.SYSTEM, priority: EventPriority.NORMAL, timestamp: new Date() },
       { id: "2", type: "test", category: EventCategory.SYSTEM, priority: EventPriority.NORMAL, timestamp: new Date() },
       { id: "3", type: "test", category: EventCategory.SYSTEM, priority: EventPriority.NORMAL, timestamp: new Date() },
     ];
 
-    batching(events[0]);
-    batching(events[1]);
+    batching(events[0]!);
+    batching(events[1]!);
     expect(callback).not.toHaveBeenCalled();
 
-    batching(events[2]);
+    batching(events[2]!);
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith(events);
   });
@@ -1275,13 +1275,13 @@ describe("createBatchingListener", () => {
       maxWaitMs: 1000,
     });
 
-    const events = [
+    const events: BaseEvent[] = [
       { id: "1", type: "test", category: EventCategory.SYSTEM, priority: EventPriority.NORMAL, timestamp: new Date() },
       { id: "2", type: "test", category: EventCategory.SYSTEM, priority: EventPriority.NORMAL, timestamp: new Date() },
     ];
 
-    batching(events[0]);
-    batching(events[1]);
+    batching(events[0]!);
+    batching(events[1]!);
 
     expect(callback).not.toHaveBeenCalled();
 

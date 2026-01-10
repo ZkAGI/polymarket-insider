@@ -465,7 +465,9 @@ export class WebSocketEventEmitter {
   /**
    * Emit an event to all registered listeners
    */
-  emit<T extends BaseEvent>(eventOrPartial: T | Omit<T, "id" | "timestamp">): T {
+  emit<T extends BaseEvent = BaseEvent>(
+    eventOrPartial: T | (Omit<T, "id" | "timestamp"> & Record<string, unknown>)
+  ): T {
     if (this.disposed) {
       throw new Error("EventEmitter has been disposed");
     }

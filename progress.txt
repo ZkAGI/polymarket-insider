@@ -2027,3 +2027,51 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - TypeScript typecheck passes
 - Browser smoke test passes
 - Next up: API-CHAIN-001 (Polygon RPC client setup)
+
+
+## API-CHAIN-001: Polygon RPC Client Setup - COMPLETED
+- Created src/api/chain/ directory structure
+- Installed viem package for Ethereum/Polygon blockchain interactions
+- Created src/api/chain/types.ts with comprehensive type definitions:
+  - RpcEndpointConfig: RPC endpoint configuration with URL, priority, rate limits
+  - PolygonClientConfig: Client configuration (endpoints, chain, timeout, retries, batch settings)
+  - PolygonClientLogger: Custom logger interface
+  - ConnectionState, ConnectionEvent: Connection lifecycle management
+  - EndpointHealth: Endpoint health tracking
+  - BlockInfo, TransactionInfo, TransactionReceipt, LogEntry: Blockchain data types
+  - ClientStats: Client statistics interface
+  - PolygonClientError: Custom error class with error codes
+- Created src/api/chain/client.ts with PolygonClient class:
+  - Multi-endpoint support with automatic failover
+  - Default public Polygon RPC endpoints (polygon-rpc.com, matic.network, maticvigil.com)
+  - Connection management (connect, disconnect, state tracking)
+  - Connection event subscription system
+  - Blockchain queries: getBlockNumber, getBlock, getBlockByHash, getTransaction,
+    getTransactionReceipt, getBalance, getTransactionCount, getChainId, getGasPrice,
+    estimateGas, getCode, isContract
+  - Retry logic with exponential backoff
+  - Endpoint health monitoring and automatic switching on failures
+  - Request statistics tracking (success, failure, latency, retries)
+  - Batch request support
+  - Address validation using viem's isAddress/getAddress utilities
+- Created src/api/chain/index.ts exporting all types and functions
+- Updated .env.example with POLYGON_RPC_URL configuration
+- Created tests/api/chain/client.test.ts with 52 test cases covering:
+  - Constructor and configuration options
+  - Factory functions (createPolygonClient, getSharedPolygonClient, etc.)
+  - Connection lifecycle (connect, disconnect, events)
+  - Blockchain queries (block, transaction, balance, gas, code)
+  - Retry and failover logic
+  - Statistics tracking
+  - Endpoint health monitoring
+  - Error handling and validation
+  - Chain configuration
+- Fixed TypeScript errors in tests/api/ws/event-emitter.test.ts:
+  - Added non-null assertions for array access
+  - Fixed callback return types (void instead of number)
+  - Fixed type assertions for filter functions
+  - Fixed emit method signature to allow extra properties
+- All 2140 tests pass (52 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes - app loads correctly at localhost:3000
+- Next up: API-CHAIN-002 (Fetch wallet transaction history)
