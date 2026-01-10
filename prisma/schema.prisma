@@ -1,5 +1,29 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ===========================================================================
+// Polymarket Insider/Whale Tracker - Database Schema
+// ===========================================================================
+//
+// This schema defines the data model for tracking markets, trades, wallets,
+// alerts, and related entities for the Polymarket prediction market platform.
+//
+// Entity Relationships:
+// - Market has many Outcomes, Trades, PriceHistory, MarketSnapshots
+// - Outcome belongs to Market, has many Trades, PriceHistory
+// - Wallet has many Trades, Alerts, WalletSnapshots, FundingSources
+// - Trade belongs to Market, Outcome, Wallet
+// - Alert may reference Market, Wallet
+//
+// Partitioning Strategy:
+// - Trade and PriceHistory tables are designed for time-based partitioning
+// - Timestamps and indexes optimized for range queries
+// - Historical data can be archived based on age
+//
+// Indexing Strategy:
+// - Primary lookups: id fields, unique constraints
+// - Foreign keys: all relation fields indexed
+// - Query patterns: timestamp ranges, filtering by category/status
+// - Composite indexes for common query combinations
+//
+// ===========================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -10,121 +34,955 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Market data from Polymarket
+// ===========================================================================
+// MARKET DATA
+// ===========================================================================
+
+/// Market data from Polymarket representing a prediction market event
 model Market {
-  id            String    @id
-  slug          String    @unique
-  question      String
-  description   String?
-  category      String?
-  endDate       DateTime?
-  active        Boolean   @default(true)
-  volume        Float     @default(0)
-  liquidity     Float     @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  /// Unique market ID from Polymarket (condition ID)
+  id              String    @id
 
-  outcomes      Outcome[]
-  trades        Trade[]
-  priceHistory  PriceHistory[]
+  /// URL-friendly slug for the market
+  slug            String    @unique
 
+  /// Main question being predicted
+  question        String
+
+  /// Detailed description of the market
+  description     String?
+
+  /// Category classification (politics, crypto, sports, etc.)
+  category        String?
+
+  /// Subcategory for more specific classification
+  subcategory     String?
+
+  /// Tags for additional filtering
+  tags            String[]
+
+  /// URL to market image/banner
+  imageUrl        String?
+
+  /// URL to market icon
+  iconUrl         String?
+
+  /// Source for resolution (e.g., "Associated Press")
+  resolutionSource String?
+
+  /// Who resolved the market (address or name)
+  resolvedBy      String?
+
+  /// Resolution outcome (if resolved)
+  resolution      String?
+
+  /// When the market ends/closes for trading
+  endDate         DateTime?
+
+  /// When the market was resolved
+  resolvedAt      DateTime?
+
+  /// Whether the market is currently active for trading
+  active          Boolean   @default(true)
+
+  /// Whether the market has been closed
+  closed          Boolean   @default(false)
+
+  /// Whether the market has been archived
+  archived        Boolean   @default(false)
+
+  /// Total trading volume in USD
+  volume          Float     @default(0)
+
+  /// 24-hour trading volume in USD
+  volume24h       Float     @default(0)
+
+  /// Current liquidity available in USD
+  liquidity       Float     @default(0)
+
+  /// Total number of trades
+  tradeCount      Int       @default(0)
+
+  /// Number of unique traders
+  uniqueTraders   Int       @default(0)
+
+  /// Market creation timestamp
+  createdAt       DateTime  @default(now())
+
+  /// Last update timestamp
+  updatedAt       DateTime  @updatedAt
+
+  /// Last time data was synced from API
+  lastSyncedAt    DateTime?
+
+  // Relations
+  outcomes        Outcome[]
+  trades          Trade[]
+  priceHistory    PriceHistory[]
+  alerts          Alert[]
+  snapshots       MarketSnapshot[]
+
+  // Indexes for common query patterns
   @@index([category])
+  @@index([subcategory])
   @@index([active])
+  @@index([closed])
   @@index([endDate])
+  @@index([volume])
+  @@index([volume24h])
+  @@index([createdAt])
+  @@index([lastSyncedAt])
+  @@index([category, active])
+  @@index([active, volume])
 }
 
-// Market outcomes (Yes/No or multiple choice)
+/// Market outcomes (Yes/No or multiple choice options)
 model Outcome {
-  id          String   @id @default(cuid())
-  marketId    String
-  name        String
-  probability Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  /// Unique outcome ID
+  id              String   @id @default(cuid())
 
-  market       Market         @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  trades       Trade[]
-  priceHistory PriceHistory[]
+  /// Reference to parent market
+  marketId        String
+
+  /// Outcome name (e.g., "Yes", "No", "Donald Trump")
+  name            String
+
+  /// CLOB token ID for trading this outcome
+  clobTokenId     String?
+
+  /// Current price/probability (0.00 to 1.00)
+  price           Float    @default(0)
+
+  /// Current probability percentage (0-100)
+  probability     Float    @default(0)
+
+  /// 24-hour price change percentage
+  priceChange24h  Float    @default(0)
+
+  /// Trading volume for this outcome in USD
+  volume          Float    @default(0)
+
+  /// Whether this outcome won (null if unresolved)
+  winner          Boolean?
+
+  /// Payout amount if winner
+  payout          Float?
+
+  /// Order in which to display outcomes
+  displayOrder    Int      @default(0)
+
+  /// Creation timestamp
+  createdAt       DateTime @default(now())
+
+  /// Last update timestamp
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  market          Market         @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  trades          Trade[]
+  priceHistory    PriceHistory[]
 
   @@unique([marketId, name])
+  @@unique([clobTokenId])
   @@index([marketId])
+  @@index([clobTokenId])
+  @@index([price])
 }
 
-// Tracked wallet addresses
-model Wallet {
-  id          String   @id @default(cuid())
-  address     String   @unique
-  label       String?
-  isWhale     Boolean  @default(false)
-  isInsider   Boolean  @default(false)
-  totalVolume Float    @default(0)
-  tradeCount  Int      @default(0)
-  winRate     Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ===========================================================================
+// WALLET DATA
+// ===========================================================================
 
-  trades Trade[]
+/// Tracked wallet addresses with profiling data
+model Wallet {
+  /// Unique wallet record ID
+  id                  String   @id @default(cuid())
+
+  /// Ethereum/Polygon wallet address (lowercase)
+  address             String   @unique
+
+  /// Human-readable label for the wallet
+  label               String?
+
+  /// Wallet type classification
+  walletType          WalletType @default(UNKNOWN)
+
+  /// Whether classified as a whale (high volume trader)
+  isWhale             Boolean  @default(false)
+
+  /// Whether classified as potential insider
+  isInsider           Boolean  @default(false)
+
+  /// Whether this is a fresh/new wallet
+  isFresh             Boolean  @default(false)
+
+  /// Whether this wallet is being actively monitored
+  isMonitored         Boolean  @default(false)
+
+  /// Whether this wallet is flagged for suspicious activity
+  isFlagged           Boolean  @default(false)
+
+  /// Whether this wallet is sanctioned (OFAC)
+  isSanctioned        Boolean  @default(false)
+
+  /// Suspicion score (0-100)
+  suspicionScore      Float    @default(0)
+
+  /// Risk level classification
+  riskLevel           RiskLevel @default(NONE)
+
+  /// Total trading volume in USD
+  totalVolume         Float    @default(0)
+
+  /// Total profit/loss in USD
+  totalPnl            Float    @default(0)
+
+  /// Total number of trades
+  tradeCount          Int      @default(0)
+
+  /// Number of winning trades
+  winCount            Int      @default(0)
+
+  /// Win rate percentage (0-100)
+  winRate             Float?
+
+  /// Average trade size in USD
+  avgTradeSize        Float?
+
+  /// Largest single trade in USD
+  maxTradeSize        Float?
+
+  /// First Polymarket trade timestamp
+  firstTradeAt        DateTime?
+
+  /// Most recent trade timestamp
+  lastTradeAt         DateTime?
+
+  /// When the wallet was first seen on-chain
+  walletCreatedAt     DateTime?
+
+  /// Number of blockchain transactions
+  onChainTxCount      Int      @default(0)
+
+  /// Wallet age in days
+  walletAgeDays       Int?
+
+  /// Primary funding source type
+  primaryFundingSource FundingSourceType?
+
+  /// JSON blob for additional metadata
+  metadata            Json?
+
+  /// Notes about the wallet
+  notes               String?
+
+  /// Record creation timestamp
+  createdAt           DateTime @default(now())
+
+  /// Record update timestamp
+  updatedAt           DateTime @updatedAt
+
+  /// Last time wallet data was synced
+  lastSyncedAt        DateTime?
+
+  // Relations
+  trades              Trade[]
+  alerts              Alert[]
+  fundingSources      WalletFundingSource[]
+  snapshots           WalletSnapshot[]
+  walletClusters      WalletClusterMember[]
 
   @@index([isWhale])
   @@index([isInsider])
+  @@index([isFresh])
+  @@index([isMonitored])
+  @@index([isFlagged])
+  @@index([suspicionScore])
+  @@index([riskLevel])
+  @@index([totalVolume])
+  @@index([tradeCount])
+  @@index([winRate])
+  @@index([firstTradeAt])
+  @@index([lastTradeAt])
+  @@index([walletCreatedAt])
+  @@index([createdAt])
+  @@index([isWhale, totalVolume])
+  @@index([isInsider, suspicionScore])
+}
+
+/// Wallet type classification
+enum WalletType {
+  /// Unknown wallet type
+  UNKNOWN
+  /// Externally Owned Account (individual)
+  EOA
+  /// Smart contract wallet (Gnosis Safe, etc.)
+  CONTRACT
+  /// Centralized exchange hot wallet
+  EXCHANGE
+  /// DeFi protocol wallet
+  DEFI
+  /// Market maker wallet
+  MARKET_MAKER
+  /// Institutional/fund wallet
+  INSTITUTIONAL
+  /// Bot/automated trading wallet
+  BOT
+}
+
+/// Risk level classification
+enum RiskLevel {
+  /// No risk detected
+  NONE
+  /// Low risk
+  LOW
+  /// Medium risk
+  MEDIUM
+  /// High risk
+  HIGH
+  /// Critical risk (sanctioned, mixer usage)
+  CRITICAL
+}
+
+/// Funding source types
+enum FundingSourceType {
+  /// Centralized exchange
+  EXCHANGE
+  /// Mixer/privacy tool
+  MIXER
+  /// DeFi protocol
+  DEFI
+  /// Smart contract
+  CONTRACT
+  /// Regular EOA wallet
+  EOA
+  /// Unknown source
+  UNKNOWN
+}
+
+/// Wallet funding source tracking
+model WalletFundingSource {
+  /// Unique record ID
+  id              String   @id @default(cuid())
+
+  /// Wallet being analyzed
+  walletId        String
+
+  /// Source address
+  sourceAddress   String
+
+  /// Type of funding source
+  sourceType      FundingSourceType
+
+  /// Source label (e.g., "Binance", "Tornado Cash")
+  sourceLabel     String?
+
+  /// Amount transferred (in native token or USD)
+  amount          Float
+
+  /// Transaction hash
+  txHash          String?
+
+  /// Depth in the funding chain (1 = direct transfer)
+  depth           Int      @default(1)
+
+  /// Risk level of this source
+  riskLevel       RiskLevel @default(NONE)
+
+  /// Whether source is sanctioned
+  isSanctioned    Boolean  @default(false)
+
+  /// Transfer timestamp
+  transferredAt   DateTime
+
+  /// Record creation timestamp
+  createdAt       DateTime @default(now())
+
+  // Relations
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([sourceAddress])
+  @@index([sourceType])
+  @@index([riskLevel])
+  @@index([transferredAt])
+}
+
+/// Wallet cluster for identifying related wallets
+model WalletCluster {
+  /// Unique cluster ID
+  id              String   @id @default(cuid())
+
+  /// Cluster name/label
+  name            String?
+
+  /// Cluster type classification
+  clusterType     ClusterType @default(UNKNOWN)
+
+  /// Confidence score for this cluster (0-100)
+  confidence      Float    @default(0)
+
+  /// Total combined volume of cluster
+  totalVolume     Float    @default(0)
+
+  /// Number of wallets in cluster
+  memberCount     Int      @default(0)
+
+  /// JSON blob with clustering metadata
+  metadata        Json?
+
+  /// Notes about the cluster
+  notes           String?
+
+  /// Record creation timestamp
+  createdAt       DateTime @default(now())
+
+  /// Record update timestamp
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  members         WalletClusterMember[]
+
+  @@index([clusterType])
+  @@index([confidence])
   @@index([totalVolume])
 }
 
-// Individual trades
-model Trade {
-  id           String   @id @default(cuid())
-  marketId     String
-  outcomeId    String
-  walletId     String
-  side         String   // "buy" or "sell"
-  amount       Float
-  price        Float
-  usdValue     Float
-  timestamp    DateTime
-  txHash       String?  @unique
-  isWhale      Boolean  @default(false)
-  createdAt    DateTime @default(now())
+/// Cluster type classification
+enum ClusterType {
+  /// Unknown cluster type
+  UNKNOWN
+  /// Same entity (high confidence)
+  SAME_ENTITY
+  /// Funded from same source
+  SAME_FUNDING
+  /// Similar trading patterns
+  SIMILAR_TRADING
+  /// Coordinated activity detected
+  COORDINATED
+  /// Bot network
+  BOT_NETWORK
+}
 
-  market  Market  @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  outcome Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
-  wallet  Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+/// Wallet cluster membership
+model WalletClusterMember {
+  /// Unique record ID
+  id              String   @id @default(cuid())
+
+  /// Cluster ID
+  clusterId       String
+
+  /// Wallet ID
+  walletId        String
+
+  /// Role in cluster (e.g., "primary", "secondary", "funding")
+  role            String?
+
+  /// Membership confidence (0-100)
+  confidence      Float    @default(0)
+
+  /// Record creation timestamp
+  createdAt       DateTime @default(now())
+
+  // Relations
+  cluster         WalletCluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  wallet          Wallet        @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([clusterId, walletId])
+  @@index([clusterId])
+  @@index([walletId])
+}
+
+// ===========================================================================
+// TRADE DATA
+// ===========================================================================
+
+/// Individual trades executed on Polymarket
+model Trade {
+  /// Unique trade record ID
+  id              String   @id @default(cuid())
+
+  /// Reference to market
+  marketId        String
+
+  /// Reference to outcome
+  outcomeId       String
+
+  /// Reference to wallet
+  walletId        String
+
+  /// Trade ID from CLOB API
+  clobTradeId     String?  @unique
+
+  /// Match ID linking maker and taker
+  matchId         String?
+
+  /// Trade side (buy/sell)
+  side            TradeSide
+
+  /// Share amount traded
+  amount          Float
+
+  /// Execution price (0-1)
+  price           Float
+
+  /// Trade value in USD
+  usdValue        Float
+
+  /// Fee amount in USD
+  feeUsd          Float    @default(0)
+
+  /// Maker address (if available)
+  makerAddress    String?
+
+  /// Taker address (if available)
+  takerAddress    String?
+
+  /// Whether wallet was maker or taker
+  isMaker         Boolean?
+
+  /// Execution timestamp
+  timestamp       DateTime
+
+  /// On-chain transaction hash
+  txHash          String?
+
+  /// Block number (if on-chain)
+  blockNumber     BigInt?
+
+  /// Whether classified as whale trade
+  isWhale         Boolean  @default(false)
+
+  /// Whether this appears to be insider activity
+  isInsider       Boolean  @default(false)
+
+  /// Trade flags (e.g., "large", "first_trade", "pre_event")
+  flags           String[]
+
+  /// Record creation timestamp
+  createdAt       DateTime @default(now())
+
+  // Relations
+  market          Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  outcome         Outcome  @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([marketId])
+  @@index([outcomeId])
   @@index([walletId])
   @@index([timestamp])
   @@index([isWhale])
+  @@index([isInsider])
   @@index([usdValue])
+  @@index([side])
+  @@index([txHash])
+  @@index([matchId])
+  // Composite indexes for common query patterns
+  @@index([marketId, timestamp])
+  @@index([walletId, timestamp])
+  @@index([marketId, walletId])
+  @@index([timestamp, usdValue])
+  @@index([isWhale, timestamp])
 }
 
-// Price history for charting
+/// Trade side enum
+enum TradeSide {
+  BUY
+  SELL
+}
+
+// ===========================================================================
+// TIME-SERIES DATA
+// ===========================================================================
+
+/// Price history for charting and analysis
 model PriceHistory {
-  id        String   @id @default(cuid())
-  marketId  String
-  outcomeId String
-  price     Float
-  volume    Float    @default(0)
-  timestamp DateTime
+  /// Unique record ID
+  id              String   @id @default(cuid())
 
-  market  Market  @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  outcome Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  /// Reference to market
+  marketId        String
 
-  @@unique([marketId, outcomeId, timestamp])
+  /// Reference to outcome
+  outcomeId       String
+
+  /// Price at this timestamp (0-1)
+  price           Float
+
+  /// Trading volume during this interval
+  volume          Float    @default(0)
+
+  /// Number of trades during this interval
+  tradeCount      Int      @default(0)
+
+  /// Best bid price at this timestamp
+  bestBid         Float?
+
+  /// Best ask price at this timestamp
+  bestAsk         Float?
+
+  /// Spread (ask - bid)
+  spread          Float?
+
+  /// Time interval type
+  interval        TimeInterval @default(HOUR_1)
+
+  /// Data point timestamp
+  timestamp       DateTime
+
+  // Relations
+  market          Market  @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  outcome         Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+
+  @@unique([marketId, outcomeId, timestamp, interval])
   @@index([marketId, timestamp])
   @@index([outcomeId, timestamp])
+  @@index([timestamp])
+  @@index([interval])
+  @@index([marketId, interval, timestamp])
 }
 
-// Alerts and notifications
+/// Time interval for aggregated data
+enum TimeInterval {
+  /// 1 minute intervals
+  MINUTE_1
+  /// 5 minute intervals
+  MINUTE_5
+  /// 15 minute intervals
+  MINUTE_15
+  /// 1 hour intervals
+  HOUR_1
+  /// 4 hour intervals
+  HOUR_4
+  /// 1 day intervals
+  DAY_1
+  /// 1 week intervals
+  WEEK_1
+}
+
+// ===========================================================================
+// SNAPSHOTS (for historical state tracking)
+// ===========================================================================
+
+/// Periodic snapshots of market state
+model MarketSnapshot {
+  /// Unique record ID
+  id              String   @id @default(cuid())
+
+  /// Reference to market
+  marketId        String
+
+  /// Full market state as JSON
+  state           Json
+
+  /// Outcome prices at snapshot time
+  outcomePrices   Json
+
+  /// Total volume at snapshot time
+  volume          Float
+
+  /// Liquidity at snapshot time
+  liquidity       Float
+
+  /// Snapshot timestamp
+  timestamp       DateTime
+
+  // Relations
+  market          Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([marketId])
+  @@index([timestamp])
+  @@index([marketId, timestamp])
+}
+
+/// Periodic snapshots of wallet state
+model WalletSnapshot {
+  /// Unique record ID
+  id              String   @id @default(cuid())
+
+  /// Reference to wallet
+  walletId        String
+
+  /// Total volume at snapshot time
+  totalVolume     Float
+
+  /// Total P&L at snapshot time
+  totalPnl        Float
+
+  /// Trade count at snapshot time
+  tradeCount      Int
+
+  /// Win rate at snapshot time
+  winRate         Float?
+
+  /// Suspicion score at snapshot time
+  suspicionScore  Float
+
+  /// Active positions as JSON
+  positions       Json?
+
+  /// Snapshot timestamp
+  timestamp       DateTime
+
+  // Relations
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([timestamp])
+  @@index([walletId, timestamp])
+}
+
+// ===========================================================================
+// ALERTS & NOTIFICATIONS
+// ===========================================================================
+
+/// Generated alerts and notifications
 model Alert {
-  id          String   @id @default(cuid())
-  type        String   // "whale_trade", "price_movement", "insider_activity"
-  marketId    String?
-  walletId    String?
-  message     String
-  data        Json?
-  read        Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  /// Unique alert ID
+  id              String   @id @default(cuid())
+
+  /// Alert type classification
+  type            AlertType
+
+  /// Alert severity level
+  severity        AlertSeverity @default(INFO)
+
+  /// Reference to related market (optional)
+  marketId        String?
+
+  /// Reference to related wallet (optional)
+  walletId        String?
+
+  /// Alert title/headline
+  title           String
+
+  /// Detailed alert message
+  message         String
+
+  /// Structured alert data as JSON
+  data            Json?
+
+  /// Alert tags for filtering
+  tags            String[]
+
+  /// Whether the alert has been read
+  read            Boolean  @default(false)
+
+  /// Whether the alert has been acknowledged
+  acknowledged    Boolean  @default(false)
+
+  /// Whether the alert has been dismissed
+  dismissed       Boolean  @default(false)
+
+  /// User who acknowledged/dismissed (if applicable)
+  actionBy        String?
+
+  /// When the alert was acknowledged
+  actionAt        DateTime?
+
+  /// Alert creation timestamp
+  createdAt       DateTime @default(now())
+
+  /// When the alert expires (for time-sensitive alerts)
+  expiresAt       DateTime?
+
+  // Relations
+  market          Market?  @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  wallet          Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)
 
   @@index([type])
+  @@index([severity])
+  @@index([marketId])
+  @@index([walletId])
   @@index([read])
+  @@index([acknowledged])
   @@index([createdAt])
+  @@index([expiresAt])
+  @@index([type, severity])
+  @@index([type, read])
+  @@index([createdAt, type])
+}
+
+/// Alert type classification
+enum AlertType {
+  /// Large trade detected (whale activity)
+  WHALE_TRADE
+  /// Significant price movement
+  PRICE_MOVEMENT
+  /// Potential insider activity
+  INSIDER_ACTIVITY
+  /// Fresh wallet making large trades
+  FRESH_WALLET
+  /// Wallet reactivation after dormancy
+  WALLET_REACTIVATION
+  /// Coordinated wallet activity
+  COORDINATED_ACTIVITY
+  /// Unusual trading pattern
+  UNUSUAL_PATTERN
+  /// Market resolution
+  MARKET_RESOLVED
+  /// New high-volume market
+  NEW_MARKET
+  /// Funding from suspicious source
+  SUSPICIOUS_FUNDING
+  /// Sanctioned address activity
+  SANCTIONED_ACTIVITY
+  /// System alert (errors, etc.)
+  SYSTEM
+}
+
+/// Alert severity levels
+enum AlertSeverity {
+  /// Informational alert
+  INFO
+  /// Low priority alert
+  LOW
+  /// Medium priority alert
+  MEDIUM
+  /// High priority alert
+  HIGH
+  /// Critical alert requiring immediate attention
+  CRITICAL
+}
+
+// ===========================================================================
+// SYSTEM & CONFIGURATION
+// ===========================================================================
+
+/// System configuration and metadata
+model SystemConfig {
+  /// Configuration key
+  key             String   @id
+
+  /// Configuration value as JSON
+  value           Json
+
+  /// Description of this configuration
+  description     String?
+
+  /// Last update timestamp
+  updatedAt       DateTime @updatedAt
+}
+
+/// Data sync tracking
+model SyncLog {
+  /// Unique log ID
+  id              String   @id @default(cuid())
+
+  /// Type of sync operation
+  syncType        String
+
+  /// Entity type being synced
+  entityType      String
+
+  /// Status of sync operation
+  status          SyncStatus
+
+  /// Number of records processed
+  recordsProcessed Int     @default(0)
+
+  /// Number of records created
+  recordsCreated  Int      @default(0)
+
+  /// Number of records updated
+  recordsUpdated  Int      @default(0)
+
+  /// Number of errors encountered
+  errorCount      Int      @default(0)
+
+  /// Error details as JSON
+  errors          Json?
+
+  /// Sync start timestamp
+  startedAt       DateTime @default(now())
+
+  /// Sync completion timestamp
+  completedAt     DateTime?
+
+  /// Duration in milliseconds
+  durationMs      Int?
+
+  /// Additional metadata
+  metadata        Json?
+
+  @@index([syncType])
+  @@index([entityType])
+  @@index([status])
+  @@index([startedAt])
+}
+
+/// Sync operation status
+enum SyncStatus {
+  /// Sync in progress
+  RUNNING
+  /// Sync completed successfully
+  COMPLETED
+  /// Sync failed
+  FAILED
+  /// Sync cancelled
+  CANCELLED
+}
+
+/// Job queue for background processing
+model JobQueue {
+  /// Unique job ID
+  id              String   @id @default(cuid())
+
+  /// Job type
+  jobType         String
+
+  /// Job priority (lower = higher priority)
+  priority        Int      @default(100)
+
+  /// Job payload as JSON
+  payload         Json
+
+  /// Current job status
+  status          JobStatus @default(PENDING)
+
+  /// Number of retry attempts
+  attempts        Int      @default(0)
+
+  /// Maximum retry attempts
+  maxAttempts     Int      @default(3)
+
+  /// Last error message
+  lastError       String?
+
+  /// When the job was created
+  createdAt       DateTime @default(now())
+
+  /// When to run the job (for scheduling)
+  scheduledFor    DateTime @default(now())
+
+  /// When the job started running
+  startedAt       DateTime?
+
+  /// When the job completed
+  completedAt     DateTime?
+
+  /// Worker ID that picked up this job
+  workerId        String?
+
+  @@index([jobType])
+  @@index([status])
+  @@index([priority])
+  @@index([scheduledFor])
+  @@index([status, scheduledFor])
+}
+
+/// Job status
+enum JobStatus {
+  /// Job waiting to be processed
+  PENDING
+  /// Job currently running
+  RUNNING
+  /// Job completed successfully
+  COMPLETED
+  /// Job failed
+  FAILED
+  /// Job cancelled
+  CANCELLED
+  /// Job scheduled for later
+  SCHEDULED
 }

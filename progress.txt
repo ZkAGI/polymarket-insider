@@ -2514,3 +2514,72 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - All 2622 tests pass (106 new tests added)
 - TypeScript typecheck passes
 - Next up: API-DB-001 (Database schema design)
+
+=== Session 2026-01-11 ===
+
+COMPLETED: API-DB-001 - Database schema design
+- Designed comprehensive database schema in prisma/schema.prisma
+- Entity relationships:
+  - Market has many Outcomes, Trades, PriceHistory, MarketSnapshots, Alerts
+  - Outcome belongs to Market, has many Trades, PriceHistory
+  - Wallet has many Trades, Alerts, WalletSnapshots, FundingSources, ClusterMemberships
+  - Trade belongs to Market, Outcome, Wallet
+  - Alert may reference Market, Wallet
+  - WalletCluster has many WalletClusterMembers
+  - WalletClusterMember links Wallet to WalletCluster
+- New models added:
+  - WalletFundingSource: Tracks funding sources with risk levels
+  - WalletCluster: Groups related wallets
+  - WalletClusterMember: Many-to-many wallet-cluster relationship
+  - MarketSnapshot: Periodic market state snapshots
+  - WalletSnapshot: Periodic wallet state snapshots
+  - SystemConfig: Key-value configuration store
+  - SyncLog: Data synchronization tracking
+  - JobQueue: Background job processing
+- Enhanced existing models:
+  - Market: Added subcategory, tags, imageUrl, iconUrl, resolution, volume24h, tradeCount, uniqueTraders, lastSyncedAt
+  - Outcome: Added clobTokenId, priceChange24h, volume, winner, payout, displayOrder
+  - Wallet: Added walletType, isFresh, isMonitored, isFlagged, isSanctioned, riskLevel, totalPnl, winCount, avgTradeSize, maxTradeSize, walletAgeDays, primaryFundingSource, onChainTxCount, metadata, notes
+  - Trade: Added clobTradeId, matchId, feeUsd, makerAddress, takerAddress, isMaker, blockNumber, isInsider, flags
+  - Alert: Added severity, title, tags, acknowledged, dismissed, actionBy, actionAt, expiresAt
+  - PriceHistory: Added tradeCount, bestBid, bestAsk, spread, interval
+- Enumerations added:
+  - WalletType: UNKNOWN, EOA, CONTRACT, EXCHANGE, DEFI, MARKET_MAKER, INSTITUTIONAL, BOT
+  - RiskLevel: NONE, LOW, MEDIUM, HIGH, CRITICAL
+  - FundingSourceType: EXCHANGE, MIXER, DEFI, CONTRACT, EOA, UNKNOWN
+  - ClusterType: UNKNOWN, SAME_ENTITY, SAME_FUNDING, SIMILAR_TRADING, COORDINATED, BOT_NETWORK
+  - AlertType: 12 types for different alert scenarios
+  - AlertSeverity: INFO, LOW, MEDIUM, HIGH, CRITICAL
+  - TradeSide: BUY, SELL
+  - TimeInterval: MINUTE_1, MINUTE_5, MINUTE_15, HOUR_1, HOUR_4, DAY_1, WEEK_1
+  - SyncStatus: RUNNING, COMPLETED, FAILED, CANCELLED
+  - JobStatus: PENDING, RUNNING, COMPLETED, FAILED, CANCELLED, SCHEDULED
+- Indexing strategy:
+  - Primary keys on all id fields
+  - Unique indexes on slug, address, clobTradeId, clobTokenId, cluster memberships
+  - Foreign key indexes on all relation fields
+  - Query pattern indexes on timestamp, status, category, volume fields
+  - Composite indexes for common query patterns
+- Partitioning strategy documented:
+  - Trade and PriceHistory tables designed for time-based partitioning
+  - Timestamps and indexes optimized for range queries
+  - Historical data can be archived based on age
+- Documentation:
+  - Created docs/database-schema.md with:
+    - Entity relationship diagram (ASCII)
+    - All models with field descriptions
+    - All enumerations with values
+    - Indexing strategy explanation
+    - Partitioning strategy recommendations
+    - Data retention guidelines
+- Verified: npx prisma validate passes
+- Verified: pnpm typecheck passes
+- Verified: All 2622 tests pass
+- Next up: API-DB-002 (Markets table and model)
+
+NOTES:
+- The schema is fully documented in docs/database-schema.md
+- Prisma schema includes comments (///) for all fields to generate documentation
+- Schema supports all detection features (fresh wallet, clustering, funding sources)
+- Time-series data supports multiple intervals for different aggregation levels
+- Job queue and sync log support background processing and data synchronization
