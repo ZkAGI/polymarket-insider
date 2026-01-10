@@ -871,3 +871,46 @@ COMPLETED: API-CLOB-005 - Fetch open orders by wallet
 - TypeScript typecheck passes
 - E2E browser test passes (app loads correctly at localhost:3000)
 - Next up: API-CLOB-006
+
+COMPLETED: API-CLOB-006 - Fetch trade history with filters
+- Added comprehensive filtered trades functionality to src/api/clob/trades.ts:
+  - getFilteredTrades(options): Fetch trades with server-side and client-side filters
+  - getAllFilteredTrades(options): Fetch all matching trades with automatic pagination
+  - calculateFilteredTradesStats(trades): Calculate statistics for filtered trades
+  - getTradesInTimeWindow(startTime, endTime, options): Convenience for time-range queries
+  - getLargeTrades(tokenId, minSize, options): Find whale trades above a size threshold
+  - getTradesInPriceRange(minPrice, maxPrice, options): Find trades in a price range
+  - getTradesBySide(side, options): Filter buy or sell trades only
+- Added types:
+  - TradeFilterOptions: startTime, endTime, minSize, maxSize, minPrice, maxPrice,
+    side, tokenId, makerAddress, takerAddress, limit, cursor, sortOrder, client
+  - GetFilteredTradesResult: trades, count, filters, nextCursor, hasMore, fetchedAt
+  - FilteredTradesStats: totalTrades, totalVolume, totalValue, avgSize, avgPrice,
+    vwap, minSize, maxSize, minPrice, maxPrice, buyCount, sellCount, buyVolume,
+    sellVolume, earliestTrade, latestTrade
+- Features:
+  - Server-side query parameter building for API efficiency
+  - Client-side filtering as fallback for APIs that don't support all parameters
+  - Date range filtering (startTime/endTime with ISO strings or Date objects)
+  - Size filtering (minSize/maxSize)
+  - Price filtering (minPrice/maxPrice)
+  - Side filtering (buy/sell)
+  - Maker/taker address filtering with validation
+  - Ascending/descending sort order support
+  - Pagination support with cursor navigation
+  - VWAP calculation in statistics
+  - Comprehensive input validation
+- Updated src/api/clob/index.ts with new exports
+- Added 30 test cases for filtered trades functionality:
+  - getFilteredTrades tests (filters, date range, size, price, side, maker address,
+    invalid addresses, pagination, sort order, error handling, limit clamping)
+  - getAllFilteredTrades tests (pagination, maxTrades limit)
+  - calculateFilteredTradesStats tests (statistics, empty array, VWAP)
+  - getTradesInTimeWindow tests
+  - getLargeTrades tests (size threshold, invalid inputs)
+  - getTradesInPriceRange tests (price range, invalid inputs)
+  - getTradesBySide tests (buy/sell filtering)
+- All 708 tests pass
+- TypeScript typecheck passes
+- E2E browser test passes
+- Next up: API-CLOB-007

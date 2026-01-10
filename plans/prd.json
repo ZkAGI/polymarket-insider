@@ -561,7 +561,8 @@
       "priority": 29,
       "name": "Fetch trade history with filters",
       "description": "Query trade history with date range and size filters",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T03:55:00Z",
       "steps": [
         "Create getFilteredTrades function",
         "Accept filter parameters",

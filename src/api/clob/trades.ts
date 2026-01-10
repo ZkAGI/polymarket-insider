@@ -1090,3 +1090,764 @@ export async function getTradesBetweenWallets(
     );
   });
 }
+
+// ============================================================================
+// API-CLOB-006: Fetch trade history with filters
+// ============================================================================
+
+/**
+ * Trade filter options for querying filtered trade history
+ */
+export interface TradeFilterOptions {
+  /** Filter trades after this timestamp (inclusive) */
+  startTime?: string | Date;
+
+  /** Filter trades before this timestamp (exclusive) */
+  endTime?: string | Date;
+
+  /** Filter trades with size >= minSize */
+  minSize?: number;
+
+  /** Filter trades with size <= maxSize */
+  maxSize?: number;
+
+  /** Filter trades with price >= minPrice */
+  minPrice?: number;
+
+  /** Filter trades with price <= maxPrice */
+  maxPrice?: number;
+
+  /** Filter by trade side (buy or sell) */
+  side?: TradeDirection;
+
+  /** Filter by specific token/market ID */
+  tokenId?: string;
+
+  /** Filter by maker wallet address */
+  makerAddress?: string;
+
+  /** Filter by taker wallet address */
+  takerAddress?: string;
+
+  /** Maximum number of trades to return (default: 100) */
+  limit?: number;
+
+  /** Pagination cursor for fetching next page */
+  cursor?: string;
+
+  /** Sort order for results (default: "desc" - most recent first) */
+  sortOrder?: "asc" | "desc";
+
+  /** Custom CLOB client to use (defaults to singleton) */
+  client?: ClobClient;
+}
+
+/**
+ * Result from fetching filtered trades
+ */
+export interface GetFilteredTradesResult {
+  /** Array of trades matching the filters */
+  trades: Trade[];
+
+  /** Number of trades returned in this page */
+  count: number;
+
+  /** Filters that were applied */
+  filters: {
+    startTime?: string;
+    endTime?: string;
+    minSize?: number;
+    maxSize?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    side?: TradeDirection;
+    tokenId?: string;
+    makerAddress?: string;
+    takerAddress?: string;
+  };
+
+  /** Pagination cursor for next page (if more results exist) */
+  nextCursor?: string;
+
+  /** Whether there are more results available */
+  hasMore: boolean;
+
+  /** Timestamp when the data was fetched */
+  fetchedAt: string;
+}
+
+/**
+ * Statistics for filtered trades
+ */
+export interface FilteredTradesStats {
+  /** Total number of trades matching filters */
+  totalTrades: number;
+
+  /** Total volume of all matching trades */
+  totalVolume: number;
+
+  /** Total value (price * size) of all matching trades */
+  totalValue: number;
+
+  /** Average trade size */
+  avgSize: number;
+
+  /** Average trade price */
+  avgPrice: number;
+
+  /** Volume-weighted average price */
+  vwap: number;
+
+  /** Minimum trade size */
+  minSize: number;
+
+  /** Maximum trade size */
+  maxSize: number;
+
+  /** Minimum trade price */
+  minPrice: number;
+
+  /** Maximum trade price */
+  maxPrice: number;
+
+  /** Number of buy trades */
+  buyCount: number;
+
+  /** Number of sell trades */
+  sellCount: number;
+
+  /** Total buy volume */
+  buyVolume: number;
+
+  /** Total sell volume */
+  sellVolume: number;
+
+  /** Earliest trade timestamp */
+  earliestTrade?: string;
+
+  /** Latest trade timestamp */
+  latestTrade?: string;
+}
+
+/**
+ * Convert filter options to API query parameters
+ *
+ * @param filters - The filter options
+ * @returns URLSearchParams object
+ */
+function buildFilterQueryParams(filters: TradeFilterOptions): URLSearchParams {
+  const params = new URLSearchParams();
+
+  // Time range filters
+  if (filters.startTime) {
+    const startTs =
+      filters.startTime instanceof Date
+        ? filters.startTime.toISOString()
+        : filters.startTime;
+    params.set("start_ts", startTs);
+  }
+
+  if (filters.endTime) {
+    const endTs =
+      filters.endTime instanceof Date
+        ? filters.endTime.toISOString()
+        : filters.endTime;
+    params.set("end_ts", endTs);
+  }
+
+  // Size filters - some APIs support these directly
+  if (filters.minSize !== undefined) {
+    params.set("min_size", filters.minSize.toString());
+  }
+
+  if (filters.maxSize !== undefined) {
+    params.set("max_size", filters.maxSize.toString());
+  }
+
+  // Price filters
+  if (filters.minPrice !== undefined) {
+    params.set("min_price", filters.minPrice.toString());
+  }
+
+  if (filters.maxPrice !== undefined) {
+    params.set("max_price", filters.maxPrice.toString());
+  }
+
+  // Side filter
+  if (filters.side) {
+    params.set("side", filters.side);
+  }
+
+  // Token ID filter
+  if (filters.tokenId) {
+    params.set("token_id", filters.tokenId);
+  }
+
+  // Maker/taker address filters
+  if (filters.makerAddress) {
+    params.set("maker", normalizeWalletAddress(filters.makerAddress));
+  }
+
+  if (filters.takerAddress) {
+    params.set("taker", normalizeWalletAddress(filters.takerAddress));
+  }
+
+  // Pagination
+  const limit = Math.max(1, Math.min(filters.limit ?? 100, 1000));
+  params.set("limit", limit.toString());
+
+  if (filters.cursor) {
+    params.set("cursor", filters.cursor);
+  }
+
+  // Sort order
+  if (filters.sortOrder) {
+    params.set("order", filters.sortOrder);
+  }
+
+  return params;
+}
+
+/**
+ * Apply client-side filters to trades
+ *
+ * This ensures filtering even if the API doesn't support all filter parameters.
+ *
+ * @param trades - Array of trades to filter
+ * @param filters - Filter options
+ * @returns Filtered trades array
+ */
+function applyClientSideFilters(trades: Trade[], filters: TradeFilterOptions): Trade[] {
+  let result = [...trades];
+
+  // Time range filter
+  if (filters.startTime || filters.endTime) {
+    const startMs = filters.startTime
+      ? new Date(filters.startTime).getTime()
+      : -Infinity;
+    const endMs = filters.endTime
+      ? new Date(filters.endTime).getTime()
+      : Infinity;
+
+    result = result.filter((trade) => {
+      const tradeMs = new Date(trade.created_at).getTime();
+      return tradeMs >= startMs && tradeMs < endMs;
+    });
+  }
+
+  // Size filters
+  if (filters.minSize !== undefined || filters.maxSize !== undefined) {
+    const minSize = filters.minSize ?? -Infinity;
+    const maxSize = filters.maxSize ?? Infinity;
+
+    result = result.filter((trade) => {
+      const size = parseFloat(trade.size);
+      if (isNaN(size)) return false;
+      return size >= minSize && size <= maxSize;
+    });
+  }
+
+  // Price filters
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+    const minPrice = filters.minPrice ?? -Infinity;
+    const maxPrice = filters.maxPrice ?? Infinity;
+
+    result = result.filter((trade) => {
+      const price = parseFloat(trade.price);
+      if (isNaN(price)) return false;
+      return price >= minPrice && price <= maxPrice;
+    });
+  }
+
+  // Side filter
+  if (filters.side) {
+    result = result.filter((trade) => trade.side === filters.side);
+  }
+
+  // Maker address filter
+  if (filters.makerAddress) {
+    const normalizedMaker = normalizeWalletAddress(filters.makerAddress);
+    result = result.filter(
+      (trade) =>
+        trade.maker_address &&
+        normalizeWalletAddress(trade.maker_address) === normalizedMaker
+    );
+  }
+
+  // Taker address filter
+  if (filters.takerAddress) {
+    const normalizedTaker = normalizeWalletAddress(filters.takerAddress);
+    result = result.filter(
+      (trade) =>
+        trade.taker_address &&
+        normalizeWalletAddress(trade.taker_address) === normalizedTaker
+    );
+  }
+
+  return result;
+}
+
+/**
+ * Fetch trade history with comprehensive filters
+ *
+ * Query trades with various filter criteria including date range, size filters,
+ * price filters, side, and wallet addresses. Supports pagination.
+ *
+ * @param options - Filter and pagination options
+ * @returns The filtered trades result, or null if no valid filters provided
+ * @throws ClobApiException on API errors (except 404)
+ *
+ * @example
+ * ```typescript
+ * // Fetch trades for the last 24 hours
+ * const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+ * const result = await getFilteredTrades({
+ *   startTime: yesterday,
+ *   endTime: new Date(),
+ * });
+ *
+ * // Fetch large trades (size >= 1000) for a specific market
+ * const whales = await getFilteredTrades({
+ *   tokenId: "12345",
+ *   minSize: 1000,
+ * });
+ *
+ * // Fetch buy trades in a price range
+ * const buys = await getFilteredTrades({
+ *   side: "buy",
+ *   minPrice: 0.4,
+ *   maxPrice: 0.6,
+ * });
+ *
+ * // Combine multiple filters
+ * const filtered = await getFilteredTrades({
+ *   tokenId: "12345",
+ *   startTime: "2026-01-01T00:00:00Z",
+ *   endTime: "2026-01-10T00:00:00Z",
+ *   minSize: 100,
+ *   side: "sell",
+ * });
+ * ```
+ */
+export async function getFilteredTrades(
+  options: TradeFilterOptions = {}
+): Promise<GetFilteredTradesResult | null> {
+  const { client = clobClient, limit = 100, sortOrder = "desc", ...filters } = options;
+
+  // At least one filter should be provided (or token ID for market-specific queries)
+  const hasFilters =
+    filters.startTime ||
+    filters.endTime ||
+    filters.minSize !== undefined ||
+    filters.maxSize !== undefined ||
+    filters.minPrice !== undefined ||
+    filters.maxPrice !== undefined ||
+    filters.side ||
+    filters.tokenId ||
+    filters.makerAddress ||
+    filters.takerAddress;
+
+  // If no filters provided, require at least a token ID
+  if (!hasFilters) {
+    return null;
+  }
+
+  // Validate wallet addresses if provided
+  if (filters.makerAddress && !isValidWalletAddress(filters.makerAddress)) {
+    return null;
+  }
+
+  if (filters.takerAddress && !isValidWalletAddress(filters.takerAddress)) {
+    return null;
+  }
+
+  // Clamp limit
+  const clampedLimit = Math.max(1, Math.min(limit, 1000));
+
+  try {
+    // Build query parameters
+    const params = buildFilterQueryParams({
+      ...filters,
+      limit: clampedLimit,
+      cursor: options.cursor,
+      sortOrder,
+      client,
+    });
+
+    // Fetch from API
+    const response = await client.get<RawTradesResponse | RawTradeResponse[]>(
+      `/trades?${params.toString()}`
+    );
+
+    // Handle different response formats
+    let rawTrades: RawTradeResponse[];
+    let nextCursor: string | undefined;
+
+    if (Array.isArray(response)) {
+      rawTrades = response;
+    } else if (response.trades) {
+      rawTrades = response.trades;
+      nextCursor = response.next_cursor;
+    } else if (response.data) {
+      rawTrades = response.data;
+      nextCursor = response.next_cursor;
+    } else {
+      rawTrades = [];
+    }
+
+    // Parse trades
+    let trades = rawTrades.map((raw) => parseTrade(raw, filters.tokenId ?? ""));
+
+    // Apply client-side filters as a safety measure
+    trades = applyClientSideFilters(trades, filters);
+
+    // Sort trades
+    trades = sortOrder === "asc"
+      ? [...trades].sort((a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
+      : sortTradesByTimestampDesc(trades);
+
+    // Apply limit after filtering
+    const limitedTrades = trades.slice(0, clampedLimit);
+
+    // Determine if there are more results
+    const hasMore = nextCursor !== undefined || limitedTrades.length === clampedLimit;
+
+    // Build result filters object
+    const appliedFilters: GetFilteredTradesResult["filters"] = {};
+    if (filters.startTime) {
+      appliedFilters.startTime =
+        filters.startTime instanceof Date
+          ? filters.startTime.toISOString()
+          : filters.startTime;
+    }
+    if (filters.endTime) {
+      appliedFilters.endTime =
+        filters.endTime instanceof Date
+          ? filters.endTime.toISOString()
+          : filters.endTime;
+    }
+    if (filters.minSize !== undefined) appliedFilters.minSize = filters.minSize;
+    if (filters.maxSize !== undefined) appliedFilters.maxSize = filters.maxSize;
+    if (filters.minPrice !== undefined) appliedFilters.minPrice = filters.minPrice;
+    if (filters.maxPrice !== undefined) appliedFilters.maxPrice = filters.maxPrice;
+    if (filters.side) appliedFilters.side = filters.side;
+    if (filters.tokenId) appliedFilters.tokenId = filters.tokenId;
+    if (filters.makerAddress) appliedFilters.makerAddress = filters.makerAddress;
+    if (filters.takerAddress) appliedFilters.takerAddress = filters.takerAddress;
+
+    return {
+      trades: limitedTrades,
+      count: limitedTrades.length,
+      filters: appliedFilters,
+      nextCursor,
+      hasMore,
+      fetchedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    // Return empty result for 404
+    if (error instanceof ClobApiException && error.statusCode === 404) {
+      return {
+        trades: [],
+        count: 0,
+        filters: {},
+        hasMore: false,
+        fetchedAt: new Date().toISOString(),
+      };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Fetch all trades matching filters with automatic pagination
+ *
+ * This function automatically handles pagination to fetch all matching trades.
+ * Use with caution for broad filters that may match many trades.
+ *
+ * @param options - Filter options (maxTrades limits total results)
+ * @returns Array of all matching trades
+ *
+ * @example
+ * ```typescript
+ * // Fetch all large trades for a market (up to 5000)
+ * const allWhales = await getAllFilteredTrades({
+ *   tokenId: "12345",
+ *   minSize: 1000,
+ *   maxTrades: 5000,
+ * });
+ * ```
+ */
+export async function getAllFilteredTrades(
+  options: TradeFilterOptions & { maxTrades?: number } = {}
+): Promise<Trade[]> {
+  const { maxTrades = 10000, ...filterOptions } = options;
+
+  const allTrades: Trade[] = [];
+  let cursor: string | undefined;
+  let pageCount = 0;
+  const maxPages = Math.ceil(maxTrades / 100);
+
+  do {
+    const result = await getFilteredTrades({
+      ...filterOptions,
+      cursor,
+      limit: Math.min(100, maxTrades - allTrades.length),
+    });
+
+    if (!result) {
+      break;
+    }
+
+    allTrades.push(...result.trades);
+    cursor = result.nextCursor;
+    pageCount++;
+
+    // Safety limits
+    if (allTrades.length >= maxTrades || pageCount >= maxPages) {
+      break;
+    }
+  } while (cursor);
+
+  return allTrades;
+}
+
+/**
+ * Calculate statistics for a set of trades
+ *
+ * @param trades - Array of trades to analyze
+ * @returns Statistics object with various metrics
+ *
+ * @example
+ * ```typescript
+ * const result = await getFilteredTrades({ tokenId: "12345", minSize: 100 });
+ * if (result) {
+ *   const stats = calculateFilteredTradesStats(result.trades);
+ *   console.log(`Average size: ${stats.avgSize}`);
+ *   console.log(`VWAP: ${stats.vwap}`);
+ * }
+ * ```
+ */
+export function calculateFilteredTradesStats(trades: Trade[]): FilteredTradesStats {
+  if (trades.length === 0) {
+    return {
+      totalTrades: 0,
+      totalVolume: 0,
+      totalValue: 0,
+      avgSize: 0,
+      avgPrice: 0,
+      vwap: 0,
+      minSize: 0,
+      maxSize: 0,
+      minPrice: 0,
+      maxPrice: 0,
+      buyCount: 0,
+      sellCount: 0,
+      buyVolume: 0,
+      sellVolume: 0,
+    };
+  }
+
+  let totalVolume = 0;
+  let totalValue = 0;
+  let minSize = Infinity;
+  let maxSize = -Infinity;
+  let minPrice = Infinity;
+  let maxPrice = -Infinity;
+  let buyCount = 0;
+  let sellCount = 0;
+  let buyVolume = 0;
+  let sellVolume = 0;
+  let earliestTrade: string | undefined;
+  let latestTrade: string | undefined;
+  let validPriceCount = 0;
+  let totalPrices = 0;
+
+  for (const trade of trades) {
+    const size = parseFloat(trade.size);
+    const price = parseFloat(trade.price);
+
+    if (!isNaN(size)) {
+      totalVolume += size;
+      if (size < minSize) minSize = size;
+      if (size > maxSize) maxSize = size;
+
+      if (trade.side === "buy") {
+        buyCount++;
+        buyVolume += size;
+      } else {
+        sellCount++;
+        sellVolume += size;
+      }
+
+      if (!isNaN(price)) {
+        totalValue += price * size;
+      }
+    }
+
+    if (!isNaN(price)) {
+      validPriceCount++;
+      totalPrices += price;
+      if (price < minPrice) minPrice = price;
+      if (price > maxPrice) maxPrice = price;
+    }
+
+    // Track timestamps
+    if (trade.created_at) {
+      if (!earliestTrade || trade.created_at < earliestTrade) {
+        earliestTrade = trade.created_at;
+      }
+      if (!latestTrade || trade.created_at > latestTrade) {
+        latestTrade = trade.created_at;
+      }
+    }
+  }
+
+  // Handle edge cases where no valid sizes/prices found
+  if (minSize === Infinity) minSize = 0;
+  if (maxSize === -Infinity) maxSize = 0;
+  if (minPrice === Infinity) minPrice = 0;
+  if (maxPrice === -Infinity) maxPrice = 0;
+
+  const avgSize = trades.length > 0 ? totalVolume / trades.length : 0;
+  const avgPrice = validPriceCount > 0 ? totalPrices / validPriceCount : 0;
+  const vwap = totalVolume > 0 ? totalValue / totalVolume : 0;
+
+  return {
+    totalTrades: trades.length,
+    totalVolume,
+    totalValue,
+    avgSize,
+    avgPrice,
+    vwap,
+    minSize,
+    maxSize,
+    minPrice,
+    maxPrice,
+    buyCount,
+    sellCount,
+    buyVolume,
+    sellVolume,
+    earliestTrade,
+    latestTrade,
+  };
+}
+
+/**
+ * Get trades within a specific time window
+ *
+ * Convenience function for time-range queries.
+ *
+ * @param startTime - Start of time window
+ * @param endTime - End of time window
+ * @param options - Additional filter options
+ * @returns Filtered trades result
+ *
+ * @example
+ * ```typescript
+ * // Get all trades from the last hour
+ * const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+ * const result = await getTradesInTimeWindow(oneHourAgo, new Date());
+ * ```
+ */
+export async function getTradesInTimeWindow(
+  startTime: Date | string,
+  endTime: Date | string,
+  options: Omit<TradeFilterOptions, "startTime" | "endTime"> = {}
+): Promise<GetFilteredTradesResult | null> {
+  return getFilteredTrades({
+    ...options,
+    startTime,
+    endTime,
+  });
+}
+
+/**
+ * Get large trades (whale trades) for a market
+ *
+ * Convenience function for finding trades above a size threshold.
+ *
+ * @param tokenId - Token/market ID
+ * @param minSize - Minimum trade size to include
+ * @param options - Additional filter options
+ * @returns Filtered trades result
+ *
+ * @example
+ * ```typescript
+ * // Find trades >= 1000 in size
+ * const whales = await getLargeTrades("12345", 1000);
+ * ```
+ */
+export async function getLargeTrades(
+  tokenId: string,
+  minSize: number,
+  options: Omit<TradeFilterOptions, "tokenId" | "minSize"> = {}
+): Promise<GetFilteredTradesResult | null> {
+  if (!tokenId || !tokenId.trim() || minSize < 0) {
+    return null;
+  }
+
+  return getFilteredTrades({
+    ...options,
+    tokenId: tokenId.trim(),
+    minSize,
+  });
+}
+
+/**
+ * Get trades within a price range
+ *
+ * Convenience function for price-range queries.
+ *
+ * @param minPrice - Minimum price (inclusive)
+ * @param maxPrice - Maximum price (inclusive)
+ * @param options - Additional filter options
+ * @returns Filtered trades result
+ *
+ * @example
+ * ```typescript
+ * // Find trades between 0.4 and 0.6 price
+ * const result = await getTradesInPriceRange(0.4, 0.6, { tokenId: "12345" });
+ * ```
+ */
+export async function getTradesInPriceRange(
+  minPrice: number,
+  maxPrice: number,
+  options: Omit<TradeFilterOptions, "minPrice" | "maxPrice"> = {}
+): Promise<GetFilteredTradesResult | null> {
+  if (minPrice < 0 || maxPrice < 0 || minPrice > maxPrice) {
+    return null;
+  }
+
+  return getFilteredTrades({
+    ...options,
+    minPrice,
+    maxPrice,
+  });
+}
+
+/**
+ * Get buy or sell trades only
+ *
+ * Convenience function for side-specific queries.
+ *
+ * @param side - Trade side ("buy" or "sell")
+ * @param options - Additional filter options
+ * @returns Filtered trades result
+ *
+ * @example
+ * ```typescript
+ * // Get only buy trades for a market
+ * const buys = await getTradesBySide("buy", { tokenId: "12345" });
+ * ```
+ */
+export async function getTradesBySide(
+  side: TradeDirection,
+  options: Omit<TradeFilterOptions, "side"> = {}
+): Promise<GetFilteredTradesResult | null> {
+  return getFilteredTrades({
+    ...options,
+    side,
+  });
+}

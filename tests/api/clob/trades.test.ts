@@ -23,6 +23,14 @@ import {
   getTradesBetweenWallets,
   isValidWalletAddress,
   normalizeWalletAddress,
+  // API-CLOB-006: Filtered trades functions
+  getFilteredTrades,
+  getAllFilteredTrades,
+  calculateFilteredTradesStats,
+  getTradesInTimeWindow,
+  getLargeTrades,
+  getTradesInPriceRange,
+  getTradesBySide,
 } from "@/api/clob/trades";
 import { ClobClient, ClobApiException } from "@/api/clob/client";
 import { Trade } from "@/api/clob/types";
@@ -1374,6 +1382,547 @@ describe("Trades API", () => {
       const trades = await getTradesBetweenWallets(walletA, walletB, { client });
 
       expect(trades).toHaveLength(0);
+    });
+  });
+
+  // ============================================================================
+  // API-CLOB-006: Filtered trades tests
+  // ============================================================================
+
+  describe("getFilteredTrades", () => {
+    it("should return null when no filters provided", async () => {
+      const result = await getFilteredTrades({});
+      expect(result).toBeNull();
+    });
+
+    it("should fetch trades with tokenId filter", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "100", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "sell", price: "0.6", size: "200", created_at: "2026-01-09T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({ tokenId: "12345", client });
+
+      expect(result).not.toBeNull();
+      expect(result?.trades).toHaveLength(2);
+      expect(result?.filters.tokenId).toBe("12345");
+    });
+
+    it("should include tokenId in query params", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      await getFilteredTrades({ tokenId: "token123", client });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("token_id=token123"),
+        expect.any(Object)
+      );
+    });
+
+    it("should apply date range filters", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "100", created_at: "2026-01-05T00:00:00Z" },
+          { id: "trade2", side: "buy", price: "0.5", size: "100", created_at: "2026-01-03T00:00:00Z" },
+          { id: "trade3", side: "buy", price: "0.5", size: "100", created_at: "2026-01-01T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({
+        startTime: "2026-01-02T00:00:00Z",
+        endTime: "2026-01-04T00:00:00Z",
+        tokenId: "12345",
+        client,
+      });
+
+      // Should only include trade from Jan 3 (Jan 1 is before start, Jan 5 is after end)
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.id).toBe("trade2");
+    });
+
+    it("should apply size filters", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "50", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "buy", price: "0.5", size: "150", created_at: "2026-01-09T00:00:00Z" },
+          { id: "trade3", side: "buy", price: "0.5", size: "300", created_at: "2026-01-08T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        minSize: 100,
+        maxSize: 200,
+        client,
+      });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.id).toBe("trade2");
+      expect(result?.filters.minSize).toBe(100);
+      expect(result?.filters.maxSize).toBe(200);
+    });
+
+    it("should apply price filters", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.3", size: "100", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "buy", price: "0.5", size: "100", created_at: "2026-01-09T00:00:00Z" },
+          { id: "trade3", side: "buy", price: "0.8", size: "100", created_at: "2026-01-08T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        minPrice: 0.4,
+        maxPrice: 0.6,
+        client,
+      });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.id).toBe("trade2");
+    });
+
+    it("should apply side filter", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "100", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "sell", price: "0.5", size: "100", created_at: "2026-01-09T00:00:00Z" },
+          { id: "trade3", side: "buy", price: "0.5", size: "100", created_at: "2026-01-08T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        side: "sell",
+        client,
+      });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.id).toBe("trade2");
+      expect(result?.filters.side).toBe("sell");
+    });
+
+    it("should apply maker address filter", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "100", maker_address: "0x1234567890123456789012345678901234567890", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "buy", price: "0.5", size: "100", maker_address: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd", created_at: "2026-01-09T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        makerAddress: "0x1234567890123456789012345678901234567890",
+        client,
+      });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.id).toBe("trade1");
+    });
+
+    it("should return null for invalid maker address", async () => {
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        makerAddress: "invalid-address",
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null for invalid taker address", async () => {
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        takerAddress: "invalid-address",
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it("should include pagination cursor in response", async () => {
+      const mockResponse = {
+        trades: [{ id: "trade1", side: "buy", price: "0.5", size: "100", created_at: "2026-01-10T00:00:00Z" }],
+        next_cursor: "next123",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({ tokenId: "12345", client });
+
+      expect(result?.nextCursor).toBe("next123");
+      expect(result?.hasMore).toBe(true);
+    });
+
+    it("should support ascending sort order", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "100", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "buy", price: "0.5", size: "100", created_at: "2026-01-08T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        sortOrder: "asc",
+        client,
+      });
+
+      // Should be sorted ascending by date
+      expect(result?.trades[0]?.id).toBe("trade2"); // Jan 8
+      expect(result?.trades[1]?.id).toBe("trade1"); // Jan 10
+    });
+
+    it("should handle 404 error gracefully", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("Not found"),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({ tokenId: "12345", client });
+
+      expect(result).not.toBeNull();
+      expect(result?.trades).toHaveLength(0);
+      expect(result?.count).toBe(0);
+    });
+
+    it("should throw on server errors", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve("Server error"),
+      });
+
+      const client = new ClobClient();
+      await expect(getFilteredTrades({ tokenId: "12345", client })).rejects.toThrow();
+    });
+
+    it("should clamp limit to valid bounds", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      await getFilteredTrades({ tokenId: "12345", limit: 5000, client });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("limit=1000"),
+        expect.any(Object)
+      );
+    });
+
+    it("should combine multiple filters", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "150", created_at: "2026-01-05T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getFilteredTrades({
+        tokenId: "12345",
+        startTime: "2026-01-01T00:00:00Z",
+        endTime: "2026-01-10T00:00:00Z",
+        minSize: 100,
+        side: "buy",
+        client,
+      });
+
+      expect(result?.filters.tokenId).toBe("12345");
+      expect(result?.filters.minSize).toBe(100);
+      expect(result?.filters.side).toBe("buy");
+      expect(result?.filters.startTime).toBe("2026-01-01T00:00:00Z");
+      expect(result?.filters.endTime).toBe("2026-01-10T00:00:00Z");
+    });
+  });
+
+  describe("getAllFilteredTrades", () => {
+    it("should paginate through all results", async () => {
+      const page1 = {
+        trades: Array(100).fill(null).map((_, i) => ({
+          id: `trade${i}`,
+          side: "buy",
+          price: "0.5",
+          size: "100",
+          created_at: "2026-01-10T00:00:00Z",
+        })),
+        next_cursor: "page2",
+      };
+
+      const page2 = {
+        trades: Array(50).fill(null).map((_, i) => ({
+          id: `trade${100 + i}`,
+          side: "buy",
+          price: "0.5",
+          size: "100",
+          created_at: "2026-01-09T00:00:00Z",
+        })),
+      };
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify(page1)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify(page2)),
+        });
+
+      const client = new ClobClient();
+      const trades = await getAllFilteredTrades({ tokenId: "12345", client });
+
+      expect(trades).toHaveLength(150);
+    });
+
+    it("should respect maxTrades limit", async () => {
+      const page1 = {
+        trades: Array(100).fill(null).map((_, i) => ({
+          id: `trade${i}`,
+          side: "buy",
+          price: "0.5",
+          size: "100",
+          created_at: "2026-01-10T00:00:00Z",
+        })),
+        next_cursor: "page2",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(page1)),
+      });
+
+      const client = new ClobClient();
+      const trades = await getAllFilteredTrades({ tokenId: "12345", maxTrades: 50, client });
+
+      expect(trades.length).toBeLessThanOrEqual(50);
+    });
+  });
+
+  describe("calculateFilteredTradesStats", () => {
+    it("should calculate correct statistics", () => {
+      const trades: Trade[] = [
+        { id: "1", asset_id: "t1", side: "buy", price: "0.4", size: "100", created_at: "2026-01-10T00:00:00Z" },
+        { id: "2", asset_id: "t1", side: "sell", price: "0.6", size: "200", created_at: "2026-01-09T00:00:00Z" },
+        { id: "3", asset_id: "t1", side: "buy", price: "0.5", size: "150", created_at: "2026-01-08T00:00:00Z" },
+      ];
+
+      const stats = calculateFilteredTradesStats(trades);
+
+      expect(stats.totalTrades).toBe(3);
+      expect(stats.totalVolume).toBe(450);
+      expect(stats.buyCount).toBe(2);
+      expect(stats.sellCount).toBe(1);
+      expect(stats.buyVolume).toBe(250);
+      expect(stats.sellVolume).toBe(200);
+      expect(stats.minSize).toBe(100);
+      expect(stats.maxSize).toBe(200);
+      expect(stats.minPrice).toBe(0.4);
+      expect(stats.maxPrice).toBe(0.6);
+      expect(stats.earliestTrade).toBe("2026-01-08T00:00:00Z");
+      expect(stats.latestTrade).toBe("2026-01-10T00:00:00Z");
+    });
+
+    it("should handle empty trades array", () => {
+      const stats = calculateFilteredTradesStats([]);
+
+      expect(stats.totalTrades).toBe(0);
+      expect(stats.totalVolume).toBe(0);
+      expect(stats.vwap).toBe(0);
+    });
+
+    it("should calculate VWAP correctly", () => {
+      const trades: Trade[] = [
+        { id: "1", asset_id: "t1", side: "buy", price: "0.4", size: "100", created_at: "2026-01-10T00:00:00Z" },
+        { id: "2", asset_id: "t1", side: "sell", price: "0.6", size: "100", created_at: "2026-01-09T00:00:00Z" },
+      ];
+
+      const stats = calculateFilteredTradesStats(trades);
+
+      // VWAP = (0.4 * 100 + 0.6 * 100) / 200 = 100 / 200 = 0.5
+      expect(stats.vwap).toBe(0.5);
+    });
+  });
+
+  describe("getTradesInTimeWindow", () => {
+    it("should fetch trades within time window", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      const start = new Date("2026-01-01T00:00:00Z");
+      const end = new Date("2026-01-10T00:00:00Z");
+
+      await getTradesInTimeWindow(start, end, { tokenId: "12345", client });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("start_ts="),
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("end_ts="),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe("getLargeTrades", () => {
+    it("should fetch trades above size threshold", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      await getLargeTrades("12345", 1000, { client });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("min_size=1000"),
+        expect.any(Object)
+      );
+    });
+
+    it("should return null for empty tokenId", async () => {
+      const result = await getLargeTrades("", 1000);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for negative minSize", async () => {
+      const result = await getLargeTrades("12345", -100);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("getTradesInPriceRange", () => {
+    it("should fetch trades within price range", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ trades: [] })),
+      });
+
+      const client = new ClobClient();
+      await getTradesInPriceRange(0.4, 0.6, { tokenId: "12345", client });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("min_price=0.4"),
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("max_price=0.6"),
+        expect.any(Object)
+      );
+    });
+
+    it("should return null for negative prices", async () => {
+      const result = await getTradesInPriceRange(-0.1, 0.6);
+      expect(result).toBeNull();
+    });
+
+    it("should return null when minPrice > maxPrice", async () => {
+      const result = await getTradesInPriceRange(0.8, 0.4);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("getTradesBySide", () => {
+    it("should fetch only buy trades", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "100", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "sell", price: "0.5", size: "100", created_at: "2026-01-09T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesBySide("buy", { tokenId: "12345", client });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.side).toBe("buy");
+    });
+
+    it("should fetch only sell trades", async () => {
+      const mockResponse = {
+        trades: [
+          { id: "trade1", side: "buy", price: "0.5", size: "100", created_at: "2026-01-10T00:00:00Z" },
+          { id: "trade2", side: "sell", price: "0.5", size: "100", created_at: "2026-01-09T00:00:00Z" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const result = await getTradesBySide("sell", { tokenId: "12345", client });
+
+      expect(result?.trades).toHaveLength(1);
+      expect(result?.trades[0]?.side).toBe("sell");
     });
   });
 });

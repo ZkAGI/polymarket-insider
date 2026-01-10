@@ -40,6 +40,14 @@ export {
   getTradesBetweenWallets,
   isValidWalletAddress,
   normalizeWalletAddress,
+  // Filtered trades functions (API-CLOB-006)
+  getFilteredTrades,
+  getAllFilteredTrades,
+  calculateFilteredTradesStats,
+  getTradesInTimeWindow,
+  getLargeTrades,
+  getTradesInPriceRange,
+  getTradesBySide,
 } from "./trades";
 
 export type {
@@ -50,6 +58,10 @@ export type {
   GetTradesByWalletResult,
   WalletActivitySummary,
   WalletTradeRole,
+  // Filtered trades types (API-CLOB-006)
+  TradeFilterOptions,
+  GetFilteredTradesResult,
+  FilteredTradesStats,
 } from "./trades";
 
 // Open orders functions (API-CLOB-005)
