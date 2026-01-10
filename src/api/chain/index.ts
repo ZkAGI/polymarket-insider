@@ -162,3 +162,35 @@ export {
   isPolymarketContract,
   getPolymarketContractName,
 } from "./contract-decoder";
+
+// API-CHAIN-007: USDC Transfer Tracker
+export type {
+  USDCTokenType,
+  TransferDirection,
+  USDCTransfer,
+  WalletDepositSummary,
+  USDCTrackerEventType,
+  USDCTrackerEvent,
+  USDCTrackerEventListener,
+  USDCTrackerConfig,
+  USDCTrackerLogger,
+} from "./usdc-tracker";
+
+export {
+  USDC_ADDRESSES,
+  POLYMARKET_DEPOSIT_CONTRACTS,
+  TRANSFER_EVENT_TOPIC,
+  USDCTracker,
+  createUSDCTracker,
+  getSharedUSDCTracker,
+  setSharedUSDCTracker,
+  resetSharedUSDCTracker,
+  getUSDCTransfers,
+  getPolymarketDeposits,
+  getPolymarketWithdrawals,
+  getWalletDepositSummary,
+  isPolymarketDepositContract,
+  isUSDCTokenContract,
+  formatUSDCAmount,
+  parseUSDCAmount,
+} from "./usdc-tracker";

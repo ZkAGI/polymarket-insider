@@ -1022,7 +1022,8 @@
       "priority": 52,
       "name": "Track USDC transfers to Polymarket",
       "description": "Monitor USDC deposits from wallets to Polymarket contracts",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T00:30:00Z",
       "steps": [
         "Identify Polymarket contract addresses",
         "Filter USDC transfers",

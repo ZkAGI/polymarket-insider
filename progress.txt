@@ -2326,3 +2326,88 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - All 2427 tests pass (79 new tests added)
 - TypeScript typecheck passes
 - Next up: API-CHAIN-007 (Track USDC transfers to Polymarket)
+
+
+## API-CHAIN-007: Track USDC Transfers to Polymarket - COMPLETED
+- Created src/api/chain/usdc-tracker.ts with USDCTracker class:
+  - Monitor USDC deposits from wallets to Polymarket contracts
+  - Support for both USDC and USDC.e tokens on Polygon
+  - Constants defined:
+    - USDC_ADDRESSES: USDC and USDC.e token addresses
+    - POLYMARKET_DEPOSIT_CONTRACTS: CTF_EXCHANGE, NEG_RISK_CTF_EXCHANGE, CONDITIONAL_TOKENS, ROUTER
+    - TRANSFER_EVENT_TOPIC: ERC20 Transfer event signature
+  - Types defined:
+    - USDCTokenType: "USDC" | "USDC.e"
+    - TransferDirection: "deposit" | "withdrawal"
+    - USDCTransfer: Complete transfer information
+    - WalletDepositSummary: Aggregated deposit statistics
+    - USDCTrackerEvent: Event emission types
+  - USDCTracker class features:
+    - getWalletTransfers(): Fetch all USDC transfers for a wallet
+    - getPolymarketDeposits(): Get only Polymarket deposits
+    - getPolymarketWithdrawals(): Get only Polymarket withdrawals
+    - getDepositSummary(): Calculate deposit statistics
+    - isPolymarketContract(): Check if address is a deposit contract
+    - getPolymarketContractName(): Get contract name
+    - isUSDCContract(): Check if address is USDC token
+    - getUSDCTokenType(): Get token type from address
+    - processTransfer(): Emit events for transfers
+    - formatUSDC(): Format bigint to human-readable string
+    - parseUSDC(): Parse string to bigint
+    - getStats(): Get tracker statistics
+  - Event emission:
+    - "deposit": Emitted for Polymarket deposits
+    - "withdrawal": Emitted for Polymarket withdrawals
+    - "largeDeposit": Emitted when deposit exceeds threshold
+    - "largeWithdrawal": Emitted when withdrawal exceeds threshold
+  - Configurable options:
+    - polygonscanClient: Custom client for fetching transactions
+    - largeDepositThreshold: Threshold for large deposit alerts (default: 10000)
+    - largeWithdrawalThreshold: Threshold for large withdrawal alerts (default: 10000)
+    - includeUsdcE: Whether to track USDC.e transfers (default: true)
+    - additionalContracts: Custom contract addresses to monitor
+    - debug: Enable debug logging
+    - logger: Custom logger implementation
+- Factory functions:
+  - createUSDCTracker(): Create new instance
+  - getSharedUSDCTracker(): Get singleton instance
+  - setSharedUSDCTracker(): Set singleton instance
+  - resetSharedUSDCTracker(): Reset singleton
+- Convenience functions:
+  - getUSDCTransfers(): Get transfers for wallet
+  - getPolymarketDeposits(): Get deposits for wallet
+  - getPolymarketWithdrawals(): Get withdrawals for wallet
+  - getWalletDepositSummary(): Get deposit summary
+  - isPolymarketDepositContract(): Check if Polymarket contract
+  - isUSDCTokenContract(): Check if USDC contract
+  - formatUSDCAmount(): Format amount
+  - parseUSDCAmount(): Parse amount string
+- Updated src/api/chain/index.ts to export all new types and functions:
+  - Types: USDCTokenType, TransferDirection, USDCTransfer, WalletDepositSummary,
+    USDCTrackerEventType, USDCTrackerEvent, USDCTrackerEventListener,
+    USDCTrackerConfig, USDCTrackerLogger
+  - Constants: USDC_ADDRESSES, POLYMARKET_DEPOSIT_CONTRACTS, TRANSFER_EVENT_TOPIC
+  - Class: USDCTracker
+- Created tests/api/chain/usdc-tracker.test.ts with 89 test cases covering:
+  - Constructor (default config, custom config, additional contracts, custom logger)
+  - isPolymarketContract (CTF Exchange, NegRisk, Conditional Tokens, Router, unknown)
+  - getPolymarketContractName (all contracts, unknown, empty)
+  - isUSDCContract (USDC, USDC.e, non-USDC, disabled USDC.e)
+  - getUSDCTokenType (USDC, USDC.e, unknown, empty)
+  - formatUSDC (small, decimals, large, zero, less than 1, negative, precision)
+  - parseUSDC (whole, decimal, full precision, excess decimals, zero)
+  - getWalletTransfers (invalid address, empty address, valid wallet, filter non-USDC, pagination, block range)
+  - getPolymarketDeposits (filter only deposits)
+  - getPolymarketWithdrawals (filter only withdrawals)
+  - getDepositSummary (invalid address, calculate totals, formatted amounts)
+  - processTransfer (deposit event, withdrawal event, largeDeposit, largeWithdrawal, threshold)
+  - getStats (configuration values, contract count)
+  - Factory functions and singleton management
+  - Convenience functions
+  - Constants (USDC_ADDRESSES, POLYMARKET_DEPOSIT_CONTRACTS, TRANSFER_EVENT_TOPIC)
+  - Edge cases (empty transfers, mixed case, address normalization, large/small amounts)
+  - Real-world scenarios (deposits, withdrawals, multiple operations)
+- All 2516 tests pass (89 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes
+- Next up: API-CHAIN-008 (Identify wallet funding sources)
