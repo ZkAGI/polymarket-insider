@@ -3154,3 +3154,100 @@ NOTES:
 - Pool recommendations scale from 2 (serverless) to 50 (high traffic)
 - Next up: API-DB-008 (Data retention and cleanup jobs)
 
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: API-DB-008 - Data retention and cleanup jobs
+- Implemented comprehensive data retention and cleanup service
+
+CLEANUP SERVICE (src/db/cleanup.ts):
+- CleanupService class for automated data cleanup with configurable retention periods
+- DEFAULT_RETENTION_CONFIGS with retention settings for all data types:
+  - trades: 365 days, archive before delete
+  - priceHistory: 180 days
+  - marketSnapshots: 90 days
+  - walletSnapshots: 90 days
+  - alerts: 90 days, archive before delete, only acknowledged alerts
+  - syncLogs: 30 days
+  - jobQueue: 7 days, only completed/failed/cancelled jobs
+
+TYPES AND INTERFACES:
+- CleanupDataType: Union type for all cleanable data types
+- RetentionConfig: Per-data-type retention configuration
+- CleanupResult: Result from individual cleanup operation
+- CleanupJobResult: Combined result from cleanup job run
+- ArchiveRecord: Archived data storage record
+- CleanupLog: Cleanup operation log entry
+- CleanupOptions: Options for running cleanup
+- ScheduledCleanupConfig: Configuration for scheduled cleanup jobs
+
+CLEANUP SERVICE FEATURES:
+Configuration Management:
+- getRetentionConfig(): Get config for a data type
+- getAllRetentionConfigs(): Get all retention configs
+- setRetentionConfig(): Update retention config
+- enableCleanup() / disableCleanup(): Toggle cleanup for data types
+- calculateCutoffDate(): Calculate cleanup cutoff date
+
+Cleanup Operations:
+- cleanupDataType(): Cleanup specific data type
+- runCleanup(): Run cleanup for all enabled types
+- previewCleanup(): Dry run to preview what would be cleaned
+
+Archiving:
+- archiveData(): Archive data before deletion
+- getArchiveRecords(): Get all archives
+- getArchiveRecordsByType(): Get archives for specific type
+- getArchiveRecord(): Get archive by ID
+- clearArchiveRecords(): Clear in-memory archives
+
+Logging:
+- logCleanupOperation(): Log cleanup operations
+- getCleanupLogs(): Get all logs
+- getCleanupLogsByType(): Get logs for specific type
+- getRecentCleanupLogs(): Get recent logs with limit
+- clearCleanupLogs(): Clear all logs
+- getCleanupStats(): Get aggregate cleanup statistics
+
+Scheduling:
+- startScheduledCleanup(): Start periodic cleanup job
+- stopScheduledCleanup(): Stop scheduled cleanup
+- isScheduledCleanupRunning(): Check if scheduled cleanup active
+- getScheduledCleanupConfig(): Get scheduled job config
+
+Utilities:
+- getEnabledDataTypes(): Get all enabled data types
+- getDisabledDataTypes(): Get disabled data types
+- getStorageEstimates(): Get record counts and eligible for cleanup
+
+INDEX EXPORTS (src/db/index.ts):
+- CleanupService, cleanupService, createCleanupService
+- createCleanupServiceWithConfigs, DEFAULT_RETENTION_CONFIGS
+- All type exports for cleanup module
+
+TESTS:
+- Created tests/db/cleanup.test.ts with 76 comprehensive unit tests:
+  - Constructor and configuration tests
+  - DEFAULT_RETENTION_CONFIGS verification
+  - Retention config CRUD operations
+  - Cutoff date calculation
+  - Data type enable/disable
+  - Individual data type cleanup
+  - Full cleanup job execution
+  - Dry run mode testing
+  - Archiving functionality
+  - Cleanup logging and statistics
+  - Scheduled cleanup jobs
+  - Storage estimates
+  - Service reset
+  - All 7 data types cleanup tests
+- All 3191 tests pass (76 new + 3115 existing)
+
+NOTES:
+- Uses Prisma type assertions for database operations
+- In-memory archive storage (can be extended to persistent storage)
+- Scheduled cleanup uses setInterval for cron-like functionality
+- Supports both dry run and actual deletion modes
+- Filter support for selective cleanup (e.g., only acknowledged alerts)
+- Batch processing support via batchSize option
+- Next up: API-DB-009 (Database indexing optimization)
+

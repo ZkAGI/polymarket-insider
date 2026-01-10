@@ -160,3 +160,23 @@ export type {
   MarketSnapshotStats,
   WalletSnapshotStats,
 } from "./snapshots";
+
+// Cleanup service exports
+export {
+  CleanupService,
+  cleanupService,
+  createCleanupService,
+  createCleanupServiceWithConfigs,
+  DEFAULT_RETENTION_CONFIGS,
+} from "./cleanup";
+export type {
+  CleanupDataType,
+  RetentionConfig,
+  CleanupResult,
+  CleanupJobResult,
+  ArchiveRecord,
+  CleanupLog,
+  CleanupOptions,
+  CleanupServiceConfig,
+  ScheduledCleanupConfig,
+} from "./cleanup";
