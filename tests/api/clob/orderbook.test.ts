@@ -12,7 +12,15 @@ import {
   getTotalBidVolume,
   getTotalAskVolume,
   getVolumeImbalance,
+  // Order book depth functions (API-CLOB-007)
+  getOrderBookDepth,
+  getCumulativeVolumeAtPrice,
+  getPriceForVolume,
+  calculateMarketImpact,
+  getDepthAtPercentages,
+  checkLiquidity,
 } from "@/api/clob/orderbook";
+import type { OrderBookDepth } from "@/api/clob/orderbook";
 import { ClobClient, ClobApiException } from "@/api/clob/client";
 import { OrderBook, OrderBookLevel } from "@/api/clob/types";
 
@@ -741,6 +749,415 @@ describe("Order Book API", () => {
       };
 
       expect(getVolumeImbalance(orderBook)).toBe(0.5);
+    });
+  });
+
+  // ============================================================================
+  // API-CLOB-007: Order Book Depth Tests
+  // ============================================================================
+
+  describe("getOrderBookDepth", () => {
+    it("should fetch and calculate order book depth", async () => {
+      const mockResponse = {
+        asset_id: "12345",
+        bids: [
+          ["0.55", "100"],
+          ["0.54", "200"],
+          ["0.53", "150"],
+          ["0.52", "300"],
+        ],
+        asks: [
+          ["0.56", "100"],
+          ["0.57", "250"],
+          ["0.58", "200"],
+          ["0.59", "150"],
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { client });
+
+      expect(depth).not.toBeNull();
+      expect(depth?.tokenId).toBe("12345");
+      expect(depth?.bidDepth.length).toBeGreaterThan(0);
+      expect(depth?.askDepth.length).toBeGreaterThan(0);
+      expect(depth?.bidSummary.totalVolume).toBeGreaterThan(0);
+      expect(depth?.askSummary.totalVolume).toBeGreaterThan(0);
+    });
+
+    it("should return null for invalid token ID", async () => {
+      const depth = await getOrderBookDepth("");
+      expect(depth).toBeNull();
+    });
+
+    it("should calculate cumulative sizes correctly", async () => {
+      const mockResponse = {
+        asset_id: "12345",
+        bids: [
+          ["0.55", "100"],
+          ["0.54", "200"],
+        ],
+        asks: [
+          ["0.56", "100"],
+          ["0.57", "200"],
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { priceInterval: 0.01, client });
+
+      expect(depth).not.toBeNull();
+
+      // Check bid depth (sorted descending by price)
+      if (depth && depth.bidDepth.length >= 2) {
+        expect(depth.bidDepth[0]?.cumulativeSize).toBe(depth.bidDepth[0]?.size);
+        expect(depth.bidDepth[1]?.cumulativeSize).toBe(
+          (depth.bidDepth[0]?.size ?? 0) + (depth.bidDepth[1]?.size ?? 0)
+        );
+      }
+    });
+
+    it("should respect levels option", async () => {
+      const mockResponse = {
+        asset_id: "12345",
+        bids: Array(50).fill(null).map((_, i) => [`${0.55 - i * 0.001}`, "100"]),
+        asks: Array(50).fill(null).map((_, i) => [`${0.56 + i * 0.001}`, "100"]),
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { levels: 10, client });
+
+      expect(depth).not.toBeNull();
+      expect(depth?.bidDepth.length).toBeLessThanOrEqual(10);
+      expect(depth?.askDepth.length).toBeLessThanOrEqual(10);
+    });
+
+    it("should calculate mid price and spread", async () => {
+      const mockResponse = {
+        asset_id: "12345",
+        bids: [["0.50", "100"]],
+        asks: [["0.52", "100"]],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { client });
+
+      expect(depth).not.toBeNull();
+      expect(depth?.midPrice).toBe(0.51);
+      expect(depth?.spread).toBeCloseTo(0.02, 10);
+      expect(depth?.spreadPercent).toBeCloseTo(3.92, 1); // 0.02/0.51 * 100
+    });
+
+    it("should calculate volume imbalance", async () => {
+      const mockResponse = {
+        asset_id: "12345",
+        bids: [["0.50", "200"]],
+        asks: [["0.52", "100"]],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { client });
+
+      expect(depth).not.toBeNull();
+      expect(depth?.volumeImbalance).toBe(2); // 200/100
+    });
+
+    it("should handle empty order book", async () => {
+      const mockResponse = {
+        asset_id: "12345",
+        bids: [],
+        asks: [],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { client });
+
+      expect(depth).not.toBeNull();
+      expect(depth?.bidDepth).toHaveLength(0);
+      expect(depth?.askDepth).toHaveLength(0);
+      expect(depth?.bidSummary.totalVolume).toBe(0);
+    });
+
+    it("should filter by maxDepthPercent", async () => {
+      const mockResponse = {
+        asset_id: "12345",
+        bids: [
+          ["0.50", "100"],  // best bid
+          ["0.49", "100"],  // 2% from best
+          ["0.45", "100"],  // 10% from best - should be filtered
+        ],
+        asks: [
+          ["0.52", "100"],  // best ask
+          ["0.53", "100"],  // ~2% from best
+          ["0.60", "100"],  // ~15% from best - should be filtered
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { maxDepthPercent: 0.05, client });
+
+      expect(depth).not.toBeNull();
+      // Should filter out levels more than 5% from best price
+      expect(depth?.bidSummary.totalVolume).toBeLessThan(300);
+    });
+
+    it("should handle 404 error gracefully", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("Not found"),
+      });
+
+      const client = new ClobClient();
+      const depth = await getOrderBookDepth("12345", { client });
+
+      expect(depth).toBeNull();
+    });
+  });
+
+  describe("getCumulativeVolumeAtPrice", () => {
+    const createDepth = (): OrderBookDepth => ({
+      tokenId: "test",
+      bidDepth: [
+        { price: 0.55, size: 100, cumulativeSize: 100, cumulativeValue: 55, orderCount: 1, percentOfTotal: 25 },
+        { price: 0.54, size: 100, cumulativeSize: 200, cumulativeValue: 109, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.53, size: 100, cumulativeSize: 300, cumulativeValue: 162, orderCount: 1, percentOfTotal: 75 },
+        { price: 0.52, size: 100, cumulativeSize: 400, cumulativeValue: 214, orderCount: 1, percentOfTotal: 100 },
+      ],
+      askDepth: [
+        { price: 0.56, size: 100, cumulativeSize: 100, cumulativeValue: 56, orderCount: 1, percentOfTotal: 25 },
+        { price: 0.57, size: 100, cumulativeSize: 200, cumulativeValue: 113, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.58, size: 100, cumulativeSize: 300, cumulativeValue: 171, orderCount: 1, percentOfTotal: 75 },
+        { price: 0.59, size: 100, cumulativeSize: 400, cumulativeValue: 230, orderCount: 1, percentOfTotal: 100 },
+      ],
+      bidSummary: { totalVolume: 400, totalValue: 214, weightedAvgPrice: 0.535, levelCount: 4, bestPrice: 0.55, worstPrice: 0.52, priceRange: 0.03 },
+      askSummary: { totalVolume: 400, totalValue: 230, weightedAvgPrice: 0.575, levelCount: 4, bestPrice: 0.56, worstPrice: 0.59, priceRange: 0.03 },
+      midPrice: 0.555,
+      spread: 0.01,
+      spreadPercent: 1.8,
+      volumeImbalance: 1,
+      timestamp: "2026-01-10T00:00:00Z",
+    });
+
+    it("should return cumulative volume at bid price", () => {
+      const depth = createDepth();
+      const volume = getCumulativeVolumeAtPrice(depth, 0.54, "bid");
+      expect(volume).toBe(200);
+    });
+
+    it("should return cumulative volume at ask price", () => {
+      const depth = createDepth();
+      const volume = getCumulativeVolumeAtPrice(depth, 0.57, "ask");
+      expect(volume).toBe(200);
+    });
+
+    it("should return total volume if price is beyond all levels", () => {
+      const depth = createDepth();
+      const bidVolume = getCumulativeVolumeAtPrice(depth, 0.40, "bid");
+      expect(bidVolume).toBe(400);
+
+      const askVolume = getCumulativeVolumeAtPrice(depth, 0.70, "ask");
+      expect(askVolume).toBe(400);
+    });
+  });
+
+  describe("getPriceForVolume", () => {
+    const createDepth = (): OrderBookDepth => ({
+      tokenId: "test",
+      bidDepth: [
+        { price: 0.55, size: 100, cumulativeSize: 100, cumulativeValue: 55, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.54, size: 100, cumulativeSize: 200, cumulativeValue: 109, orderCount: 1, percentOfTotal: 100 },
+      ],
+      askDepth: [
+        { price: 0.56, size: 100, cumulativeSize: 100, cumulativeValue: 56, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.57, size: 100, cumulativeSize: 200, cumulativeValue: 113, orderCount: 1, percentOfTotal: 100 },
+      ],
+      bidSummary: { totalVolume: 200, totalValue: 109, weightedAvgPrice: 0.545, levelCount: 2, bestPrice: 0.55, worstPrice: 0.54, priceRange: 0.01 },
+      askSummary: { totalVolume: 200, totalValue: 113, weightedAvgPrice: 0.565, levelCount: 2, bestPrice: 0.56, worstPrice: 0.57, priceRange: 0.01 },
+      midPrice: 0.555,
+      spread: 0.01,
+      spreadPercent: 1.8,
+      volumeImbalance: 1,
+      timestamp: "2026-01-10T00:00:00Z",
+    });
+
+    it("should return price for fillable volume on bid side", () => {
+      const depth = createDepth();
+      const price = getPriceForVolume(depth, 150, "bid");
+      expect(price).toBe(0.54);
+    });
+
+    it("should return price for fillable volume on ask side", () => {
+      const depth = createDepth();
+      const price = getPriceForVolume(depth, 150, "ask");
+      expect(price).toBe(0.57);
+    });
+
+    it("should return undefined for insufficient liquidity", () => {
+      const depth = createDepth();
+      const price = getPriceForVolume(depth, 500, "bid");
+      expect(price).toBeUndefined();
+    });
+  });
+
+  describe("calculateMarketImpact", () => {
+    const createDepth = (): OrderBookDepth => ({
+      tokenId: "test",
+      bidDepth: [
+        { price: 0.55, size: 100, cumulativeSize: 100, cumulativeValue: 55, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.54, size: 100, cumulativeSize: 200, cumulativeValue: 109, orderCount: 1, percentOfTotal: 100 },
+      ],
+      askDepth: [
+        { price: 0.56, size: 100, cumulativeSize: 100, cumulativeValue: 56, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.57, size: 100, cumulativeSize: 200, cumulativeValue: 113, orderCount: 1, percentOfTotal: 100 },
+      ],
+      bidSummary: { totalVolume: 200, totalValue: 109, weightedAvgPrice: 0.545, levelCount: 2, bestPrice: 0.55, worstPrice: 0.54, priceRange: 0.01 },
+      askSummary: { totalVolume: 200, totalValue: 113, weightedAvgPrice: 0.565, levelCount: 2, bestPrice: 0.56, worstPrice: 0.57, priceRange: 0.01 },
+      midPrice: 0.555,
+      spread: 0.01,
+      spreadPercent: 1.8,
+      volumeImbalance: 1,
+      timestamp: "2026-01-10T00:00:00Z",
+    });
+
+    it("should calculate average price for small volume", () => {
+      const depth = createDepth();
+      const avgPrice = calculateMarketImpact(depth, 50, "ask");
+      expect(avgPrice).toBe(0.56); // All fills at first level
+    });
+
+    it("should calculate average price spanning multiple levels", () => {
+      const depth = createDepth();
+      const avgPrice = calculateMarketImpact(depth, 150, "ask");
+      // 100 at 0.56 + 50 at 0.57 = (56 + 28.5) / 150 = 0.563333
+      expect(avgPrice).toBeCloseTo(0.563, 2);
+    });
+
+    it("should return undefined for insufficient liquidity", () => {
+      const depth = createDepth();
+      const avgPrice = calculateMarketImpact(depth, 500, "bid");
+      expect(avgPrice).toBeUndefined();
+    });
+  });
+
+  describe("getDepthAtPercentages", () => {
+    const createDepth = (): OrderBookDepth => ({
+      tokenId: "test",
+      bidDepth: [
+        { price: 0.55, size: 100, cumulativeSize: 100, cumulativeValue: 55, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.50, size: 100, cumulativeSize: 200, cumulativeValue: 105, orderCount: 1, percentOfTotal: 100 },
+      ],
+      askDepth: [
+        { price: 0.56, size: 100, cumulativeSize: 100, cumulativeValue: 56, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.60, size: 100, cumulativeSize: 200, cumulativeValue: 116, orderCount: 1, percentOfTotal: 100 },
+      ],
+      bidSummary: { totalVolume: 200, totalValue: 105, weightedAvgPrice: 0.525, levelCount: 2, bestPrice: 0.55, worstPrice: 0.50, priceRange: 0.05 },
+      askSummary: { totalVolume: 200, totalValue: 116, weightedAvgPrice: 0.58, levelCount: 2, bestPrice: 0.56, worstPrice: 0.60, priceRange: 0.04 },
+      midPrice: 0.555,
+      spread: 0.01,
+      spreadPercent: 1.8,
+      volumeImbalance: 1,
+      timestamp: "2026-01-10T00:00:00Z",
+    });
+
+    it("should return depth at multiple percentages", () => {
+      const depth = createDepth();
+      const levels = getDepthAtPercentages(depth, [0.02, 0.05, 0.10]);
+
+      // Note: 0.10 becomes "0.1" when used as an object key
+      expect(levels).toHaveProperty("0.02");
+      expect(levels).toHaveProperty("0.05");
+      expect(levels).toHaveProperty("0.1");
+    });
+
+    it("should return zero volumes when no mid price", () => {
+      const depth = createDepth();
+      depth.midPrice = undefined;
+      const levels = getDepthAtPercentages(depth, [0.02]);
+
+      expect(levels[0.02]?.bidVolume).toBe(0);
+      expect(levels[0.02]?.askVolume).toBe(0);
+    });
+  });
+
+  describe("checkLiquidity", () => {
+    const createDepth = (): OrderBookDepth => ({
+      tokenId: "test",
+      bidDepth: [
+        { price: 0.55, size: 100, cumulativeSize: 100, cumulativeValue: 55, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.54, size: 100, cumulativeSize: 200, cumulativeValue: 109, orderCount: 1, percentOfTotal: 100 },
+      ],
+      askDepth: [
+        { price: 0.56, size: 100, cumulativeSize: 100, cumulativeValue: 56, orderCount: 1, percentOfTotal: 50 },
+        { price: 0.57, size: 100, cumulativeSize: 200, cumulativeValue: 113, orderCount: 1, percentOfTotal: 100 },
+      ],
+      bidSummary: { totalVolume: 200, totalValue: 109, weightedAvgPrice: 0.545, levelCount: 2, bestPrice: 0.55, worstPrice: 0.54, priceRange: 0.01 },
+      askSummary: { totalVolume: 200, totalValue: 113, weightedAvgPrice: 0.565, levelCount: 2, bestPrice: 0.56, worstPrice: 0.57, priceRange: 0.01 },
+      midPrice: 0.555,
+      spread: 0.01,
+      spreadPercent: 1.8,
+      volumeImbalance: 1,
+      timestamp: "2026-01-10T00:00:00Z",
+    });
+
+    it("should indicate sufficient liquidity for small order", () => {
+      const depth = createDepth();
+      const result = checkLiquidity(depth, 50, "ask", 0.05);
+
+      expect(result.hasSufficientLiquidity).toBe(true);
+      expect(result.expectedSlippage).toBeLessThan(0.05);
+      expect(result.fillPrice).toBeDefined();
+    });
+
+    it("should indicate insufficient liquidity for large order", () => {
+      const depth = createDepth();
+      const result = checkLiquidity(depth, 500, "ask", 0.05);
+
+      expect(result.hasSufficientLiquidity).toBe(false);
+      expect(result.expectedSlippage).toBe(Infinity);
+    });
+
+    it("should return slippage exceeds max for medium order", () => {
+      const depth = createDepth();
+      const result = checkLiquidity(depth, 150, "ask", 0.001); // Very tight slippage tolerance
+
+      expect(result.hasSufficientLiquidity).toBe(false);
+      expect(result.expectedSlippage).toBeGreaterThan(0.001);
     });
   });
 });

@@ -16,9 +16,23 @@ export {
   getTotalBidVolume,
   getTotalAskVolume,
   getVolumeImbalance,
+  // Order book depth functions (API-CLOB-007)
+  getOrderBookDepth,
+  getCumulativeVolumeAtPrice,
+  getPriceForVolume,
+  calculateMarketImpact,
+  getDepthAtPercentages,
+  checkLiquidity,
 } from "./orderbook";
 
-export type { GetOrderBookOptions } from "./orderbook";
+export type {
+  GetOrderBookOptions,
+  // Order book depth types (API-CLOB-007)
+  OrderBookDepthLevel,
+  GetOrderBookDepthOptions,
+  DepthSideSummary,
+  OrderBookDepth as ComputedOrderBookDepth,
+} from "./orderbook";
 
 export {
   getRecentTrades,

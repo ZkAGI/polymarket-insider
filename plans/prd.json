@@ -581,7 +581,8 @@
       "priority": 30,
       "name": "Fetch order book depth",
       "description": "Get aggregated order book depth at various price levels",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T04:05:00Z",
       "steps": [
         "Create getOrderBookDepth function",
         "Aggregate orders by price level",

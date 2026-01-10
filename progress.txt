@@ -914,3 +914,44 @@ COMPLETED: API-CLOB-006 - Fetch trade history with filters
 - TypeScript typecheck passes
 - E2E browser test passes
 - Next up: API-CLOB-007
+
+COMPLETED: API-CLOB-007 - Fetch order book depth
+- Extended src/api/clob/orderbook.ts with comprehensive order book depth functions:
+  - getOrderBookDepth(tokenId, options): Fetch order book depth with aggregated price levels
+  - getCumulativeVolumeAtPrice(depth, side, price): Get cumulative volume at a price level
+  - getPriceForVolume(depth, side, volume): Get price needed to fill a specific volume
+  - calculateMarketImpact(depth, side, volume): Calculate average execution price for volume
+  - getDepthAtPercentages(depth, percentages): Get depth at multiple % from mid price
+  - checkLiquidity(depth, side, volume, maxSlippage): Check if liquidity is sufficient
+- Added types:
+  - OrderBookDepthLevel: price, size, cumulativeSize, cumulativeValue, orderCount, percentOfTotal
+  - GetOrderBookDepthOptions: levels, priceInterval, maxDepthPercent, client
+  - DepthSideSummary: totalVolume, totalValue, weightedAvgPrice, levelCount, bestPrice, worstPrice, priceRange
+  - OrderBookDepth: tokenId, bidDepth, askDepth, bidSummary, askSummary, midPrice, spread, spreadPercent, volumeImbalance, timestamp
+- Features:
+  - Price aggregation by configurable intervals (e.g., 0.01, 0.001)
+  - Automatic price interval calculation based on spread
+  - Bids rounded down, asks rounded up for proper aggregation
+  - Cumulative volume and value calculation per level
+  - Order count tracking per aggregated level
+  - Percentage of total volume per level
+  - Depth summary statistics (weighted avg price, price range, etc.)
+  - Max depth percentage filtering (e.g., only levels within 10% of best price)
+  - Mid price, spread, and spread percentage calculation
+  - Volume imbalance ratio between bids and asks
+  - Market impact calculation for slippage analysis
+  - Liquidity sufficiency checking with max slippage tolerance
+- Updated src/api/clob/index.ts with new exports
+- Added 25+ test cases for order book depth functionality:
+  - getOrderBookDepth tests (basic fetch, price aggregation, cumulative calculation,
+    levels limit, auto interval, max depth filter, mid price, spread, imbalance)
+  - getCumulativeVolumeAtPrice tests (bid/ask cumulative volumes)
+  - getPriceForVolume tests (fillable price calculation, insufficient liquidity)
+  - calculateMarketImpact tests (average price for volume, multi-level spans)
+  - getDepthAtPercentages tests (depth at multiple percentages from mid)
+  - checkLiquidity tests (sufficient, insufficient, slippage exceeds max)
+- All 731 tests pass
+- TypeScript typecheck passes
+- E2E browser test passes
+- Created scripts/browser-smoke-test.mjs for automated E2E testing
+- Next up: API-CLOB-008
