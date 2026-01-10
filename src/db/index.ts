@@ -85,3 +85,26 @@ export type {
   WalletServiceConfig,
   WalletStats,
 } from "./wallets";
+
+// Alert service exports
+export {
+  AlertService,
+  alertService,
+  createAlertService,
+  AlertType,
+  AlertSeverity,
+} from "./alerts";
+export type {
+  Alert,
+  AlertWithMarket,
+  AlertWithWallet,
+  AlertWithRelations,
+  CreateAlertInput,
+  UpdateAlertInput,
+  AlertFilters,
+  AlertSortOptions,
+  PaginatedAlertResult,
+  AlertIncludeOptions,
+  AlertServiceConfig,
+  AlertStats,
+} from "./alerts";

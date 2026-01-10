@@ -2884,3 +2884,120 @@ NOTES:
 - SuspicionScore auto-determines riskLevel based on thresholds (0-20:NONE, 20-40:LOW, 40-60:MEDIUM, 60-80:HIGH, 80+:CRITICAL)
 - Relations (trades, alerts, fundingSources, snapshots, walletClusters) can be optionally included in queries
 
+=== API-DB-005: Alerts table and model ===
+Date: 2026-01-11
+
+COMPLETED:
+- Created src/db/alerts.ts with AlertService class
+- Alert model was already defined in Prisma schema from API-DB-001
+- Created comprehensive AlertService with full CRUD operations
+
+AlertService Features:
+- Core CRUD:
+  - create(): Create new alert with type, severity, title, message
+  - findById(): Find alert by ID with optional relations
+  - findByIds(): Find multiple alerts by IDs
+  - update(): Update alert fields
+  - delete(): Delete single alert
+  - deleteMany(): Bulk delete alerts
+  - createMany(): Bulk create alerts
+
+- Query Methods:
+  - findMany(): Query with filters, sorting, pagination
+  - findByType(): Filter by alert type
+  - findBySeverity(): Filter by severity level
+  - findUnread(): Find unread alerts
+  - findUnacknowledged(): Find unacknowledged alerts
+  - findActive(): Find non-dismissed, non-expired alerts
+  - findCritical(): Find HIGH and CRITICAL severity alerts
+  - findByWallet(): Find alerts for specific wallet
+  - findByMarket(): Find alerts for specific market
+  - getRecent(): Get recent alerts
+  - getRecentUnread(): Get recent unread alerts
+  - count(): Count alerts matching filters
+  - exists(): Check if alert exists
+
+- Alert Actions:
+  - markAsRead(): Mark single alert as read
+  - markManyAsRead(): Bulk mark as read
+  - markAllAsRead(): Mark all matching alerts as read
+  - acknowledge(): Acknowledge alert with optional user
+  - acknowledgeMany(): Bulk acknowledge
+  - dismiss(): Dismiss alert with optional user
+  - dismissMany(): Bulk dismiss
+
+- Cleanup Methods:
+  - deleteExpired(): Delete expired alerts
+  - deleteOldDismissed(): Delete old dismissed alerts
+
+- Statistics:
+  - getStats(): Aggregate statistics (count, unread, by severity, by type)
+  - getCountBySeverity(): Counts grouped by severity
+  - getCountByType(): Counts grouped by type
+  - search(): Search alerts by title or message
+
+- Utility:
+  - getSeverityPriority(): Get numeric priority for severity
+  - compareBySeverity(): Compare alerts for sorting
+
+- Filter support:
+  - type, types (multiple)
+  - severity, severities (multiple)
+  - marketId, walletId
+  - read, acknowledged, dismissed
+  - hasTag, hasTags (any match)
+  - createdAfter, createdBefore
+  - expiresAfter, expiresBefore
+  - notExpired
+  - titleContains, messageContains
+
+- Sort support: createdAt, severity, type, expiresAt
+
+- Type exports:
+  - Alert, AlertType, AlertSeverity (from Prisma)
+  - AlertWithMarket, AlertWithWallet, AlertWithRelations
+  - CreateAlertInput, UpdateAlertInput
+  - AlertFilters, AlertSortOptions
+  - PaginationOptions, PaginatedAlertResult
+  - AlertIncludeOptions, AlertServiceConfig, AlertStats
+
+- Created tests/db/alerts.test.ts with 76 comprehensive unit tests:
+  - Constructor tests
+  - Create tests (required fields, all fields, default severity)
+  - FindById tests (found, not found, with relations)
+  - FindByIds tests
+  - Update tests (fields, nullable to null)
+  - Delete, DeleteMany tests
+  - FindMany tests (all filters, sorting, pagination)
+  - FindByType, FindBySeverity, FindUnread, FindUnacknowledged tests
+  - FindActive, FindCritical tests
+  - FindByWallet, FindByMarket tests
+  - GetRecent, GetRecentUnread tests
+  - Count, Exists tests
+  - CreateMany tests
+  - MarkAsRead, MarkManyAsRead, MarkAllAsRead tests
+  - Acknowledge, AcknowledgeMany tests
+  - Dismiss, DismissMany tests
+  - DeleteExpired, DeleteOldDismissed tests
+  - GetStats tests
+  - GetCountBySeverity, GetCountByType tests
+  - Search tests
+  - GetSeverityPriority, CompareBySeverity tests
+
+- Updated src/db/index.ts to export AlertService and types
+- All 2960 tests pass (76 new tests added)
+- TypeScript typecheck passes
+- Next up: API-DB-006 (Historical snapshots table)
+
+NOTES:
+- Alert model was already defined in Prisma schema from API-DB-001
+- This feature focuses on the service layer for database operations
+- Tests use mocked Prisma client to avoid database dependency
+- AlertService can be injected with custom Prisma client for testing
+- Default singleton instance available via alertService export
+- Supports multiple alert types: WHALE_TRADE, PRICE_MOVEMENT, INSIDER_ACTIVITY, etc.
+- Severity levels: INFO, LOW, MEDIUM, HIGH, CRITICAL
+- Alerts can be linked to markets and wallets via optional relations
+- Read/acknowledged/dismissed status tracking for alert lifecycle
+- Expiration support for time-sensitive alerts
+
