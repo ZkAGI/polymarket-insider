@@ -1154,4 +1154,98 @@ COMPLETED: API-CLOB-010 - CLOB API error handler
 - TypeScript typecheck passes
 - Browser smoke test passes
 - App loads correctly at localhost:3000
-- Next up: API-CLOB-011
+
+COMPLETED: API-CLOB-011 - Parse trade execution data
+- Created src/api/clob/trade-execution.ts with comprehensive trade execution parsing:
+  - parseTradeExecution(): Parse raw API response into EnrichedTradeExecution
+  - tradeToExecution(): Convert Trade object to EnrichedTradeExecution
+  - parseTradeExecutions(): Batch parse with error handling and statistics
+  - tradesToExecutions(): Convert Trade[] to executions with summary
+- Timestamp normalization functions:
+  - parseTimestampToMs(): Parse various formats (ISO, Unix seconds, Unix milliseconds, Date)
+  - normalizeTimestamp(): Returns NormalizedTimestamp with iso, date, unix, unixMs, formatted, relative
+  - isTimestampInRange(): Check if timestamp is within a time range
+  - Handles edge cases: null, undefined, 0, future timestamps, invalid strings
+- Fee extraction and calculation:
+  - extractFeeRateBps(): Extract fee rate from raw data (multiple field names)
+  - calculateFeeFromRate(): Calculate fee from rate and size
+  - extractFeeUsd(): Extract or calculate fee in USD
+  - calculateTotalFees(): Sum fees from array of executions
+  - Supports: fee_usd, fee_amount, fee, trading_fee, fee_rate_bps fields
+- Value extraction functions:
+  - extractSizeUsd(): Extract USD value from multiple field variants
+  - extractPrice(): Extract price from price or execution_price
+  - extractSize(): Extract size from size, amount, or quantity
+  - calculateFeeFromRate(): Calculate fee from basis points
+  - Supports: size_usd, value_usd, usd_amount, notional fields
+- Trade direction parsing:
+  - parseTradeDirection(): Normalize side to "buy" or "sell"
+  - Handles: buy, sell, BUY, SELL, b, s, bid, ask, long, short, offer
+- Execution status determination:
+  - determineExecutionStatus(): Returns ExecutionStatus enum
+  - Values: "filled", "partial", "pending", "cancelled", "unknown"
+  - Checks: status field, is_partial flag, is_fill flag, transaction_hash presence
+- Type definitions:
+  - RawTradeExecutionResponse: Handles various API field naming conventions
+  - EnrichedTradeExecution: Extended TradeExecution with computed fields
+    - net_value_usd: Calculated after fees
+    - price_numeric, size_numeric: Parsed numeric values
+    - fee_rate_bps_numeric: Fee rate as number
+    - is_partial_fill: Boolean flag
+    - execution_status: ExecutionStatus enum
+    - executed_at: Date object
+    - executed_at_ms: Unix timestamp in milliseconds
+  - ExecutionStatus: "filled" | "partial" | "pending" | "cancelled" | "unknown"
+  - FeeCalculationOptions: defaultFeeRateBps, usdcPrice
+  - NormalizedTimestamp: Multiple timestamp formats
+  - ParseTradeExecutionsResult: Batch parsing result with summary
+- Utility functions:
+  - sortExecutionsByTime(): Sort by timestamp (asc or desc)
+  - filterExecutionsByTimeRange(): Filter by time range
+  - filterExecutionsByMinSize(): Filter by minimum USD size
+  - groupExecutionsByAsset(): Group by asset/token ID
+  - groupExecutionsBySide(): Split into buy/sell arrays
+  - calculateExecutionVWAP(): Volume-weighted average price
+  - isEnrichedTradeExecution(): Type guard function
+- Updated src/api/clob/index.ts with all new exports:
+  - Functions: parseTradeExecution, tradeToExecution, parseTradeExecutions, tradesToExecutions,
+    parseTimestampToMs, normalizeTimestamp, isTimestampInRange, extractFeeRateBps, calculateFeeFromRate,
+    extractFeeUsd, calculateTotalFees, extractSizeUsd, extractPrice, extractSize, parseTradeDirection,
+    determineExecutionStatus, sortExecutionsByTime, filterExecutionsByTimeRange, filterExecutionsByMinSize,
+    groupExecutionsByAsset, groupExecutionsBySide, calculateExecutionVWAP, isEnrichedTradeExecution
+  - Types: RawTradeExecutionResponse, EnrichedTradeExecution, ExecutionStatus, FeeCalculationOptions,
+    NormalizedTimestamp, ParseTradeExecutionsResult
+- Created tests/api/clob/trade-execution.test.ts with 114 comprehensive tests:
+  - Timestamp normalization tests (parseTimestampToMs, normalizeTimestamp, isTimestampInRange)
+    - ISO parsing, Unix seconds/milliseconds, Date objects, strings, null/undefined handling
+  - Fee extraction tests (extractFeeRateBps, calculateFeeFromRate, extractFeeUsd, calculateTotalFees)
+    - Multiple field names, default values, calculation from rate
+  - Value extraction tests (extractSizeUsd, extractPrice, extractSize)
+    - Multiple field variants, USDC price multiplier, calculation from price*size
+  - Trade direction tests (parseTradeDirection)
+    - All variants: buy, sell, BUY, SELL, b, s, bid, ask, long, short, offer
+  - Execution status tests (determineExecutionStatus)
+    - All status values, boolean flags, transaction hash inference
+  - Main parsing tests (parseTradeExecution, tradeToExecution)
+    - Full field parsing, net value calculation, alternative field names
+    - Market metadata, partial fills, order ID
+  - Batch parsing tests (parseTradeExecutions, tradesToExecutions)
+    - Multiple trades, summary statistics, earliest/latest tracking
+  - Utility function tests:
+    - sortExecutionsByTime (ascending, descending, immutability)
+    - filterExecutionsByTimeRange (inclusive start, exclusive end, null handling)
+    - filterExecutionsByMinSize (USD threshold)
+    - groupExecutionsByAsset, groupExecutionsBySide
+    - calculateExecutionVWAP (weighted average, edge cases)
+    - isEnrichedTradeExecution (type guard validation)
+  - Edge case tests:
+    - Minimal/empty data, invalid data, NaN handling
+    - Negative values, very old timestamps, future timestamps, epoch
+    - Large data sets (1000 trades)
+  - Integration tests:
+    - Complete workflow: parse, sort, filter, group, calculate
+- All 1117 tests pass (114 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes
+- App loads correctly at localhost:3000
+- Next up: API-CLOB-012

@@ -197,6 +197,49 @@ export type {
   ClobWrapOptions,
 } from "./error-handler";
 
+// Trade Execution Parser (API-CLOB-011)
+export {
+  // Main parsing functions
+  parseTradeExecution,
+  tradeToExecution,
+  parseTradeExecutions,
+  tradesToExecutions,
+  // Timestamp normalization
+  parseTimestampToMs,
+  normalizeTimestamp,
+  isTimestampInRange,
+  // Fee extraction and calculation
+  extractFeeRateBps,
+  calculateFeeFromRate,
+  extractFeeUsd,
+  calculateTotalFees,
+  // Value extraction
+  extractSizeUsd,
+  extractPrice,
+  extractSize,
+  // Direction parsing
+  parseTradeDirection,
+  // Status parsing
+  determineExecutionStatus,
+  // Utility functions
+  sortExecutionsByTime,
+  filterExecutionsByTimeRange,
+  filterExecutionsByMinSize,
+  groupExecutionsByAsset,
+  groupExecutionsBySide,
+  calculateExecutionVWAP,
+  isEnrichedTradeExecution,
+} from "./trade-execution";
+
+export type {
+  RawTradeExecutionResponse,
+  EnrichedTradeExecution,
+  ExecutionStatus,
+  FeeCalculationOptions,
+  NormalizedTimestamp,
+  ParseTradeExecutionsResult,
+} from "./trade-execution";
+
 export type {
   ClobClientConfig,
   ClobRequestOptions,
