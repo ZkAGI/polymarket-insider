@@ -154,3 +154,49 @@ export type {
   TradeStreamConfig,
   TradeStreamEventListenerMap,
 } from "./trade-stream";
+
+// Order Book Stream (API-WS-005)
+export {
+  OrderBookStreamClient,
+  createOrderBookStreamClient,
+  getSharedOrderBookStreamClient,
+  setSharedOrderBookStreamClient,
+  resetSharedOrderBookStreamClient,
+  // Constants
+  POLYMARKET_BOOK_WS_URL,
+  DEFAULT_MAX_BOOK_LEVELS,
+  DEFAULT_SNAPSHOT_INTERVAL,
+  // Utility functions
+  parseBookLevel,
+  parseBookSide,
+  isOrderBookMessage,
+  buildBookSubscriptionMessage,
+  calculateOrderBookStats,
+  createEmptyOrderBook,
+  applyDeltaUpdate,
+  parseOrderBookMessage,
+  getCumulativeVolumeAtPrice,
+  getPriceForVolume,
+  calculateMarketImpact,
+} from "./orderbook-stream";
+
+// Order Book Stream Types (API-WS-005)
+export type {
+  BookSide,
+  DeltaType,
+  RawBookLevel,
+  RawBookUpdateMessage,
+  ParsedBookLevel,
+  OrderBookState,
+  OrderBookSubscriptionRequest,
+  OrderBookSubscriptionInfo,
+  OrderBookUpdateEvent,
+  OrderBookSnapshotEvent,
+  SpreadChangeEvent,
+  BookImbalanceEvent,
+  OrderBookConfirmedEvent,
+  OrderBookErrorEvent,
+  OrderBookStats,
+  OrderBookStreamConfig,
+  OrderBookStreamEventListenerMap,
+} from "./orderbook-stream";

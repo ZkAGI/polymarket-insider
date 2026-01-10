@@ -781,7 +781,8 @@
       "priority": 40,
       "name": "Subscribe to order book updates",
       "description": "Subscribe to real-time order book changes",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T19:30:00Z",
       "steps": [
         "Create order book subscription",
         "Handle delta updates",

@@ -1566,4 +1566,103 @@ COMPLETED: API-WS-004 - Subscribe to trade stream
 - All 1511 tests pass (122 new tests added)
 - TypeScript typecheck passes
 - Dev server verified running at localhost:3000
-- Next up: API-WS-005
+
+COMPLETED: API-WS-005 - Subscribe to order book updates
+- Created src/api/ws/orderbook-stream.ts with comprehensive order book streaming:
+  - Constants: POLYMARKET_BOOK_WS_URL, DEFAULT_MAX_BOOK_LEVELS (50), DEFAULT_SNAPSHOT_INTERVAL (30000ms)
+  - Types: BookSide, DeltaType, RawBookLevel, RawBookUpdateMessage, ParsedBookLevel, OrderBookState
+  - OrderBookSubscriptionRequest, OrderBookSubscriptionInfo for subscription management
+  - Event types: OrderBookUpdateEvent, OrderBookSnapshotEvent, SpreadChangeEvent, BookImbalanceEvent
+  - OrderBookConfirmedEvent, OrderBookErrorEvent for subscription lifecycle
+  - OrderBookStats for analytics, OrderBookStreamConfig for configuration
+  - OrderBookStreamEventListenerMap for typed event listeners
+- Utility functions for order book parsing:
+  - parseBookLevel(): Parse raw [price, size] arrays into typed objects
+  - parseBookSide(): Parse array of book levels
+  - isOrderBookMessage(): Type guard for order book messages
+  - buildBookSubscriptionMessage(): Build subscription JSON messages
+  - parseOrderBookMessage(): Full message parsing with timestamps
+- Order book state management:
+  - createEmptyOrderBook(): Initialize empty order book state
+  - applyDeltaUpdate(): Apply incremental delta updates to book state
+  - Supports delta types: insert, update, delete
+  - Maintains sorted bids (descending) and asks (ascending)
+  - Tracks best bid/ask, spread, mid price
+  - Calculates total bid/ask volume, level counts
+- Analytics and market impact functions:
+  - calculateOrderBookStats(): Compute comprehensive stats from order book
+  - getCumulativeVolumeAtPrice(): Get total volume up to a price level
+  - getPriceForVolume(): Find price needed to fill a given volume
+  - calculateMarketImpact(): Estimate price impact for trade size
+- OrderBookStreamClient class with full lifecycle management:
+  - Constructor accepts config, logger, and WebSocket class injection
+  - connect(): Establish WebSocket connection
+  - disconnect(): Close connection gracefully
+  - subscribe(tokenId): Subscribe to order book for a token
+  - unsubscribe(subscriptionId): Remove subscription by ID
+  - unsubscribeByToken(tokenId): Remove subscription by token
+  - unsubscribeAll(): Remove all subscriptions
+  - getOrderBook(tokenId): Get current order book state
+  - getBestBid/getBestAsk(tokenId): Get best prices
+  - getSpread(tokenId): Get bid-ask spread
+  - getStats(tokenId): Get order book statistics
+  - getAllSubscriptions(): Get all active subscriptions
+  - dispose(): Clean up resources
+- Configuration options (OrderBookStreamConfig):
+  - wsUrl: WebSocket URL (default POLYMARKET_BOOK_WS_URL)
+  - maxBookLevels: Maximum book levels to maintain (default 50)
+  - snapshotInterval: Periodic snapshot interval (default 30000ms)
+  - spreadChangeThreshold: Threshold for spread change events (default 0.01)
+  - imbalanceThreshold: Threshold for book imbalance events (default 0.3)
+  - confirmationTimeout: Subscription confirmation timeout (default 10000ms)
+  - debug: Enable debug logging
+- Event system:
+  - orderBookUpdate: Emitted on each book update
+  - orderBookSnapshot: Emitted for periodic snapshots
+  - spreadChange: Emitted when spread changes significantly
+  - bookImbalance: Emitted when bid/ask imbalance detected
+  - orderBookConfirmed: Emitted when subscription confirmed
+  - orderBookError: Emitted on subscription error
+  - connected, disconnected, reconnecting: Connection state events
+  - on(), off(), once(), removeAllListeners(): Event listener management
+- Order book maintenance features:
+  - Real-time delta updates (insert, update, delete)
+  - Automatic sorting of bids/asks
+  - Level trimming to maxBookLevels
+  - Spread and mid price calculation
+  - Book imbalance detection
+  - Periodic snapshot emission
+- Singleton management:
+  - createOrderBookStreamClient(): Factory function
+  - getSharedOrderBookStreamClient(), setSharedOrderBookStreamClient(), resetSharedOrderBookStreamClient()
+- Updated src/api/ws/index.ts with all new exports (lines 158-202)
+- Created tests/api/ws/orderbook-stream.test.ts with 102 comprehensive tests:
+  - Constants tests (POLYMARKET_BOOK_WS_URL, DEFAULT_MAX_BOOK_LEVELS, DEFAULT_SNAPSHOT_INTERVAL)
+  - parseBookLevel tests (valid levels, defaults, negative values, edge cases)
+  - parseBookSide tests (multiple levels, empty, invalid items)
+  - isOrderBookMessage tests (valid/invalid messages)
+  - buildBookSubscriptionMessage tests (single/multiple tokens, unsubscribe)
+  - createEmptyOrderBook tests (structure, initial values)
+  - applyDeltaUpdate tests (insert, update, delete, sorting, level trimming)
+  - parseOrderBookMessage tests (full parsing, bids/asks extraction)
+  - calculateOrderBookStats tests (volume, spread, imbalance, empty book)
+  - getCumulativeVolumeAtPrice tests (bids, asks, beyond range)
+  - getPriceForVolume tests (full fill, partial fill, insufficient liquidity)
+  - calculateMarketImpact tests (buy impact, sell impact, various sizes)
+  - OrderBookStreamClient constructor tests (default config, custom config)
+  - connect/disconnect tests (events, state transitions, disposed client)
+  - subscribe tests (single token, multiple, tracking, errors)
+  - unsubscribe tests (by ID, by token, unknown, unsubscribe all)
+  - order book state tests (getOrderBook, getBestBid, getBestAsk, getSpread)
+  - stats calculation tests
+  - dispose tests (cleanup, event listeners)
+  - Shared client singleton tests
+- Bug fixes during implementation:
+  - Removed unused parseMessageTimestamp import
+  - Removed unused newBidPrices variable declaration
+  - Removed unused mockWs variable in tests
+  - Removed unused type imports (BookSide, ParsedBookLevel, OrderBookUpdateEvent, etc.)
+- All 1613 tests pass (102 new tests added)
+- TypeScript typecheck passes
+- Dev server verified running at localhost:3000
+- Next up: API-WS-006
