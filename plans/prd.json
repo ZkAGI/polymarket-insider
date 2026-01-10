@@ -1162,7 +1162,8 @@
       "priority": 59,
       "name": "Historical snapshots table",
       "description": "Store periodic snapshots of market state for analysis",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T04:10:00Z",
       "steps": [
         "Define Snapshot model",
         "Store market state JSON",

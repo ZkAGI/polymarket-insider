@@ -108,3 +108,29 @@ export type {
   AlertServiceConfig,
   AlertStats,
 } from "./alerts";
+
+// Snapshot service exports
+export {
+  SnapshotService,
+  snapshotService,
+  createSnapshotService,
+} from "./snapshots";
+export type {
+  MarketSnapshot,
+  WalletSnapshot,
+  MarketSnapshotWithMarket,
+  WalletSnapshotWithWallet,
+  CreateMarketSnapshotInput,
+  CreateWalletSnapshotInput,
+  MarketSnapshotFilters,
+  WalletSnapshotFilters,
+  MarketSnapshotSortOptions,
+  WalletSnapshotSortOptions,
+  SnapshotPaginationOptions,
+  PaginatedMarketSnapshotResult,
+  PaginatedWalletSnapshotResult,
+  SnapshotServiceConfig,
+  TimeRange,
+  MarketSnapshotStats,
+  WalletSnapshotStats,
+} from "./snapshots";

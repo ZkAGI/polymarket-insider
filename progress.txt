@@ -3001,3 +3001,79 @@ NOTES:
 - Read/acknowledged/dismissed status tracking for alert lifecycle
 - Expiration support for time-sensitive alerts
 
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: API-DB-006 - Historical snapshots table
+- Created src/db/snapshots.ts with comprehensive SnapshotService class
+- Implemented CRUD operations for both MarketSnapshot and WalletSnapshot models
+- Schema already defined MarketSnapshot and WalletSnapshot in Prisma schema from API-DB-001
+
+MARKET SNAPSHOT SERVICE:
+- createMarketSnapshot(): Create single snapshot with state, outcomePrices, volume, liquidity
+- createManyMarketSnapshots(): Batch create multiple snapshots
+- findMarketSnapshotById(): Find by ID with optional market relation
+- findMarketSnapshotsByIds(): Find multiple by IDs
+- deleteMarketSnapshot(), deleteManyMarketSnapshots(): Delete operations
+- findManyMarketSnapshots(): Query with filters, sorting, pagination
+- findMarketSnapshotsByMarket(): Find snapshots for specific market
+- getLatestMarketSnapshot(): Get most recent snapshot for a market
+- getLatestMarketSnapshots(): Get latest for multiple markets (Map return)
+- countMarketSnapshots(): Count matching filters
+- getMarketSnapshotStats(): Aggregate statistics (count, earliest/latest, avg/max/min volume/liquidity)
+- deleteOldMarketSnapshots(): Delete snapshots older than date
+- cleanupOldMarketSnapshots(): Delete based on configurable retention period
+
+WALLET SNAPSHOT SERVICE:
+- createWalletSnapshot(): Create with totalVolume, totalPnl, tradeCount, winRate, suspicionScore, positions
+- createManyWalletSnapshots(): Batch create
+- findWalletSnapshotById(): Find by ID with optional wallet relation
+- findWalletSnapshotsByIds(): Find multiple by IDs
+- deleteWalletSnapshot(), deleteManyWalletSnapshots(): Delete operations
+- findManyWalletSnapshots(): Query with filters (walletId, timestamps, volume range, suspicion score range, PnL range)
+- findWalletSnapshotsByWallet(): Find snapshots for specific wallet
+- getLatestWalletSnapshot(): Get most recent for wallet
+- getLatestWalletSnapshots(): Get latest for multiple wallets (Map return)
+- countWalletSnapshots(): Count matching filters
+- getWalletSnapshotStats(): Aggregate statistics (count, earliest/latest, avg volume/pnl/suspicion score)
+- deleteOldWalletSnapshots(): Delete older than date
+- cleanupOldWalletSnapshots(): Delete based on retention period
+
+COMBINED OPERATIONS:
+- createCombinedSnapshots(): Create market and wallet snapshots in a transaction
+- cleanupAllOldSnapshots(): Cleanup both types at once
+- getTotalSnapshotCounts(): Get counts for both types
+- marketHasSnapshots(), walletHasSnapshots(): Check existence
+
+FILTER SUPPORT:
+- Market snapshots: marketId, marketIds, timestamp range, volume range, liquidity range
+- Wallet snapshots: walletId, walletIds, timestamp range, volume range, suspicion score range, PnL range
+
+SORT SUPPORT:
+- Market: timestamp, volume, liquidity
+- Wallet: timestamp, totalVolume, totalPnl, tradeCount, suspicionScore
+
+TYPE EXPORTS:
+- MarketSnapshot, WalletSnapshot (from Prisma)
+- MarketSnapshotWithMarket, WalletSnapshotWithWallet
+- CreateMarketSnapshotInput, CreateWalletSnapshotInput
+- MarketSnapshotFilters, WalletSnapshotFilters
+- MarketSnapshotSortOptions, WalletSnapshotSortOptions
+- SnapshotPaginationOptions, PaginatedMarketSnapshotResult, PaginatedWalletSnapshotResult
+- SnapshotServiceConfig, TimeRange, MarketSnapshotStats, WalletSnapshotStats
+
+TESTS:
+- Created tests/db/snapshots.test.ts with 70 comprehensive unit tests
+- Tests cover all CRUD operations for both snapshot types
+- Uses mocked Prisma client to avoid database dependency
+- Tests verify filter building, sorting, pagination
+- Tests cover aggregate statistics, cleanup operations
+- All 3030 tests pass (70 new + 2960 existing)
+
+NOTES:
+- MarketSnapshot and WalletSnapshot models were already defined in Prisma schema from API-DB-001
+- This feature implements the service layer for database operations
+- Configurable retention period (defaults to 90 days)
+- Prisma.DbNull used for nullable JSON fields instead of null
+- Supports time-series analysis of market and wallet state changes
+- Next up: API-DB-007 (Database connection pooling)
+
