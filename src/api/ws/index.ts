@@ -113,3 +113,44 @@ export type {
   MarketSubscriptionConfig,
   MarketSubscriptionEventListenerMap,
 } from "./market-subscriptions";
+
+// Trade Stream (API-WS-004)
+export {
+  TradeStreamClient,
+  createTradeStreamClient,
+  getSharedTradeStreamClient,
+  setSharedTradeStreamClient,
+  resetSharedTradeStreamClient,
+  // Constants
+  POLYMARKET_TRADES_WS_URL,
+  DEFAULT_BUFFER_SIZE,
+  DEFAULT_FLUSH_INTERVAL,
+  DEFAULT_MAX_TRADES_PER_TOKEN,
+  // Utility functions
+  parseTradeDirection,
+  parseTradeMessage,
+  isTradeMessage,
+  buildTradeSubscriptionMessage,
+  calculateTradeStreamStats,
+  filterTradesByMinSize,
+  filterTradesByTimeRange,
+  groupTradesByAsset,
+  sortTradesByTime,
+} from "./trade-stream";
+
+// Trade Stream Types (API-WS-004)
+export type {
+  TradeStreamDirection,
+  RawTradeMessage,
+  ParsedTrade,
+  TradeStreamSubscriptionRequest,
+  TradeStreamSubscriptionInfo,
+  TradeEvent,
+  TradeBatchEvent,
+  LargeTradeEvent,
+  TradeStreamConfirmedEvent,
+  TradeStreamErrorEvent,
+  TradeStreamStats,
+  TradeStreamConfig,
+  TradeStreamEventListenerMap,
+} from "./trade-stream";

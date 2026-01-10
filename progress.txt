@@ -1475,3 +1475,95 @@ COMPLETED: API-WS-003 - Subscribe to market updates
 - TypeScript typecheck passes
 - Browser smoke test passes
 - Next up: API-WS-004
+
+COMPLETED: API-WS-004 - Subscribe to trade stream
+- Created src/api/ws/trade-stream.ts with comprehensive trade stream functionality:
+- TradeStreamClient class:
+  - connect()/disconnect(): Connection management with ReconnectableConnection
+  - subscribe(): Subscribe to trade stream for token IDs
+  - unsubscribe(): Unsubscribe by subscription ID
+  - unsubscribeToken(): Unsubscribe by token ID
+  - unsubscribeAll(): Remove all subscriptions
+  - getRecentTrades(): Get recent trades for a token
+  - getStats(): Get trade statistics
+  - dispose(): Clean up all resources
+- Constants:
+  - POLYMARKET_TRADES_WS_URL: WebSocket endpoint for trades
+  - DEFAULT_BUFFER_SIZE: Default buffer size (1000)
+  - DEFAULT_FLUSH_INTERVAL: Default flush interval (5000ms)
+  - DEFAULT_MAX_TRADES_PER_TOKEN: Max trades to store per token (1000)
+- Type definitions:
+  - TradeStreamDirection: "buy" | "sell"
+  - RawTradeMessage: Raw WebSocket trade data
+  - ParsedTrade: Parsed trade with computed fields (probability, valueUsd, isLargeTrade)
+  - TradeStreamSubscriptionRequest: Subscription request format
+  - TradeStreamSubscriptionInfo: Subscription metadata
+  - TradeEvent, TradeBatchEvent, LargeTradeEvent: Event types
+  - TradeStreamStats: Statistics for trade analysis
+  - TradeStreamConfig: Configuration options
+- Utility functions:
+  - parseTradeDirection(): Convert string to TradeStreamDirection
+  - parseTradeMessage(): Parse raw message to ParsedTrade
+  - isTradeMessage(): Type guard for trade messages
+  - buildTradeSubscriptionMessage(): Build subscription message
+  - calculateTradeStreamStats(): Calculate statistics from trades
+  - filterTradesByMinSize(): Filter trades by minimum size
+  - filterTradesByTimeRange(): Filter trades by time range
+  - groupTradesByAsset(): Group trades by asset/token ID
+  - sortTradesByTime(): Sort trades by timestamp
+- Configuration options:
+  - wsUrl: Custom WebSocket URL
+  - bufferSize: Size of trade buffer (default 1000)
+  - flushInterval: Interval to flush buffered trades (default 5000ms)
+  - maxTradesPerToken: Max trades stored per token (default 1000)
+  - largeTradeThreshold: Threshold for large trade detection (default 10000)
+  - enableBuffering: Enable batch buffering (default false)
+  - confirmationTimeout: Timeout for subscription confirmation (default 10000ms)
+  - debug: Enable debug logging
+- Event system:
+  - trade: Emitted on each trade
+  - tradeBatch: Emitted for batched trades (when buffering enabled)
+  - largeTrade: Emitted when trade exceeds threshold
+  - subscriptionConfirmed: Emitted when subscription confirmed
+  - subscriptionError: Emitted on subscription error
+  - connected, disconnected, reconnecting: Connection state events
+  - on(), off(), once(), removeAllListeners(): Event listener management
+- Buffering and high-volume handling:
+  - Trade buffering with configurable batch size and flush interval
+  - Per-token trade storage with configurable max limit
+  - Automatic cleanup of old trades
+  - Large trade detection and alerting
+- Singleton management:
+  - createTradeStreamClient(): Factory function
+  - getSharedTradeStreamClient(), setSharedTradeStreamClient(), resetSharedTradeStreamClient()
+- Updated src/api/ws/index.ts with all new exports (lines 117-156)
+- Created tests/api/ws/trade-stream.test.ts with 122 comprehensive tests:
+  - Constants tests (POLYMARKET_TRADES_WS_URL, buffer defaults)
+  - parseTradeDirection tests (buy, sell, case insensitive, invalid)
+  - parseTradeMessage tests (complete parsing, probability calculation, USD value, large trade detection, defaults)
+  - isTradeMessage tests (valid/invalid messages)
+  - buildTradeSubscriptionMessage tests (single/multiple tokens, unsubscribe, format)
+  - calculateTradeStreamStats tests (count, volume, average size, largest trade, time range, buy/sell counts, empty)
+  - filterTradesByMinSize tests (filter, empty, equal to min)
+  - filterTradesByTimeRange tests (filter, empty, inclusive boundaries)
+  - groupTradesByAsset tests (multiple tokens, single, empty)
+  - sortTradesByTime tests (descending, ascending, original unchanged)
+  - TradeStreamClient constructor tests (default config, custom config)
+  - connect/disconnect tests (events, state transitions, disposed client)
+  - subscribe tests (single token, multiple, tracking, errors)
+  - unsubscribe tests (by ID, by token, unknown, unsubscribe all)
+  - trade event tests (parsing, tracking, recent trades retrieval)
+  - large trade detection tests (threshold, events)
+  - buffering tests (disabled by default, batching when enabled)
+  - stats calculation tests
+  - dispose tests (cleanup, idempotent)
+  - Shared client singleton tests
+- Bug fixes during implementation:
+  - Added confirmationTimeout config option to fix test timeouts
+  - Removed unused SubscriptionChannelValue import
+  - Removed unused test imports (TradeEvent, TradeBatchEvent, LargeTradeEvent)
+  - Added non-null assertions for array access in tests
+- All 1511 tests pass (122 new tests added)
+- TypeScript typecheck passes
+- Dev server verified running at localhost:3000
+- Next up: API-WS-005

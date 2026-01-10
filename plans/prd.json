@@ -761,7 +761,8 @@
       "priority": 39,
       "name": "Subscribe to trade stream",
       "description": "Subscribe to real-time trade execution feed",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T13:45:00Z",
       "steps": [
         "Create trade stream subscription",
         "Parse trade messages",
