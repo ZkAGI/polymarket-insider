@@ -2075,3 +2075,40 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - TypeScript typecheck passes
 - Browser smoke test passes - app loads correctly at localhost:3000
 - Next up: API-CHAIN-002 (Fetch wallet transaction history)
+
+
+## API-CHAIN-002: Fetch Wallet Transaction History - COMPLETED
+- Created src/api/chain/history.ts with PolygonscanClient class:
+  - Polygonscan API integration for fetching wallet transaction history
+  - getWalletHistory: Fetch paginated transaction history for a wallet address
+  - getAllWalletHistory: Fetch all transactions with automatic pagination
+  - getInternalTransactions: Fetch internal (contract call) transactions
+  - getTransactionCount: Get nonce/transaction count for a wallet
+  - Retry logic with exponential backoff for rate limits and errors
+  - Request timeout handling
+  - API key support for higher rate limits
+- Updated src/api/chain/types.ts with new types:
+  - WalletTransaction: Full transaction data from Polygonscan API
+  - InternalTransaction: Internal/trace transaction data
+  - WalletHistoryOptions: Pagination, block range, sort options
+  - WalletHistoryResult: Paginated result with hasMore indicator
+  - PolygonscanConfig: API configuration (key, baseUrl, timeout, retries)
+  - PolygonscanError: Custom error class for API errors
+- Updated src/api/chain/index.ts to export new types and functions
+- Updated .env.example with POLYGONSCAN_API_KEY configuration
+- Created tests/api/chain/history.test.ts with 49 test cases covering:
+  - PolygonscanClient constructor and configuration
+  - getWalletHistory with various options (pagination, block range, sort)
+  - Transaction parsing (normal, failed, contract creation)
+  - Different transaction types (normal, internal, erc20, erc721, erc1155)
+  - getAllWalletHistory with automatic pagination
+  - getInternalTransactions
+  - getTransactionCount
+  - Error handling (HTTP errors, API errors, rate limits)
+  - Retry logic and max retry behavior
+  - Singleton management (createPolygonscanClient, getSharedPolygonscanClient, etc.)
+  - Convenience functions
+  - PolygonscanError class
+- All 2189 tests pass (49 new tests added)
+- TypeScript typecheck passes
+- Next up: API-CHAIN-003 (Fetch wallet token balances)

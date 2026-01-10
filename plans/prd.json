@@ -922,7 +922,8 @@
       "priority": 47,
       "name": "Fetch wallet transaction history",
       "description": "Retrieve on-chain transaction history for a wallet",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T21:45:00Z",
       "steps": [
         "Create getWalletHistory function",
         "Use Polygonscan API or RPC",

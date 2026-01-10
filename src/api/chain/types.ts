@@ -330,3 +330,213 @@ export type ConnectionEventListener = (event: ConnectionEvent) => void;
 export interface Disposable {
   dispose: () => void;
 }
+
+// ============================================================================
+// Wallet History Types (API-CHAIN-002)
+// ============================================================================
+
+/**
+ * Wallet transaction from Polygonscan API
+ */
+export interface WalletTransaction {
+  /** Transaction hash */
+  hash: string;
+
+  /** Block number */
+  blockNumber: bigint;
+
+  /** Block timestamp as Unix timestamp */
+  timestamp: number;
+
+  /** Transaction nonce */
+  nonce: number;
+
+  /** Block hash */
+  blockHash: string;
+
+  /** Transaction index within block */
+  transactionIndex: number;
+
+  /** Sender address */
+  from: string;
+
+  /** Recipient address (null for contract creation) */
+  to: string | null;
+
+  /** Value transferred in wei */
+  value: bigint;
+
+  /** Gas limit */
+  gas: bigint;
+
+  /** Gas price in wei */
+  gasPrice: bigint;
+
+  /** Transaction input data */
+  input: string;
+
+  /** Contract address (for contract creation transactions) */
+  contractAddress: string | null;
+
+  /** Cumulative gas used */
+  cumulativeGasUsed: bigint;
+
+  /** Actual gas used */
+  gasUsed: bigint;
+
+  /** Transaction confirmations */
+  confirmations: number;
+
+  /** Whether transaction errored */
+  isError: boolean;
+
+  /** Error code if transaction failed */
+  txReceiptStatus: string;
+
+  /** Method ID (first 4 bytes of input data) */
+  methodId: string;
+
+  /** Function name (if available) */
+  functionName: string;
+}
+
+/**
+ * Internal token transfer (ERC20, ERC721, etc.)
+ */
+export interface InternalTransaction {
+  /** Transaction hash */
+  hash: string;
+
+  /** Block number */
+  blockNumber: bigint;
+
+  /** Block timestamp */
+  timestamp: number;
+
+  /** Sender address */
+  from: string;
+
+  /** Recipient address */
+  to: string;
+
+  /** Value transferred in wei */
+  value: bigint;
+
+  /** Contract address involved */
+  contractAddress: string;
+
+  /** Input data */
+  input: string;
+
+  /** Type of internal transaction */
+  type: string;
+
+  /** Gas used */
+  gas: bigint;
+
+  /** Gas used for internal call */
+  gasUsed: bigint;
+
+  /** Trace ID */
+  traceId: string;
+
+  /** Whether this call errored */
+  isError: boolean;
+
+  /** Error code if call failed */
+  errCode: string;
+}
+
+/**
+ * Wallet history options
+ */
+export interface WalletHistoryOptions {
+  /** Page number for pagination (1-indexed) */
+  page?: number;
+
+  /** Number of results per page (max 10000) */
+  pageSize?: number;
+
+  /** Start block number */
+  startBlock?: bigint;
+
+  /** End block number */
+  endBlock?: bigint;
+
+  /** Sort order */
+  sort?: "asc" | "desc";
+
+  /** Filter by transaction type */
+  txType?: "normal" | "internal" | "erc20" | "erc721" | "erc1155";
+}
+
+/**
+ * Wallet history result
+ */
+export interface WalletHistoryResult {
+  /** Wallet address */
+  address: string;
+
+  /** Transactions */
+  transactions: WalletTransaction[];
+
+  /** Total transaction count (if available) */
+  totalCount?: number;
+
+  /** Whether there are more results */
+  hasMore: boolean;
+
+  /** Current page */
+  page: number;
+
+  /** Page size */
+  pageSize: number;
+}
+
+/**
+ * Polygonscan API configuration
+ */
+export interface PolygonscanConfig {
+  /** API key for Polygonscan */
+  apiKey?: string;
+
+  /** Base URL (defaults to https://api.polygonscan.com) */
+  baseUrl?: string;
+
+  /** Request timeout in milliseconds */
+  timeout?: number;
+
+  /** Maximum retries */
+  maxRetries?: number;
+
+  /** Delay between retries in milliseconds */
+  retryDelay?: number;
+}
+
+/**
+ * Polygonscan API error
+ */
+export class PolygonscanError extends Error {
+  readonly code: string;
+  readonly statusCode?: number;
+  readonly response?: unknown;
+
+  constructor(
+    message: string,
+    code: string,
+    options?: {
+      statusCode?: number;
+      response?: unknown;
+    }
+  ) {
+    super(message);
+    this.name = "PolygonscanError";
+    this.code = code;
+    this.statusCode = options?.statusCode;
+    this.response = options?.response;
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PolygonscanError);
+    }
+  }
+}
