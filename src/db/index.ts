@@ -13,8 +13,34 @@ export {
   resetPrismaClient,
   setPrismaClient,
   PrismaClient,
+  // Pool and health check exports
+  getPoolMonitor,
+  setPoolMonitor,
+  performHealthCheck,
+  startHealthChecks,
+  stopHealthChecks,
+  getPoolMetrics,
+  isConnectionHealthy,
 } from "./client";
 export type { PrismaClientConfig } from "./client";
+
+// Connection pool configuration exports
+export {
+  PoolMonitor,
+  poolMonitor,
+  createPoolMonitor,
+  getDefaultPoolConfig,
+  getRecommendedPoolConfig,
+  buildPooledDatabaseUrl,
+  parsePoolConfigFromUrl,
+  validatePoolConfig,
+  POOL_SIZE_RECOMMENDATIONS,
+} from "./pool";
+export type {
+  PoolConfig,
+  PoolMetrics,
+  HealthCheckResult,
+} from "./pool";
 
 // Market service exports
 export {

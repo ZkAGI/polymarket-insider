@@ -75,6 +75,12 @@ export const env = {
   // Whale Detection
   WHALE_THRESHOLD_USD: getEnvVarAsNumber("WHALE_THRESHOLD_USD", 10000),
   INSIDER_DETECTION_ENABLED: getEnvVarAsBoolean("INSIDER_DETECTION_ENABLED", true),
+
+  // Database Connection Pool Settings
+  // Controls Prisma's connection pool behavior for optimal performance under load
+  DB_POOL_SIZE: getEnvVarAsNumber("DB_POOL_SIZE", 10),
+  DB_POOL_TIMEOUT: getEnvVarAsNumber("DB_POOL_TIMEOUT", 10000),
+  DB_CONNECT_TIMEOUT: getEnvVarAsNumber("DB_CONNECT_TIMEOUT", 10000),
 } as const;
 
 export type Env = typeof env;
