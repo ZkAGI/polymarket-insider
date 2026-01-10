@@ -2583,3 +2583,98 @@ NOTES:
 - Schema supports all detection features (fresh wallet, clustering, funding sources)
 - Time-series data supports multiple intervals for different aggregation levels
 - Job queue and sync log support background processing and data synchronization
+
+
+COMPLETED: API-DB-002 - Markets table and model
+- Created src/db/ directory with modular database service architecture
+- Created src/db/client.ts:
+  - PrismaClient singleton with lazy initialization
+  - Support for development mode (persists across hot reloads)
+  - createPrismaClient() factory function
+  - getPrismaClient() singleton accessor
+  - disconnectPrisma() for cleanup
+  - resetPrismaClient() for testing
+  - setPrismaClient() for mock injection
+- Created src/db/markets.ts:
+  - MarketService class with comprehensive CRUD operations
+  - create(): Create a new market with required/optional fields
+  - createWithOutcomes(): Create market with outcomes in single transaction
+  - findById(): Find market by ID with optional outcomes include
+  - findBySlug(): Find market by URL slug
+  - findByIds(): Find multiple markets by ID array
+  - update(): Update market fields
+  - upsert(): Create or update market
+  - delete(): Delete single market
+  - deleteMany(): Delete multiple markets
+  - findMany(): Query markets with filters, sorting, pagination
+  - findActive(): Find active, non-closed markets
+  - findByCategory(): Find markets by category
+  - search(): Search markets by question text (case-insensitive)
+  - getTrending(): Get top markets by volume
+  - getRecent(): Get recently created markets
+  - count(): Count markets matching filters
+  - exists(): Check if market exists by ID
+  - existsBySlug(): Check if market exists by slug
+  - createMany(): Bulk create markets (skip duplicates)
+  - markSynced(): Update last synced timestamp
+  - getNeedingSync(): Find markets needing data sync
+  - getStats(): Aggregate statistics (count, volume, liquidity)
+- Created src/db/index.ts with exports for all db module components
+- Added package.json scripts:
+  - db:generate: Run prisma generate
+  - db:push: Run prisma db push
+  - db:migrate: Run prisma migrate dev
+  - db:studio: Run prisma studio
+  - postinstall: Auto-run prisma generate
+- Type exports:
+  - Market, Outcome (from Prisma)
+  - MarketWithOutcomes (Market + outcomes relation)
+  - CreateMarketInput, UpdateMarketInput
+  - CreateOutcomeInput
+  - MarketFilters, MarketSortOptions
+  - PaginationOptions, PaginatedMarketResult
+  - MarketServiceConfig
+- Filter support:
+  - active, closed, archived status
+  - category, subcategory
+  - tags (hasSome)
+  - search (question contains)
+  - minVolume, maxVolume
+  - endDateBefore, endDateAfter
+  - createdBefore, createdAfter
+- Sort support: volume, volume24h, liquidity, createdAt, updatedAt, endDate, tradeCount
+- Created tests/db/markets.test.ts with 64 unit tests:
+  - Constructor tests
+  - Create tests (required fields, all fields, defaults)
+  - CreateWithOutcomes tests (outcomes, probability calculation)
+  - FindById tests (found, not found, with outcomes)
+  - FindBySlug tests (found, not found, with outcomes)
+  - FindByIds tests (multiple, empty)
+  - Update tests (multiple fields, single field, nullable)
+  - Upsert tests (create new, update existing)
+  - Delete tests (single, many)
+  - FindMany tests (all filters, sorting, pagination, outcomes)
+  - FindActive tests
+  - FindByCategory tests (active only, all)
+  - Search tests (active only, all)
+  - GetTrending tests (default, with category)
+  - GetRecent tests (active only, all)
+  - Count tests (no filters, with filters)
+  - Exists/ExistsBySlug tests
+  - CreateMany tests (bulk, skip duplicates)
+  - MarkSynced tests
+  - GetNeedingSync tests
+  - GetStats tests (aggregates, null handling, with filters)
+  - Edge cases (empty tags, min/max volume only, all sort fields)
+- All 2686 tests pass (64 new tests added)
+- TypeScript typecheck passes
+- Prisma schema validation passes
+- Next up: API-DB-003 (Trades table and model)
+
+NOTES:
+- Market model was already defined in schema from API-DB-001
+- This feature focuses on the service layer for database operations
+- Tests use mocked Prisma client to avoid database dependency
+- MarketService can be injected with custom Prisma client for testing
+- Default singleton instance available via marketService export
+
