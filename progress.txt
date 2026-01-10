@@ -1919,3 +1919,58 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - All 1912 tests pass (63 new tests added)
 - TypeScript typecheck passes
 - Next up: API-WS-009
+
+## API-WS-009: Multi-market Subscription Manager - COMPLETED
+- Created src/api/ws/subscription-manager.ts with MultiMarketSubscriptionManager class
+- Key features:
+  - Track active subscriptions across multiple markets
+  - Batch subscription requests with configurable delay and size
+  - Handle subscription limits per connection
+  - Provide subscription status and health monitoring
+  - Auto-resubscription support for reconnection scenarios
+  - Stale subscription detection
+  - Priority-based subscription ordering
+- Main class: MultiMarketSubscriptionManager
+  - subscribe(): Subscribe to single or multiple tokens
+  - subscribeMany(): Subscribe to multiple markets at once
+  - unsubscribe(): Unsubscribe by subscription ID
+  - unsubscribeByToken(): Unsubscribe by token ID
+  - unsubscribeAll(): Unsubscribe from all subscriptions
+  - pauseSubscription()/resumeSubscription(): Pause/resume subscriptions
+  - handleConfirmation(): Mark subscription as confirmed
+  - handleError(): Handle subscription errors with retry logic
+  - handlePriceUpdate(): Update subscription state on price updates
+  - handleConnectionStateChange(): Manage reconnection logic
+  - getSubscriptions(): Filter and retrieve subscriptions
+  - getHealth(): Get subscription health metrics
+  - getStats(): Get subscription statistics
+- Configuration options:
+  - maxSubscriptionsPerConnection: Limit subscriptions per connection
+  - maxTokensPerSubscription: Limit tokens per subscription
+  - batchSize/batchDelay: Configure batching behavior
+  - subscriptionTimeout: Timeout for subscription confirmation
+  - maxRetries: Maximum retry attempts
+  - staleSubscriptionThreshold: Threshold for stale detection
+  - enableStaleDetection: Toggle stale detection
+- Constants exported:
+  - DEFAULT_MAX_SUBSCRIPTIONS_PER_CONNECTION (100)
+  - DEFAULT_MAX_TOKENS_PER_SUBSCRIPTION (50)
+  - DEFAULT_BATCH_SIZE (10)
+  - DEFAULT_BATCH_DELAY (100ms)
+  - DEFAULT_SUBSCRIPTION_TIMEOUT (10000ms)
+  - DEFAULT_STALE_SUBSCRIPTION_THRESHOLD (60000ms)
+  - SubscriptionStatus enum (PENDING, ACTIVE, PAUSED, ERROR, UNSUBSCRIBED)
+  - BatchOperationType enum (SUBSCRIBE, UNSUBSCRIBE)
+  - SubscriptionManagerEventType enum
+- Utility functions:
+  - calculateSubscriptionDistribution(): Distribute tokens across connections
+  - mergeFilters(): Merge subscription filter criteria
+  - matchesFilter(): Check if subscription matches filter
+- Singleton management:
+  - createMultiMarketSubscriptionManager(): Factory function
+  - getSharedSubscriptionManager/setSharedSubscriptionManager/resetSharedSubscriptionManager
+- Updated src/api/ws/index.ts to export all new functions, types, and constants
+- Created comprehensive tests in tests/api/ws/subscription-manager.test.ts (99 test cases)
+- All 2011 tests pass (99 new tests added)
+- TypeScript typecheck passes
+- Next up: API-WS-010

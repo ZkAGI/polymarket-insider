@@ -333,3 +333,54 @@ export type {
   EnqueueOptions,
   EnqueueResult,
 } from "./message-queue";
+
+// Multi-market Subscription Manager (API-WS-009)
+export {
+  MultiMarketSubscriptionManager,
+  createMultiMarketSubscriptionManager,
+  getSharedSubscriptionManager,
+  setSharedSubscriptionManager,
+  resetSharedSubscriptionManager,
+  // Constants
+  DEFAULT_MAX_SUBSCRIPTIONS_PER_CONNECTION,
+  DEFAULT_MAX_TOKENS_PER_SUBSCRIPTION,
+  DEFAULT_BATCH_SIZE,
+  DEFAULT_BATCH_DELAY,
+  DEFAULT_SUBSCRIPTION_TIMEOUT,
+  DEFAULT_STALE_SUBSCRIPTION_THRESHOLD,
+  SubscriptionStatus,
+  BatchOperationType,
+  SubscriptionManagerEventType,
+  // Utility functions
+  calculateSubscriptionDistribution,
+  mergeFilters,
+  matchesFilter,
+} from "./subscription-manager";
+
+// Subscription Manager Types (API-WS-009)
+export type {
+  SubscriptionStatusValue,
+  BatchOperationTypeValue,
+  SubscriptionManagerEventTypeValue,
+  ManagedSubscription,
+  PendingOperation,
+  BatchOperation,
+  SubscriptionFilter,
+  SubscriptionManagerConfig,
+  SubscriptionManagerStats,
+  SubscriptionHealth,
+  SubscriptionManagerEvent,
+  SubscriptionAddedEvent,
+  SubscriptionRemovedEvent,
+  SubscriptionConfirmedEvent as ManagerSubscriptionConfirmedEvent,
+  SubscriptionErrorEvent as ManagerSubscriptionErrorEvent,
+  SubscriptionStaleEvent,
+  BatchSentEvent,
+  BatchCompleteEvent,
+  LimitReachedEvent,
+  StatusChangedEvent as ManagerStatusChangedEvent,
+  HealthUpdatedEvent,
+  SubscriptionManagerEventUnion,
+  SubscriptionManagerEventListenerMap,
+  SendJsonFunction,
+} from "./subscription-manager";
