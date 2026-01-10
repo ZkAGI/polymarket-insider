@@ -384,3 +384,46 @@ export type {
   SubscriptionManagerEventListenerMap,
   SendJsonFunction,
 } from "./subscription-manager";
+
+// WebSocket Event Emitter (API-WS-010)
+export {
+  WebSocketEventEmitter,
+  createEventEmitter,
+  getSharedEventEmitter,
+  setSharedEventEmitter,
+  resetSharedEventEmitter,
+  // Constants
+  EventCategory,
+  EventPriority,
+  WebSocketEventTypes,
+  // Utility functions
+  createFilteredListener,
+  createDebouncedListener,
+  createThrottledListener,
+  createBatchingListener,
+  createEventBuilder,
+} from "./event-emitter";
+
+// Event Emitter Types (API-WS-010)
+export type {
+  EventCategoryValue,
+  EventPriorityValue,
+  WebSocketEventTypeValue,
+  BaseEvent,
+  ConnectionOpenEventData,
+  ConnectionCloseEventData,
+  ConnectionErrorEventData,
+  PriceUpdateEventData,
+  TradeEventData,
+  LargeTradeEventData,
+  OrderBookUpdateEventData,
+  HandlerErrorEventData,
+  GenericEvent,
+  WebSocketEvent as EmitterWebSocketEvent,
+  EventListenerFn,
+  EventFilter,
+  ListenerOptions as EmitterListenerOptions,
+  EventEmitterConfig,
+  EventEmitterStats,
+  EventEmitterLogger,
+} from "./event-emitter";

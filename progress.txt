@@ -1974,3 +1974,56 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - All 2011 tests pass (99 new tests added)
 - TypeScript typecheck passes
 - Next up: API-WS-010
+
+
+## API-WS-010: WebSocket Event Emitter - COMPLETED
+- Created src/api/ws/event-emitter.ts with WebSocketEventEmitter class
+- Key features implemented:
+  - Strongly typed events with TypeScript generics
+  - Event filtering capabilities with listener filter option
+  - One-time event listeners (once method)
+  - Event listener management (on, off, removeAllListeners)
+  - Category-based listeners (onCategory for receiving all events in a category)
+  - Global listeners (onAll for receiving all events)
+  - Event history tracking (optional, configurable)
+  - Error handling for listeners with HANDLER_ERROR events
+  - Priority-based listener execution order
+  - Async listener support with configurable timeout
+  - Comprehensive statistics tracking
+- Main class: WebSocketEventEmitter
+  - emit(): Emit events to all registered listeners
+  - on()/off(): Register/unregister type-specific listeners
+  - onCategory()/offCategory(): Register/unregister category listeners
+  - onAll()/offAll(): Register/unregister global listeners
+  - once(): Register one-time listener
+  - removeAllListeners(): Remove all listeners
+  - listenerCount(): Get count of registered listeners
+  - hasListeners(): Check if event type has listeners
+  - eventTypes(): Get list of event types with listeners
+  - getHistory()/getHistoryByType()/getHistoryByCategory(): Access event history
+  - clearHistory(): Clear event history
+  - getStats()/resetStats(): Get/reset statistics
+  - dispose(): Clean up resources
+- Constants exported:
+  - EventCategory: connection, subscription, marketData, trade, orderBook, system, error
+  - EventPriority: CRITICAL (0), HIGH (1), NORMAL (2), LOW (3)
+  - WebSocketEventTypes: 25 predefined event types for various WebSocket events
+- Utility functions:
+  - createEventEmitter(): Factory function
+  - getSharedEventEmitter/setSharedEventEmitter/resetSharedEventEmitter: Singleton management
+  - createFilteredListener(): Create filtered event listener
+  - createDebouncedListener(): Create debounced event listener
+  - createThrottledListener(): Create throttled event listener
+  - createBatchingListener(): Create batching event listener
+  - createEventBuilder(): Create type-safe event builder for specific event types
+- Event types:
+  - BaseEvent: Base interface for all events
+  - ConnectionOpenEventData, ConnectionCloseEventData, ConnectionErrorEventData
+  - PriceUpdateEventData, TradeEventData, LargeTradeEventData
+  - OrderBookUpdateEventData, HandlerErrorEventData, GenericEvent
+- Updated src/api/ws/index.ts to export all new functions, types, and constants
+- Created comprehensive tests in tests/api/ws/event-emitter.test.ts (77 test cases)
+- All 2088 tests pass (77 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes
+- Next up: API-CHAIN-001 (Polygon RPC client setup)
