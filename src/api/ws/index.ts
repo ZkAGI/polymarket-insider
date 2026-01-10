@@ -289,3 +289,47 @@ export type {
   ReconnectFunction,
   AttachHeartbeatOptions,
 } from "./heartbeat-handler";
+
+// Message Queue (API-WS-008)
+export {
+  MessageQueue,
+  createMessageQueue,
+  getSharedMessageQueue,
+  setSharedMessageQueue,
+  resetSharedMessageQueue,
+  // Constants
+  PRIORITY_VALUES,
+  QueueEventType,
+  // Utility functions
+  createFilteredProcessor,
+  createBatchProcessor,
+  calculateQueueHealth,
+} from "./message-queue";
+
+// Message Queue Types (API-WS-008)
+export type {
+  MessagePriority,
+  QueuedMessage,
+  MessageProcessor,
+  BackpressureStrategy,
+  QueueState,
+  MessageQueueConfig,
+  QueueStats,
+  QueueEventTypeValue,
+  QueueEvent,
+  MessageEnqueuedEvent,
+  MessageProcessedEvent,
+  MessageDroppedEvent,
+  ProcessingErrorEvent,
+  BackpressureStartEvent,
+  BackpressureEndEvent,
+  QueueEmptyEvent,
+  QueueFullEvent,
+  StateChangeEvent as QueueStateChangeEvent,
+  BatchProcessedEvent,
+  QueueEventUnion,
+  QueueEventListenerMap,
+  QueueLogger,
+  EnqueueOptions,
+  EnqueueResult,
+} from "./message-queue";

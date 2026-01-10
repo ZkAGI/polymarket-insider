@@ -1838,3 +1838,84 @@ COMPLETED: API-WS-007 - WebSocket heartbeat handler
 - TypeScript typecheck passes
 - Dev server verified running at localhost:3000
 - Next up: API-WS-008
+
+COMPLETED: API-WS-008 - WebSocket message queue
+- Created src/api/ws/message-queue.ts with comprehensive message queue functionality:
+  - MessageQueue class: High-performance queue for WebSocket message handling
+  - createMessageQueue(): Factory function for creating new queues
+  - getSharedMessageQueue/setSharedMessageQueue/resetSharedMessageQueue: Singleton management
+  - createFilteredProcessor(): Create processors that route by message type
+  - createBatchProcessor(): Create processors that batch messages before handling
+  - calculateQueueHealth(): Calculate health score 0-100 based on stats
+- Core features:
+  - Asynchronous message processing with configurable batch sizes
+  - Priority queue support (high, normal, low) with insertion ordering
+  - Backpressure handling with four strategies: dropOldest, dropNewest, block, error
+  - High/low water marks for triggering and releasing backpressure
+  - Queue depth monitoring with comprehensive statistics
+  - Processing rate tracking (messages per second)
+  - Wait time tracking (average and max)
+  - Error tracking and handling
+- Configuration options:
+  - maxSize: Maximum queue size (default: 10000)
+  - batchSize: Batch size for processing (default: 100)
+  - processingInterval: Processing interval in ms (default: 10)
+  - backpressureStrategy: "dropOldest" | "dropNewest" | "block" | "error"
+  - highWaterMark: Threshold to activate backpressure (default: 80% of maxSize)
+  - lowWaterMark: Threshold to release backpressure (default: 50% of maxSize)
+  - enablePriority: Enable priority queue ordering (default: false)
+- Event system with typed events:
+  - messageEnqueued, messageProcessed, messageDropped
+  - processingError, batchProcessed
+  - backpressureStart, backpressureEnd
+  - queueEmpty, queueFull, stateChange
+- Queue operations:
+  - enqueue(): Add message to queue
+  - enqueueBatch(): Add multiple messages at once
+  - setProcessor(): Set the message processing function
+  - start()/stop(): Control processing
+  - pause()/resume(): Pause/resume without stopping timer
+  - clear(): Clear all messages
+  - peek(): View next message without removing
+  - getMessages(): Get all queued messages
+  - getStats(): Get comprehensive queue statistics
+  - dispose(): Clean up resources
+- Utility functions:
+  - createFilteredProcessor(): Route messages by type to specific handlers
+  - createBatchProcessor(): Batch messages with size/time-based flushing
+  - calculateQueueHealth(): Score queue health based on utilization, errors, wait times
+  - PRIORITY_VALUES: Priority ordering constants
+- Added types:
+  - MessagePriority, QueuedMessage, MessageProcessor
+  - BackpressureStrategy, QueueState
+  - MessageQueueConfig, QueueStats
+  - All event types (MessageEnqueuedEvent, etc.)
+  - EnqueueOptions, EnqueueResult
+  - QueueLogger interface
+- Updated src/api/ws/index.ts to export all new functions, types, and constants
+- Created comprehensive tests in tests/api/ws/message-queue.test.ts (63 test cases):
+  - Constructor tests (default config, custom config, water mark calculation)
+  - Enqueue tests (basic, with options, multiple, disposed queue, events, auto-ID)
+  - enqueueBatch tests
+  - Priority queue tests (ordering, insertion, disabled priority)
+  - Processing tests (basic, events, async, errors, batching, queueEmpty)
+  - Pause/resume tests
+  - Backpressure tests for all strategies:
+    - dropOldest: activation, dropping, release at low water mark
+    - dropNewest: dropping new messages when full
+    - block: blocking until space available
+    - error: throwing error when full
+  - Clear tests (basic, end backpressure)
+  - Peek/getMessages tests
+  - getStats tests (basic, processing, errors, utilization)
+  - State management tests
+  - Event listener tests (add/remove, once, removeAll)
+  - Dispose tests
+  - Singleton function tests
+  - createFilteredProcessor tests
+  - createBatchProcessor tests (batching, flush interval, manual flush, dispose)
+  - calculateQueueHealth tests (healthy, utilization penalty, error penalty, wait time penalty, backpressure penalty, clamping)
+  - PRIORITY_VALUES constant tests
+- All 1912 tests pass (63 new tests added)
+- TypeScript typecheck passes
+- Next up: API-WS-009
