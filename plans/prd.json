@@ -681,7 +681,8 @@
       "priority": 35,
       "name": "Calculate trade sizes in USD",
       "description": "Convert trade sizes to USD equivalent values",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-10T10:30:00Z",
       "steps": [
         "Get USDC price (or assume 1:1)",
         "Calculate position value",

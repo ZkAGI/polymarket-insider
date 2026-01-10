@@ -1249,3 +1249,52 @@ COMPLETED: API-CLOB-011 - Parse trade execution data
 - Browser smoke test passes
 - App loads correctly at localhost:3000
 - Next up: API-CLOB-012
+
+COMPLETED: API-CLOB-012 - Calculate trade sizes in USD
+- Created src/api/clob/usd-calculator.ts with comprehensive USD calculation functionality:
+  - USDC price handling: getUsdcPrice, validateUsdcPrice, createUsdcPriceFetcher
+  - Trade size calculations: calculateTradeSizeUsd, calculateTradeValueWithFees
+  - Trade USD value functions: calculateTradeUsdValues, calculateTradesUsdValues
+  - Trade enrichment: enrichTradeWithUsd, enrichTradesWithUsd
+  - Summary calculations: calculateTradeUsdSummary (with VWAP, volume by side, min/max)
+  - Position value: calculatePositionValueUsd (with P&L tracking)
+  - Profit calculations: calculatePotentialPayout, calculatePotentialProfit, calculatePotentialRoi
+  - Outcome token pricing: getOutcomeTokenPrice, priceToImpliedProbability, impliedProbabilityToPrice
+  - Order book USD: addUsdToOrderBookLevels, calculateOrderBookSideValueUsd, calculateOrderBookTotalValueUsd
+  - Position tracking: buildPositionFromTrades (tracks avg cost, realized/unrealized P&L)
+  - Utility functions: formatUsdValue, isWhaleTrade, filterTradesByMinValueUsd, sortTradesByValueUsd, getTopTradesByValue
+- Types exported:
+  - UsdCalculatorConfig: Configuration for USD calculations (usdcPrice, defaultFeeRateBps, includeFees)
+  - PositionValueResult: Position value with optional P&L data
+  - TradeWithUsdValues: Trade with calculated USD values
+  - OrderBookLevelUsd: Order book level with USD value
+  - TradeUsdSummary: Summary statistics for multiple trades
+  - OutcomeTokenPrice: Outcome token pricing information
+  - Position: Full position with cost basis and P&L tracking
+- Features:
+  - USDC price handling with validation and caching support
+  - Price-to-probability and probability-to-price conversions
+  - Support for string and number inputs throughout
+  - Configurable fee rates in basis points
+  - Cost basis tracking with realized/unrealized P&L
+  - Whale trade detection with configurable threshold
+  - Volume-weighted average price (VWAP) calculation
+  - Compact USD formatting (K/M suffixes)
+- Updated src/api/clob/index.ts with all new exports
+- Created tests/api/clob/usd-calculator.test.ts with 83 comprehensive tests:
+  - USDC price tests (getUsdcPrice, validateUsdcPrice, createUsdcPriceFetcher)
+  - Trade size tests (calculateTradeSizeUsd, calculateTradeValueWithFees)
+  - Trade USD value tests (calculateTradeUsdValues, calculateTradesUsdValues)
+  - Trade enrichment tests (enrichTradeWithUsd, enrichTradesWithUsd)
+  - Summary tests (calculateTradeUsdSummary with VWAP)
+  - Position value tests (calculatePositionValueUsd with P&L)
+  - Profit tests (calculatePotentialPayout, calculatePotentialProfit, calculatePotentialRoi)
+  - Token pricing tests (getOutcomeTokenPrice, priceToImpliedProbability, impliedProbabilityToPrice)
+  - Order book tests (addUsdToOrderBookLevels, calculateOrderBookSideValueUsd, calculateOrderBookTotalValueUsd)
+  - Position tracking tests (buildPositionFromTrades)
+  - Utility tests (formatUsdValue, isWhaleTrade, filterTradesByMinValueUsd, sortTradesByValueUsd, getTopTradesByValue)
+- All 1200 tests pass (83 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes
+- App loads correctly at localhost:3000
+- Next up: API-WS-001

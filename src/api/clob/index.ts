@@ -240,6 +240,54 @@ export type {
   ParseTradeExecutionsResult,
 } from "./trade-execution";
 
+// USD Calculator (API-CLOB-012)
+export {
+  // USDC price functions
+  getUsdcPrice,
+  validateUsdcPrice,
+  createUsdcPriceFetcher,
+  // Trade size calculations
+  calculateTradeSizeUsd,
+  calculateTradeValueWithFees,
+  calculateTradeUsdValues,
+  calculateTradesUsdValues,
+  enrichTradeWithUsd,
+  enrichTradesWithUsd,
+  // Trade summary calculations
+  calculateTradeUsdSummary,
+  // Position value calculations
+  calculatePositionValueUsd,
+  calculatePotentialPayout,
+  calculatePotentialProfit,
+  calculatePotentialRoi,
+  // Outcome token pricing
+  getOutcomeTokenPrice,
+  priceToImpliedProbability,
+  impliedProbabilityToPrice,
+  // Order book USD calculations
+  addUsdToOrderBookLevels,
+  calculateOrderBookSideValueUsd,
+  calculateOrderBookTotalValueUsd,
+  // Position tracking
+  buildPositionFromTrades,
+  // Utility functions
+  formatUsdValue,
+  isWhaleTrade,
+  filterTradesByMinValueUsd,
+  sortTradesByValueUsd,
+  getTopTradesByValue,
+} from "./usd-calculator";
+
+export type {
+  UsdCalculatorConfig,
+  PositionValueResult,
+  TradeWithUsdValues,
+  OrderBookLevelUsd,
+  TradeUsdSummary,
+  OutcomeTokenPrice,
+  Position,
+} from "./usd-calculator";
+
 export type {
   ClobClientConfig,
   ClobRequestOptions,
