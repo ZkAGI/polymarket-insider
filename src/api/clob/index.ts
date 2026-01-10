@@ -7,6 +7,36 @@
 
 export { ClobClient, ClobApiException, clobClient, createClobClient, validateCredentials } from "./client";
 
+// Authentication module (API-CLOB-008)
+export {
+  // Auth header generation
+  generateSignature,
+  generateAuthHeaders,
+  validateCredentialFormat,
+  // Error classification
+  classifyAuthError,
+  isAuthError,
+  isRetryableAuthError,
+  AuthErrorType,
+  // Credential storage
+  CredentialStore,
+  // Auth manager
+  AuthManager,
+  getSharedAuthManager,
+  setSharedAuthManager,
+  resetSharedAuthManager,
+  createAuthManager,
+  // Auth wrapper
+  withAuth,
+} from "./auth";
+
+export type {
+  ClassifiedAuthError,
+  CredentialStorageConfig,
+  KeyRotationConfig,
+  AuthState,
+} from "./auth";
+
 export {
   getOrderBook,
   getOrderBooks,

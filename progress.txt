@@ -954,4 +954,58 @@ COMPLETED: API-CLOB-007 - Fetch order book depth
 - TypeScript typecheck passes
 - E2E browser test passes
 - Created scripts/browser-smoke-test.mjs for automated E2E testing
-- Next up: API-CLOB-008
+
+COMPLETED: API-CLOB-008 - CLOB API authentication
+- Created src/api/clob/auth.ts with comprehensive authentication functionality:
+  - generateSignature(): HMAC-SHA256 signature generation for API authentication
+  - generateAuthHeaders(): Generate full auth header set (POLY-API-KEY, POLY-SIGNATURE, POLY-TIMESTAMP, POLY-PASSPHRASE)
+  - validateCredentialFormat(): Validate API key and secret format
+  - AuthErrorType enum: 11 authentication error types for classified error handling
+    - MISSING_CREDENTIALS, INVALID_KEY_FORMAT, KEY_REVOKED, KEY_EXPIRED
+    - INVALID_SIGNATURE, TIMESTAMP_EXPIRED, INVALID_PASSPHRASE
+    - IP_NOT_WHITELISTED, RATE_LIMITED, PERMISSION_DENIED, UNKNOWN
+  - classifyAuthError(): Classify errors by type, message, and suggested action
+  - isAuthError(), isRetryableAuthError(): Error type checking helpers
+  - ClassifiedAuthError interface: type, message, statusCode, retryable, suggestedAction, originalCode
+- Credential Storage features:
+  - CredentialStore class: Secure in-memory credential storage
+  - Optional XOR encryption for in-memory obfuscation
+  - Environment variable loading support (POLY_API_KEY, POLY_API_SECRET, POLY_API_PASSPHRASE)
+  - Custom env var prefix configuration
+  - Credentials age tracking
+  - Masked credentials for display
+- Key Rotation support:
+  - AuthManager class: Full authentication state management
+  - KeyRotationConfig: maxCredentialAge, maxAuthFailures, onRotationNeeded callback
+  - Automatic rotation detection based on consecutive failures or credential age
+  - rotateCredentials(): Trigger rotation with callback support
+  - AuthState tracking: hasCredentials, credentialsSetAt, authFailures, lastSuccessfulAuth, lastFailedAuth, lastError
+- Singleton management:
+  - getSharedAuthManager(), setSharedAuthManager(), resetSharedAuthManager()
+  - createAuthManager() factory function
+- Auth wrapper:
+  - withAuth(): Execute function with auto-generated auth headers
+  - Automatic success/failure recording
+  - Automatic rotation attempt on failures
+- Updated src/api/clob/index.ts with all new exports:
+  - Functions: generateSignature, generateAuthHeaders, validateCredentialFormat, classifyAuthError,
+    isAuthError, isRetryableAuthError, withAuth, getSharedAuthManager, setSharedAuthManager,
+    resetSharedAuthManager, createAuthManager
+  - Classes: CredentialStore, AuthManager
+  - Enum: AuthErrorType
+  - Types: ClassifiedAuthError, CredentialStorageConfig, KeyRotationConfig, AuthState
+- Created comprehensive tests in tests/api/clob/auth.test.ts with 80 test cases covering:
+  - generateSignature tests (base64 encoding, different inputs, consistency)
+  - generateAuthHeaders tests (header generation, passphrase handling, validation)
+  - validateCredentialFormat tests (valid/invalid credentials, format checks)
+  - classifyAuthError tests (all error types, status codes, retryable determination)
+  - isAuthError and isRetryableAuthError tests
+  - CredentialStore tests (storage, encryption, env vars, masking, age tracking)
+  - AuthManager tests (credential management, header generation, state tracking, rotation)
+  - Shared AuthManager singleton tests
+  - withAuth wrapper tests (success/failure recording, rotation attempts)
+  - AuthErrorType enum validation
+- All 811 tests pass (80 new tests added)
+- TypeScript typecheck passes
+- App loads correctly at localhost:3000
+- Next up: API-CLOB-009
