@@ -52,6 +52,28 @@ export type {
   WalletTradeRole,
 } from "./trades";
 
+// Open orders functions (API-CLOB-005)
+export {
+  getOpenOrders,
+  getAllOpenOrders,
+  getOpenOrdersSummary,
+  hasOpenOrders,
+  getOpenOrdersForMarket,
+  calculateOpenOrdersValue,
+  calculateRemainingOrdersValue,
+  getOrderRemainingSize,
+  getOrderFillPercentage,
+  filterOrdersByMinRemainingSize,
+  groupOrdersByToken,
+  groupOrdersBySide,
+} from "./orders";
+
+export type {
+  GetOpenOrdersOptions,
+  GetOpenOrdersResult,
+  OpenOrdersSummary,
+} from "./orders";
+
 export type {
   ClobClientConfig,
   ClobRequestOptions,

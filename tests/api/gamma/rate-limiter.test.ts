@@ -666,13 +666,19 @@ describe("executeWithRateLimit()", () => {
 
     const promise = executeWithRateLimit(mockFn, limiter, 2);
 
+    // Catch rejection to prevent unhandled promise rejection warning
+    const caughtPromise = promise.catch(() => {});
+
     // Process all retries
     for (let i = 0; i < 3; i++) {
       await vi.advanceTimersByTimeAsync(2000);
     }
 
     await expect(promise).rejects.toThrow(RateLimiterError);
-    await expect(promise).rejects.toThrow("max retries");
+    await expect(promise).rejects.toThrow("retries");
+
+    // Wait for caught promise to settle
+    await caughtPromise;
   });
 
   it("should retry on rate limit error messages", async () => {

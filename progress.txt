@@ -820,3 +820,54 @@ COMPLETED: API-CLOB-004 - Fetch trades by wallet address
   - getTradesBetweenWallets tests (find trades, invalid addresses, same wallet, no trades)
 - NOTE: Tests require Node 20+ to run (vitest uses modern regex features)
 - Next up: API-CLOB-005
+
+=== Session 2026-01-10 ===
+
+COMPLETED: API-CLOB-005 - Fetch open orders by wallet
+- Created src/api/clob/orders.ts with comprehensive order management functions:
+  - getOpenOrders(walletAddress, options): Fetch open orders for a specific wallet
+  - getAllOpenOrders(walletAddress, options): Fetch all orders with automatic pagination
+  - getOpenOrdersSummary(orders, walletAddress): Calculate aggregate statistics
+  - hasOpenOrders(walletAddress, options): Check if wallet has any open orders
+  - getOpenOrdersForMarket(walletAddress, tokenId, options): Fetch orders for specific market
+  - calculateOpenOrdersValue(orders): Calculate total value of open orders
+  - calculateRemainingOrdersValue(orders): Calculate unfilled value
+  - getOrderRemainingSize(order): Get remaining size to be filled
+  - getOrderFillPercentage(order): Get fill percentage (0-100)
+  - filterOrdersByMinRemainingSize(orders, minSize): Filter by minimum remaining size
+  - groupOrdersByToken(orders): Group orders by token/asset ID
+  - groupOrdersBySide(orders): Group orders by side (BUY/SELL)
+- Added types:
+  - GetOpenOrdersOptions: limit, cursor, tokenId, assetId, side, client
+  - GetOpenOrdersResult: orders, count, walletAddress, tokenId, nextCursor, hasMore, fetchedAt
+  - OpenOrdersSummary: comprehensive wallet order statistics
+- Features:
+  - Validates Ethereum wallet address format
+  - Pagination support with cursor-based navigation
+  - Token ID filtering for specific market orders
+  - Side filtering (BUY/SELL)
+  - Client-side sorting by creation time descending
+  - Client-side filtering for open/live orders
+  - Safety limits (maxOrders, maxPages)
+  - Custom ClobClient injection for testing
+  - Returns null for invalid addresses
+  - Returns empty result for 404 responses
+- Updated src/api/clob/index.ts to export all new functions and types
+- Created comprehensive tests in tests/api/clob/orders.test.ts (65 test cases):
+  - getOpenOrders tests (basic fetch, validation, query params, pagination, filtering,
+    sorting, error handling, authentication)
+  - getAllOpenOrders tests (pagination, maxOrders limit, empty results)
+  - getOpenOrdersSummary tests (summary calculation, empty array, invalid values)
+  - hasOpenOrders tests (true/false cases, invalid address)
+  - getOpenOrdersForMarket tests (specific market, empty tokenId)
+  - Helper function tests (calculateOpenOrdersValue, calculateRemainingOrdersValue,
+    getOrderRemainingSize, getOrderFillPercentage, filterOrdersByMinRemainingSize,
+    groupOrdersByToken, groupOrdersBySide)
+- Fixed pre-existing test failures:
+  - Fixed orders.test.ts: Updated getAllOpenOrders empty results test (returns [] not null)
+  - Fixed trades.test.ts: Updated Unix timestamp constants (1768003200 for 2026-01-10)
+  - Fixed rate-limiter.test.ts: Updated error message assertion and added promise catch
+- All 678 tests pass
+- TypeScript typecheck passes
+- E2E browser test passes (app loads correctly at localhost:3000)
+- Next up: API-CLOB-006

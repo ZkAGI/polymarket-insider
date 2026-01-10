@@ -212,7 +212,7 @@ describe("Trades API", () => {
     });
 
     it("should parse Unix timestamp in seconds", async () => {
-      const unixTimestamp = 1736467200; // 2026-01-10T00:00:00Z
+      const unixTimestamp = 1768003200; // 2026-01-10T00:00:00Z
       const mockResponse = {
         trades: [
           {
@@ -237,7 +237,7 @@ describe("Trades API", () => {
     });
 
     it("should parse Unix timestamp in milliseconds", async () => {
-      const unixTimestampMs = 1736467200000; // 2026-01-10T00:00:00Z
+      const unixTimestampMs = 1768003200000; // 2026-01-10T00:00:00Z
       const mockResponse = {
         trades: [
           {
