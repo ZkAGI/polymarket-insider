@@ -2678,3 +2678,94 @@ NOTES:
 - MarketService can be injected with custom Prisma client for testing
 - Default singleton instance available via marketService export
 
+
+COMPLETED: API-DB-003 - Trades table and model
+- Created src/db/trades.ts with comprehensive TradeService class
+- TradeService provides full CRUD operations for the Trade model:
+  - create(): Create a new trade with required/optional fields
+  - findById(): Find trade by ID with optional relation includes
+  - findByClobTradeId(): Find trade by CLOB trade ID
+  - findByIds(): Find multiple trades by ID array
+  - update(): Update trade fields
+  - upsertByClobTradeId(): Create or update trade by CLOB ID
+  - delete(): Delete single trade
+  - deleteMany(): Delete multiple trades by IDs
+  - deleteByMarket(): Delete all trades for a market
+  - deleteByWallet(): Delete all trades for a wallet
+  - findMany(): Query trades with filters, sorting, pagination
+  - findByWallet(): Find trades for a specific wallet
+  - findByMarket(): Find trades for a specific market
+  - findByOutcome(): Find trades for a specific outcome
+  - findWhaleTrades(): Find trades flagged as whale activity
+  - findInsiderTrades(): Find trades flagged as insider activity
+  - getRecent(): Get most recent trades
+  - getLargest(): Get largest trades by USD value
+  - findInTimeRange(): Find trades within a time range
+  - count(): Count trades matching filters
+  - exists(): Check if trade exists by ID
+  - existsByClobTradeId(): Check if trade exists by CLOB ID
+  - createMany(): Bulk create trades (skip duplicates)
+  - markAsWhale(): Flag a trade as whale activity
+  - markAsInsider(): Flag a trade as insider activity
+  - addFlags(): Add flags to a trade (merges with existing)
+  - getStats(): Aggregate statistics (count, volume, avg size, fees)
+  - getWalletStats(): Trade statistics for a specific wallet
+  - getMarketStats(): Trade statistics for a specific market
+  - findFirstTradeByWallet(): Find first trade for a wallet
+  - findLastTradeByWallet(): Find last trade for a wallet
+  - getTradesByInterval(): Get trades grouped by time interval for charting
+- Type exports:
+  - Trade, TradeSide (from Prisma)
+  - TradeWithMarket, TradeWithOutcome, TradeWithWallet, TradeWithRelations
+  - CreateTradeInput, UpdateTradeInput
+  - TradeFilters, TradeSortOptions
+  - PaginationOptions, PaginatedTradeResult
+  - TradeIncludeOptions, TradeServiceConfig, TradeStats
+- Filter support:
+  - marketId, outcomeId, walletId
+  - side (BUY/SELL)
+  - isWhale, isInsider
+  - matchId, txHash
+  - makerAddress, takerAddress
+  - minUsdValue, maxUsdValue
+  - timestampAfter, timestampBefore
+  - flags (hasSome)
+- Sort support: timestamp, usdValue, amount, price, createdAt
+- Created tests/db/trades.test.ts with 76 comprehensive unit tests:
+  - Constructor tests
+  - Create tests (required fields, all fields, defaults)
+  - FindById tests (found, not found, with each relation, all relations)
+  - FindByClobTradeId tests
+  - FindByIds tests
+  - Update tests (fields, nullable to null)
+  - UpsertByClobTradeId tests (create new, update existing)
+  - Delete tests (single, many, by market, by wallet)
+  - FindMany tests (all filters, sorting, pagination, includes)
+  - FindByWallet, FindByMarket, FindByOutcome tests
+  - FindWhaleTrades, FindInsiderTrades tests
+  - GetRecent, GetLargest tests
+  - FindInTimeRange tests
+  - Count tests (no filters, with filters)
+  - Exists/ExistsByClobTradeId tests
+  - CreateMany tests
+  - MarkAsWhale, MarkAsInsider tests
+  - AddFlags tests (add new, merge existing, dedupe, not found)
+  - GetStats tests (aggregates, null handling, with filters)
+  - GetWalletStats, GetMarketStats tests
+  - FindFirstTradeByWallet, FindLastTradeByWallet tests
+  - GetTradesByInterval tests
+  - Edge cases (all filter variations, all sort fields)
+- Updated src/db/index.ts to export TradeService and types
+- All 2762 tests pass (76 new tests added)
+- TypeScript typecheck passes
+- Next up: API-DB-004 (Wallets table and model)
+
+NOTES:
+- Trade model was already defined in Prisma schema from API-DB-001
+- This feature focuses on the service layer for database operations
+- Tests use mocked Prisma client to avoid database dependency
+- TradeService can be injected with custom Prisma client for testing
+- Default singleton instance available via tradeService export
+- Relations (market, outcome, wallet) can be optionally included in queries
+- Time-series grouping done in memory for simplicity (can optimize with DB functions)
+

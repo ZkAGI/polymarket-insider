@@ -35,3 +35,26 @@ export type {
   PaginatedMarketResult,
   MarketServiceConfig,
 } from "./markets";
+
+// Trade service exports
+export {
+  TradeService,
+  tradeService,
+  createTradeService,
+  TradeSide,
+} from "./trades";
+export type {
+  Trade,
+  TradeWithMarket,
+  TradeWithOutcome,
+  TradeWithWallet,
+  TradeWithRelations,
+  CreateTradeInput,
+  UpdateTradeInput,
+  TradeFilters,
+  TradeSortOptions,
+  PaginatedTradeResult,
+  TradeIncludeOptions,
+  TradeServiceConfig,
+  TradeStats,
+} from "./trades";
