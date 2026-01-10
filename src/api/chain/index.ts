@@ -94,3 +94,35 @@ export {
   isWalletFresh,
   batchGetCreationDates,
 } from "./creation-date";
+
+// API-CHAIN-005: Wallet Monitor
+export type {
+  TransactionType,
+  WalletMonitorEventTypeValue,
+  WalletMonitorEvent,
+  NewTransactionEvent,
+  NewInternalTransactionEvent,
+  MonitorStartedEvent,
+  MonitorStoppedEvent,
+  WalletAddedEvent,
+  WalletRemovedEvent,
+  MonitorErrorEvent,
+  PollCompleteEvent,
+  WalletMonitorEventData,
+  WalletMonitorEventListener,
+  WalletMonitorListenerOptions,
+  WalletMonitorConfig,
+  WalletMonitorLogger,
+  WalletMonitorStats,
+} from "./wallet-monitor";
+
+export {
+  WalletMonitorEventType,
+  WalletMonitor,
+  createWalletMonitor,
+  getSharedWalletMonitor,
+  setSharedWalletMonitor,
+  resetSharedWalletMonitor,
+  startMonitoringWallet,
+  monitorWallets,
+} from "./wallet-monitor";

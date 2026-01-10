@@ -2183,3 +2183,62 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - All 2282 tests pass (42 new tests added)
 - TypeScript typecheck passes
 - Next up: API-CHAIN-005 (Monitor wallet for new transactions)
+
+
+## API-CHAIN-005: Monitor Wallet for New Transactions - COMPLETED
+- Created src/api/chain/wallet-monitor.ts with WalletMonitor class:
+  - WalletMonitor: Core class for real-time wallet transaction monitoring
+  - addWallet/removeWallet: Add/remove wallet addresses from monitoring
+  - start/stop: Control monitoring lifecycle
+  - pollNow: Force immediate poll cycle
+  - Configurable polling interval (default: 15 seconds)
+  - Support for multiple transaction types: normal, internal, erc20
+  - Event-based architecture with typed events:
+    - NEW_TRANSACTION: Emitted when new transaction detected
+    - NEW_INTERNAL_TRANSACTION: Emitted for internal transactions
+    - MONITOR_STARTED/MONITOR_STOPPED: Lifecycle events
+    - WALLET_ADDED/WALLET_REMOVED: Wallet management events
+    - MONITOR_ERROR: Error events with error details
+    - POLL_COMPLETE: Emitted after each polling cycle
+  - Baseline establishment on first poll (no events emitted)
+  - Block tracking per wallet to detect only new transactions
+  - Error handling with catchErrors configuration option
+  - Statistics tracking: poll cycles, transactions detected, errors, uptime
+  - Listener management with once/on/off pattern
+  - Wildcard listener support ("*")
+  - Configurable Polygonscan client (retries, delay, timeout)
+- Factory functions:
+  - createWalletMonitor(): Create new instance
+  - getSharedWalletMonitor(): Get singleton instance
+  - setSharedWalletMonitor(): Set singleton instance
+  - resetSharedWalletMonitor(): Reset and dispose singleton
+- Convenience functions:
+  - startMonitoringWallet(): Quick start monitoring a single wallet
+  - monitorWallets(): Monitor multiple wallets at once
+  - Both return stop() function and monitor reference
+- Updated src/api/chain/index.ts to export all new types and functions:
+  - Types: TransactionType, WalletMonitorEventTypeValue, WalletMonitorEvent,
+    NewTransactionEvent, NewInternalTransactionEvent, MonitorStartedEvent,
+    MonitorStoppedEvent, WalletAddedEvent, WalletRemovedEvent, MonitorErrorEvent,
+    PollCompleteEvent, WalletMonitorEventData, WalletMonitorEventListener,
+    WalletMonitorListenerOptions, WalletMonitorConfig, WalletMonitorLogger,
+    WalletMonitorStats
+  - Constants: WalletMonitorEventType
+  - Class: WalletMonitor
+- Created tests/api/chain/wallet-monitor.test.ts with 66 test cases covering:
+  - Constructor (default config, custom config, custom logger)
+  - Wallet Management (add/remove, normalization, validation, duplicates, events)
+  - Monitor Control (start/stop, lifecycle events, polling interval, pollNow)
+  - Event Listeners (on/off, wildcards, once, removeAllListeners, unsubscribe)
+  - Transaction Detection (normal, internal, erc20, baseline establishment)
+  - Error Handling (emit errors, catchErrors, throw on false, error count)
+  - Statistics (poll cycles, running state, wallet count, transactions detected)
+  - Dispose (cleanup, stop on dispose, operations throw after dispose)
+  - Factory Functions (createWalletMonitor)
+  - Singleton Management (getShared, setShared, resetShared, dispose on reset)
+  - Convenience Functions (startMonitoringWallet, monitorWallets, stop function)
+  - Multiple Transaction Types (simultaneous monitoring)
+  - Edge Cases (empty wallet list, async/sync listener errors)
+- All 2348 tests pass (66 new tests added)
+- TypeScript typecheck passes
+- Next up: API-CHAIN-006 (Decode Polymarket contract interactions)
