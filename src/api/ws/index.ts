@@ -200,3 +200,47 @@ export type {
   OrderBookStreamConfig,
   OrderBookStreamEventListenerMap,
 } from "./orderbook-stream";
+
+// Message Parser (API-WS-006)
+export {
+  MessageParser,
+  createMessageParser,
+  getSharedMessageParser,
+  setSharedMessageParser,
+  resetSharedMessageParser,
+  // Constants
+  MessageType,
+  MessageCategory,
+  ParseErrorCode,
+  // Utility functions
+  determineMessageType,
+  determineMessageCategory,
+  isValidJson,
+  safeJsonParse,
+  arrayBufferToString,
+  blobToString,
+  validateMessageSchema,
+  createParseError,
+  isPingPongMessage,
+  isSubscriptionMessage,
+  isMarketDataMessage,
+  isErrorMessageType,
+  extractMessageId,
+  extractTimestamp,
+  // Default schemas
+  defaultSchemas,
+} from "./message-parser";
+
+// Message Parser Types (API-WS-006)
+export type {
+  MessageTypeValue,
+  MessageCategoryValue,
+  ParseErrorCodeValue,
+  BaseMessage,
+  ParseError,
+  ParsedMessage,
+  ValidationRule,
+  MessageSchema,
+  MessageParserConfig,
+  ParserStats,
+} from "./message-parser";

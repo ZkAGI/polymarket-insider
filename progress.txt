@@ -1665,4 +1665,90 @@ COMPLETED: API-WS-005 - Subscribe to order book updates
 - All 1613 tests pass (102 new tests added)
 - TypeScript typecheck passes
 - Dev server verified running at localhost:3000
-- Next up: API-WS-006
+
+COMPLETED: API-WS-006 - WebSocket message parser
+- Created src/api/ws/message-parser.ts with comprehensive message parsing capabilities:
+  - Constants: MessageType (15 types), MessageCategory (5 categories), ParseErrorCode (7 codes)
+  - Type definitions for parsing: BaseMessage, ParseError, ParsedMessage, ValidationRule, MessageSchema
+  - Configuration types: MessageParserConfig, ParserStats
+- Utility functions for message handling:
+  - determineMessageType(): Determines message type from parsed data (supports inference from structure)
+  - determineMessageCategory(): Maps message types to categories
+  - isValidJson(): Check if a string is valid JSON
+  - safeJsonParse(): Parse JSON with detailed error information
+  - arrayBufferToString(): Convert ArrayBuffer to string using TextDecoder
+  - blobToString(): Convert Blob to string using Blob.text() (Node.js 18+ compatible)
+  - validateMessageSchema(): Validate message against schema with custom rules
+  - createParseError(): Factory function for parse errors
+  - isPingPongMessage(): Check for ping/pong/heartbeat messages
+  - isSubscriptionMessage(): Check for subscription-related messages
+  - isMarketDataMessage(): Check for market data messages (price, trade, book)
+  - isErrorMessageType(): Check for error messages
+  - extractMessageId(): Extract message ID from various field names
+  - extractTimestamp(): Extract and parse timestamp from message
+- Default schemas for common message types:
+  - price_update: Validates price field (0-1 range)
+  - trade: Validates price and size fields
+  - book: Validates bids/asks arrays
+  - error: Validates error/message fields
+- MessageParser class with full feature set:
+  - Constructor accepts config: validateSchema, schemas, logErrors, maxMessageSize, trackUnknownTypes, logger, debug
+  - parse<T>(rawData): Parse string or ArrayBuffer, returns ParsedMessage<T>
+  - parseAsync<T>(rawData): Async parse supporting Blob data
+  - addSchema(schema): Add custom validation schema
+  - removeSchema(type): Remove schema by type (case insensitive)
+  - getSchemas(): Get all registered schemas
+  - getStats(): Get parsing statistics (returns copy to prevent mutation)
+  - resetStats(): Reset all statistics
+  - getUnknownTypes(): Get list of unknown message types encountered
+  - isDisposed(): Check if parser is disposed
+  - dispose(): Clean up resources
+- Statistics tracking:
+  - totalParsed: Total messages processed
+  - successfulParses/failedParses: Success/failure counts
+  - messagesByType: Map of counts by message type
+  - messagesByCategory: Map of counts by category
+  - errorsByCode: Map of error counts by error code
+  - unknownTypes: Set of unknown type strings encountered
+  - avgParseTimeMs/maxParseTimeMs: Performance metrics
+  - startedAt/lastMessageAt: Timing information
+- Singleton management:
+  - createMessageParser(): Factory function
+  - getSharedMessageParser(), setSharedMessageParser(), resetSharedMessageParser()
+- Updated src/api/ws/index.ts with all new exports (constants, functions, types)
+- Created tests/api/ws/message-parser.test.ts with 140 comprehensive tests:
+  - MessageType constants tests (subscription, market data, system, connection types)
+  - MessageCategory constants tests
+  - ParseErrorCode constants tests
+  - determineMessageType tests (null, non-object, subscription, market, system, connection, case insensitive, structure inference)
+  - determineMessageCategory tests (all categories)
+  - isValidJson tests (valid/invalid JSON)
+  - safeJsonParse tests (success, arrays, error details, truncation)
+  - arrayBufferToString tests (basic, empty, JSON)
+  - blobToString tests (basic, empty, JSON)
+  - validateMessageSchema tests (valid, missing required, wrong type, optional, custom validation, multiple types)
+  - createParseError tests
+  - isPingPongMessage tests (ping, pong, heartbeat, case insensitive)
+  - isSubscriptionMessage tests (all subscription types)
+  - isMarketDataMessage tests (explicit types, structure inference)
+  - isErrorMessageType tests
+  - extractMessageId tests (id, message_id, request_id, number conversion)
+  - extractTimestamp tests (missing, milliseconds, seconds, ISO string, alternatives, invalid)
+  - defaultSchemas tests
+  - MessageParser constructor tests (default, custom config, custom schemas)
+  - parse tests (valid JSON, types, invalid JSON, empty, whitespace, size limit, ArrayBuffer, time tracking)
+  - parseAsync tests (string, ArrayBuffer, Blob)
+  - schema management tests (add, remove)
+  - statistics tests (total, success, failure, by type, by category, errors, unknown types, timing)
+  - dispose tests
+  - validation tests
+  - debug/error logging tests
+  - Factory and singleton tests
+  - Integration tests (realistic streams, mixed types, malformed messages, many messages)
+- Bug fixes during implementation:
+  - Removed unused 'error' variable in schema validation
+  - Changed blobToString to use Blob.text() instead of FileReader (not available in Node.js)
+- All 1753 tests pass (140 new tests added)
+- TypeScript typecheck passes
+- Dev server verified running at localhost:3000
+- Next up: API-WS-007
