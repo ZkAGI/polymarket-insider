@@ -1354,4 +1354,53 @@ COMPLETED: API-WS-001 - WebSocket connection manager
 - All 1250 tests pass (50 new tests added)
 - TypeScript typecheck passes
 - Build compiles successfully
-- Next up: API-WS-002
+
+COMPLETED: API-WS-002 - WebSocket auto-reconnection
+- Created src/api/ws/auto-reconnect.ts with comprehensive auto-reconnection functionality:
+  - ReconnectableConnection class extending WebSocketConnection with:
+    - Subscription tracking system for restoration after reconnect
+    - Reconnection state management (isReconnecting, attempt, totalAttempts, exhausted)
+    - Events: subscriptionRestored, subscriptionsRestored, reconnectExhausted
+    - Manual reconnection via forceReconnect()
+    - Subscription management: addSubscription, removeSubscription, getSubscription, getAllSubscriptions
+    - Automatic subscription restoration after successful reconnect
+- New types exported:
+  - Subscription: Subscription information for restoration
+  - SubscriptionRestoredEvent, SubscriptionsRestoredEvent: Restoration events
+  - ReconnectConfig: Reconnection configuration options
+  - ReconnectableConnectionConfig: Extended connection config
+  - ReconnectionState: Current reconnection state
+  - ReconnectEventListenerMap: Event listener types
+- Utility functions:
+  - calculateBackoffDelay(): Exponential backoff calculation
+  - calculateBackoffDelayWithJitter(): Backoff with jitter to prevent thundering herd
+  - shouldReconnectOnClose(): Determine if close code should trigger reconnection
+  - getReconnectDelayForCloseCode(): Get appropriate delay for specific close codes
+- Features:
+  - Configurable auto-reconnect, max attempts, delays, backoff multiplier
+  - Subscription restoration can be enabled/disabled
+  - Configurable subscription restoration delay and timeout
+  - Event proxying from underlying connection
+  - State tracking: attempt count, total attempts, last reconnect timestamp
+  - reconnectExhausted event when max attempts reached
+  - Manual resetReconnectionAttempts() to allow retry after exhaustion
+  - forceReconnect() for manual reconnection trigger
+- Updated src/api/ws/index.ts with all new exports
+- Created tests/api/ws/auto-reconnect.test.ts with 51 comprehensive tests:
+  - Constructor tests (default config, custom reconnect config)
+  - Connect/disconnect tests (successful connection, events, dispose error)
+  - Send message tests (string, JSON)
+  - Reconnection state tests (tracking, reset, exhausted event, manual reset)
+  - Force reconnect tests
+  - Subscription management tests (add, remove, get, getAll, getByChannel, count, clear)
+  - Subscription restoration tests (after reconnect, disabled, failure handling, manual restore)
+  - Event listener tests (proxy events, once, off, removeAllListeners)
+  - Utility function tests (calculateBackoffDelay, withJitter, shouldReconnectOnClose, getDelayForCloseCode)
+  - Dispose tests (cleanup, idempotent)
+- Bug fixes during implementation:
+  - Fixed type error with circular reference in once() listener wrapper
+  - Fixed type error with includes() on const array by adding explicit number[] type
+  - Fixed test for unhandled promise rejections using .catch() pattern
+- All 1301 tests pass (51 new tests added)
+- TypeScript typecheck passes
+- Next up: API-WS-003

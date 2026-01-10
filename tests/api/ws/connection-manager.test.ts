@@ -296,17 +296,23 @@ describe("WebSocket Connection Manager", () => {
       it("should timeout on slow connection", async () => {
         MockWebSocket.nextOpenDelay = 50000; // 50 seconds
         const connection = createWebSocketConnection(
-          { url: "wss://example.com", connectionTimeout: 1000 },
+          { url: "wss://example.com", connectionTimeout: 1000, autoReconnect: false },
           undefined,
           MockWebSocket as unknown as WebSocketConstructor
         );
 
-        const connectPromise = connection.connect();
+        // Catch rejection to prevent unhandled rejection
+        const connectPromise = connection.connect().catch((error) => error);
 
         await vi.advanceTimersByTimeAsync(1500);
 
-        await expect(connectPromise).rejects.toThrow("Connection timeout");
+        const result = await connectPromise;
+        expect(result).toBeInstanceOf(Error);
+        expect((result as Error).message).toContain("Connection timeout");
         expect(connection.getState()).toBe("error");
+
+        // Clean up the connection to prevent lingering timers
+        connection.dispose();
       });
 
       it("should handle connection error", async () => {
@@ -320,11 +326,19 @@ describe("WebSocket Connection Manager", () => {
         const errorHandler = vi.fn();
         connection.on("error", errorHandler);
 
-        const connectPromise = connection.connect();
+        // Catch rejection immediately to prevent unhandled rejection
+        const connectPromise = connection.connect().catch((error) => error);
+
+        // Advance timers to trigger the error
         await vi.advanceTimersByTimeAsync(10);
 
-        await expect(connectPromise).rejects.toThrow("WebSocket error");
+        const result = await connectPromise;
+        expect(result).toBeInstanceOf(Error);
+        expect((result as Error).message).toBe("WebSocket error");
         expect(errorHandler).toHaveBeenCalled();
+
+        // Clean up
+        connection.dispose();
       });
 
       it("should not connect twice if already connected", async () => {

@@ -18,6 +18,16 @@ export {
   WebSocketReadyState,
 } from "./connection-manager";
 
+// Auto-Reconnection (API-WS-002)
+export {
+  ReconnectableConnection,
+  createReconnectableConnection,
+  calculateBackoffDelay,
+  calculateBackoffDelayWithJitter,
+  shouldReconnectOnClose,
+  getReconnectDelayForCloseCode,
+} from "./auto-reconnect";
+
 // Types
 export type {
   // Connection state types
@@ -52,3 +62,14 @@ export type {
   IWebSocket,
   WebSocketConstructor,
 } from "./types";
+
+// Auto-Reconnection Types (API-WS-002)
+export type {
+  Subscription,
+  SubscriptionRestoredEvent,
+  SubscriptionsRestoredEvent,
+  ReconnectConfig,
+  ReconnectableConnectionConfig,
+  ReconnectionState,
+  ReconnectEventListenerMap,
+} from "./auto-reconnect";
