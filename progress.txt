@@ -2242,3 +2242,87 @@ COMPLETED: API-WS-008 - WebSocket message queue
 - All 2348 tests pass (66 new tests added)
 - TypeScript typecheck passes
 - Next up: API-CHAIN-006 (Decode Polymarket contract interactions)
+
+
+## API-CHAIN-006: Decode Polymarket Contract Interactions - COMPLETED
+- Created src/api/chain/contract-decoder.ts with ContractDecoder class:
+  - Decode Polymarket smart contract interactions from transaction input data
+  - Known contract addresses defined in POLYMARKET_CONTRACTS constant:
+    - CTF_EXCHANGE: Main CTF Exchange for trading
+    - NEG_RISK_CTF_EXCHANGE: Negative risk markets
+    - CONDITIONAL_TOKENS: Gnosis Conditional Token Framework
+    - USDC: Polygon USDC token
+    - USDC_E: Bridged USDC on Polygon
+    - PROXY_WALLET_FACTORY: Proxy wallet creation
+    - ROUTER: Polymarket router
+  - Known function selectors in FUNCTION_SELECTORS constant:
+    - CTF Exchange: fillOrder, fillOrders, matchOrders, cancelOrder, cancelOrders
+    - Conditional Tokens: splitPosition, mergePositions, redeemPositions
+    - ERC1155: safeTransferFrom, safeBatchTransferFrom
+    - ERC20: transfer, transferFrom, approve
+    - NegRisk: convertPositions
+  - Decoded interaction types with extracted parameters:
+    - FILL_ORDER: tokenId, maker, side, price, size, fillAmount
+    - FILL_ORDERS: orderCount, fillAmounts
+    - CANCEL_ORDER/CANCEL_ORDERS: orderCount
+    - SPLIT_POSITION: collateralToken, parentCollectionId, conditionId, amount
+    - MERGE_POSITIONS: collateralToken, parentCollectionId, conditionId, amount
+    - REDEEM_POSITIONS: collateralToken, parentCollectionId, conditionId, indexSets
+    - TOKEN_TRANSFER/TOKEN_TRANSFER_FROM: from, to, amount, tokenSymbol, decimals, formattedAmount
+    - TOKEN_APPROVE: spender, amount, isUnlimited, tokenSymbol
+    - CTF_TRANSFER/CTF_BATCH_TRANSFER: from, to, tokenIds, amounts
+    - CONVERT_POSITIONS: marketId, indexSet, amount
+    - UNKNOWN: for unrecognized functions
+  - Helper methods:
+    - isPolymarketContract: Check if address is a known Polymarket contract
+    - getContractName: Get contract name for an address
+    - getFunctionInfo: Get function name and type from selector
+    - batchDecode: Decode multiple transactions at once
+    - filterByType: Filter decoded interactions by type
+    - filterPolymarketOnly: Get only Polymarket interactions
+  - Configurable options:
+    - additionalContracts: Add custom contract addresses
+    - decodeParameters: Enable/disable parameter extraction
+    - debug: Enable debug logging
+    - logger: Custom logger implementation
+- Factory functions:
+  - createContractDecoder(): Create new instance
+  - getSharedContractDecoder(): Get singleton instance
+  - setSharedContractDecoder(): Set singleton instance
+  - resetSharedContractDecoder(): Reset singleton
+- Convenience functions:
+  - decodeContractInteraction(): Decode single transaction
+  - batchDecodeContractInteractions(): Decode multiple transactions
+  - isPolymarketContract(): Check if address is Polymarket contract
+  - getPolymarketContractName(): Get contract name for address
+- Updated src/api/chain/index.ts to export all new types and functions:
+  - Types: PolymarketContractName, FunctionSelector, DecodedInteraction,
+    DecodedInteractionType, DecodedFillOrder, DecodedFillOrders, DecodedCancelOrder,
+    DecodedSplitPosition, DecodedMergePositions, DecodedRedeemPositions,
+    DecodedTokenTransfer, DecodedTokenApprove, DecodedCTFTransfer,
+    DecodedConvertPositions, DecodedUnknown, AnyDecodedInteraction,
+    ContractDecoderConfig, ContractDecoderLogger
+  - Constants: POLYMARKET_CONTRACTS, FUNCTION_SELECTORS
+  - Class: ContractDecoder
+- Created tests/api/chain/contract-decoder.test.ts with 79 test cases covering:
+  - Constructor (default config, custom config, additional contracts, custom logger)
+  - isPolymarketContract (known contracts, unknown, case-insensitive, invalid)
+  - getContractName (CTF Exchange, USDC, unknown, invalid)
+  - getFunctionInfo (transfer, fillOrder, unknown, case-insensitive)
+  - ERC20 transfers (transfer, transferFrom, USDC/USDC.e token info)
+  - ERC20 approve (normal, unlimited detection)
+  - CTF Exchange orders (fillOrder, fillOrders batch, cancelOrder, cancelOrders)
+  - Conditional Token operations (splitPosition, mergePositions, redeemPositions)
+  - CTF transfers (safeTransferFrom, safeBatchTransferFrom)
+  - NegRisk Exchange (convertPositions)
+  - Unknown/edge cases (unknown selector, empty input, short input, invalid address)
+  - Parameter decoding toggle
+  - batchDecode, filterByType, filterPolymarketOnly
+  - Factory functions and singleton management
+  - Convenience functions
+  - POLYMARKET_CONTRACTS and FUNCTION_SELECTORS constants
+  - Edge cases (malformed hex, long input, case normalization)
+  - Real-world scenarios (trading flow, batch operations)
+- All 2427 tests pass (79 new tests added)
+- TypeScript typecheck passes
+- Next up: API-CHAIN-007 (Track USDC transfers to Polymarket)

@@ -1002,7 +1002,8 @@
       "priority": 51,
       "name": "Decode Polymarket contract interactions",
       "description": "Parse and decode Polymarket smart contract calls",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T00:20:00Z",
       "steps": [
         "Get contract ABIs",
         "Create decoder functions",

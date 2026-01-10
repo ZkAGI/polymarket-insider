@@ -126,3 +126,39 @@ export {
   startMonitoringWallet,
   monitorWallets,
 } from "./wallet-monitor";
+
+// API-CHAIN-006: Contract Decoder
+export type {
+  PolymarketContractName,
+  FunctionSelector,
+  DecodedInteraction,
+  DecodedInteractionType,
+  DecodedFillOrder,
+  DecodedFillOrders,
+  DecodedCancelOrder,
+  DecodedSplitPosition,
+  DecodedMergePositions,
+  DecodedRedeemPositions,
+  DecodedTokenTransfer,
+  DecodedTokenApprove,
+  DecodedCTFTransfer,
+  DecodedConvertPositions,
+  DecodedUnknown,
+  AnyDecodedInteraction,
+  ContractDecoderConfig,
+  ContractDecoderLogger,
+} from "./contract-decoder";
+
+export {
+  POLYMARKET_CONTRACTS,
+  FUNCTION_SELECTORS,
+  ContractDecoder,
+  createContractDecoder,
+  getSharedContractDecoder,
+  setSharedContractDecoder,
+  resetSharedContractDecoder,
+  decodeContractInteraction,
+  batchDecodeContractInteractions,
+  isPolymarketContract,
+  getPolymarketContractName,
+} from "./contract-decoder";
