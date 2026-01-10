@@ -1009,3 +1009,58 @@ COMPLETED: API-CLOB-008 - CLOB API authentication
 - TypeScript typecheck passes
 - App loads correctly at localhost:3000
 - Next up: API-CLOB-009
+
+COMPLETED: API-CLOB-009 - CLOB API rate limiter
+- Created src/api/clob/rate-limiter.ts with comprehensive rate limiting implementation:
+  - ClobRateLimiter class with per-endpoint category rate limiting
+  - ClobEndpointCategory enum: PUBLIC, PRIVATE, TRADING, HISTORICAL
+  - Different default rate limits per category:
+    - PUBLIC: 20 burst, 5/sec sustained (for order books, trades, markets)
+    - PRIVATE: 10 burst, 2/sec sustained (for orders, positions, account)
+    - TRADING: 5 burst, 1/sec sustained (for order placement/cancel/amend)
+    - HISTORICAL: 10 burst, 2/sec sustained (for historical queries)
+  - Reuses token bucket algorithm from Gamma rate limiter
+  - Configurable category limits via ClobRateLimiterConfig
+  - Optional shared limiter across categories
+  - Integration with Gamma shared limiter (useGammaSharedLimiter option)
+  - Logging support with custom logger injection
+  - Endpoint category detection via getEndpointCategory() function
+  - Pattern matching for endpoint categorization
+  - Singleton management: getSharedClobRateLimiter, setSharedClobRateLimiter, resetSharedClobRateLimiter
+  - createClobRateLimiter factory function
+  - withClobRateLimit decorator for wrapping functions
+  - executeWithClobRateLimit for automatic 429 retry with rate limiting
+  - Per-category stats: tokens, queue, paused state
+  - Aggregated stats with most constrained category detection
+  - Category-level pause/resume/reset operations
+  - Full dispose with cleanup
+- Updated src/api/clob/index.ts with all new exports
+- Created tests/api/clob/rate-limiter.test.ts with 81 comprehensive tests:
+  - ClobRateLimiter constructor tests (defaults, custom limits, logging, shared limiter)
+  - getCategoryLimiter tests
+  - acquire tests (all categories, shared limiter interaction, unknown category error)
+  - tryAcquire tests (immediate acquisition, shared limiter blocking)
+  - handleRateLimitResponse tests (429 handling, Retry-After header, shared limiter)
+  - getStats tests (all categories, total tracking, most constrained detection)
+  - getCategoryStats tests
+  - logStatus tests
+  - resetStats, resetCategory, reset tests
+  - pauseCategory, resumeCategory, isCategoryPaused tests
+  - dispose tests
+  - getEndpointCategory tests:
+    - Trading: /order, /orders/cancel, /orders/amend
+    - Private: /orders, /positions, /account, /balances, /auth
+    - Historical: trades with maker/taker/start_ts filters, history endpoints
+    - Public: /book, /trades, /markets, /price, /midpoint
+    - Full URLs with host and port
+  - Shared CLOB rate limiter singleton tests
+  - createClobRateLimiter factory tests
+  - withClobRateLimit decorator tests
+  - executeWithClobRateLimit tests (429 retry, max retries, non-rate-limit errors)
+  - ClobEndpointCategory enum tests
+  - RateLimiterError re-export tests
+- All 892 tests pass (81 new tests added)
+- TypeScript typecheck passes
+- Browser smoke test passes
+- App loads correctly at localhost:3000
+- Next up: API-CLOB-010

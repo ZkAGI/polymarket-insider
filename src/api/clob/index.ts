@@ -130,6 +130,31 @@ export type {
   OpenOrdersSummary,
 } from "./orders";
 
+// CLOB Rate Limiter (API-CLOB-009)
+export {
+  ClobRateLimiter,
+  ClobEndpointCategory,
+  getEndpointCategory,
+  getSharedClobRateLimiter,
+  setSharedClobRateLimiter,
+  resetSharedClobRateLimiter,
+  createClobRateLimiter,
+  withClobRateLimit,
+  executeWithClobRateLimit,
+  // Re-exports from base rate limiter
+  RateLimiter,
+  RateLimiterError,
+  createRateLimiter,
+} from "./rate-limiter";
+
+export type {
+  ClobRateLimiterConfig,
+  ClobRateLimiterStats,
+  // Re-exports from base rate limiter
+  RateLimiterConfig,
+  RateLimiterStats,
+} from "./rate-limiter";
+
 export type {
   ClobClientConfig,
   ClobRequestOptions,
