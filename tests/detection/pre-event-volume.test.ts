@@ -20,7 +20,6 @@ import {
   resetSharedPreEventVolumeDetector,
   registerMarketEvent,
   analyzePreEventVolume,
-  batchAnalyzePreEventVolume,
   isInPreEventPeriod,
   getCurrentPreEventWindow,
   getRecentPreEventSpikes,
@@ -28,7 +27,6 @@ import {
   addHistoricalPreEventData,
   type PreEventVolumeDetectorConfig,
   type PreEventVolumeSpike,
-  type MarketEvent,
 } from "../../src/detection/pre-event-volume";
 import {
   RollingVolumeTracker,
@@ -204,7 +202,7 @@ describe("PreEventVolumeDetector", () => {
       detector.registerEvent("market-1", futureDate(24));
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener.mock.calls[0][0].marketId).toBe("market-1");
+      expect(listener.mock.calls[0]?.[0]?.marketId).toBe("market-1");
     });
 
     it("should handle past events correctly", () => {
@@ -559,9 +557,9 @@ describe("PreEventVolumeDetector", () => {
       detector.analyzePreEventVolume("market-1", 1000, { bypassCooldown: true });
 
       expect(listener).toHaveBeenCalled();
-      const spike: PreEventVolumeSpike = listener.mock.calls[0][0];
-      expect(spike.marketId).toBe("market-1");
-      expect(spike.severity).not.toBeNull();
+      const spike = listener.mock.calls[0]?.[0] as PreEventVolumeSpike | undefined;
+      expect(spike?.marketId).toBe("market-1");
+      expect(spike?.severity).not.toBeNull();
     });
 
     it("should respect cooldown period", () => {

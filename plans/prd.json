@@ -1700,7 +1700,8 @@
       "priority": 200,
       "name": "Performance benchmarks",
       "description": "Comprehensive performance benchmarks for all systems",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T18:53:00Z",
       "steps": [
         "Define performance targets",
         "Create benchmark suite",
@@ -1708,8 +1709,8 @@
         "Document results"
       ],
       "test_instructions": {
-        "unit": null,
-        "typecheck": null,
+        "unit": "npm test -- tests/benchmarks/benchmarks.test.ts",
+        "typecheck": "npm run typecheck",
         "e2e": "Run benchmark suite",
         "manual_verification": "Review benchmark results"
       }
