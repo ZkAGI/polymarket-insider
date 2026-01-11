@@ -265,3 +265,31 @@ export type {
   DepthThresholds,
   DepthScoreWeights,
 } from "./wallet-history-depth";
+
+// DET-FRESH-010: Fresh Wallet Alert Generator
+export {
+  FreshWalletAlertType,
+  AlertStatus,
+  DEFAULT_ALERT_CONDITIONS,
+  FreshWalletAlertGenerator,
+  createFreshWalletAlertGenerator,
+  getSharedFreshWalletAlertGenerator,
+  setSharedFreshWalletAlertGenerator,
+  resetSharedFreshWalletAlertGenerator,
+  generateFreshWalletAlerts,
+  batchGenerateFreshWalletAlerts,
+  shouldTriggerFreshWalletAlert,
+  getFreshWalletAlerts,
+  getFreshWalletAlertSummary,
+} from "./fresh-wallet-alert";
+
+export type {
+  FreshWalletAlertContext,
+  FreshWalletAlert,
+  AlertCondition,
+  GenerateAlertOptions,
+  BatchAlertResult,
+  AlertSummary,
+  AlertListener,
+  FreshWalletAlertGeneratorConfig,
+} from "./fresh-wallet-alert";
