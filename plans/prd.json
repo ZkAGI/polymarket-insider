@@ -1461,7 +1461,8 @@
       "priority": 74,
       "name": "Market baseline volume calculator",
       "description": "Calculate normal volume baseline for each market",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T12:45:00Z",
       "steps": [
         "Collect historical volume data",
         "Calculate rolling averages",

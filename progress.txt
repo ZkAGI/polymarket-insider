@@ -4240,3 +4240,115 @@ FRESH WALLET DETECTION PIPELINE COMPLETE:
 - DET-FRESH-010: Fresh Wallet Alert Generator ✓
 
 Next: DET-WHALE-001 (Whale trade detection foundation)
+
+=== Session 2026-01-11 ===
+
+COMPLETED: DET-VOL-001 - Market baseline volume calculator
+- Created src/detection/volume-baseline.ts with comprehensive implementation
+- Feature: Calculate normal volume baseline for each market to detect anomalies
+
+IMPLEMENTATION:
+1. MarketMaturity Enum - Classifies markets by age:
+   - VERY_NEW: < 3 days
+   - NEW: 3-7 days
+   - YOUNG: 7-14 days
+   - ESTABLISHED: 14-30 days
+   - MATURE: > 30 days
+
+2. BaselineWindow Enum - Time windows for volume analysis:
+   - HOURLY: 1-hour rolling window
+   - FOUR_HOUR: 4-hour rolling window
+   - DAILY: 24-hour rolling window
+   - WEEKLY: 7-day rolling window
+   - MONTHLY: 30-day rolling window
+
+3. VolumeBaselineCalculator Class:
+   - calculateBaseline(): Calculate volume baseline for single market
+   - batchCalculateBaselines(): Process multiple markets
+   - getSummary(): Generate summary statistics for baselines
+   - isVolumeAnomalous(): Detect volume anomalies using z-score analysis
+   - getRecommendedWindow(): Get optimal window for market maturity
+   - clearCache(): Clear all cached baselines
+   - getCacheStats(): Get cache statistics
+   - invalidateCacheEntry(): Remove specific market from cache
+
+4. Window Statistics (WindowVolumeStats):
+   - averageVolume: Mean volume over window
+   - medianVolume: Median volume (50th percentile)
+   - standardDeviation: Volume volatility measure
+   - minVolume/maxVolume: Volume range
+   - totalVolume: Sum of all volume in window
+   - dataPointCount: Number of data points used
+   - percentile25/75/95: Distribution percentiles
+   - averageTradeCount: Average trades per period
+   - coefficientOfVariation: Normalized volatility
+
+5. Anomaly Detection:
+   - Z-score based detection with configurable threshold
+   - Default: 2 standard deviations for anomaly
+   - Returns: isAnomalous, isHigh, isLow, zScore, thresholds
+   - Window-aware analysis based on market maturity
+
+6. Caching System:
+   - In-memory cache with configurable TTL (default: 15 min)
+   - Configurable max size (default: 1000 entries)
+   - LRU eviction when size exceeded
+   - Cache stats: enabled, size, maxSize, ttlMs, hitCount, missCount
+
+7. Integration:
+   - Uses Gamma API for market data (getMarketById)
+   - Uses getMarketVolumeHistory for historical volume
+   - Handles API errors gracefully with null returns
+
+TYPES EXPORTED:
+- WindowVolumeStats: Statistics for a single time window
+- MarketVolumeBaseline: Complete baseline data for a market
+- CalculateBaselineOptions: Options for baseline calculation
+- BatchBaselineResult: Results from batch processing
+- BaselineSummary: Summary statistics across markets
+- VolumeBaselineCalculatorConfig: Calculator configuration
+
+ENUMS EXPORTED:
+- MarketMaturity: Market age classification
+- BaselineWindow: Time window types
+
+CONVENIENCE FUNCTIONS:
+- calculateMarketVolumeBaseline: Calculate baseline for single market
+- batchCalculateMarketVolumeBaselines: Batch baseline calculation
+- checkVolumeAnomaly: Check if volume is anomalous
+- getMarketBaselineSummary: Get summary for baselines
+
+SINGLETON MANAGEMENT:
+- getSharedVolumeBaselineCalculator
+- setSharedVolumeBaselineCalculator
+- resetSharedVolumeBaselineCalculator
+- createVolumeBaselineCalculator
+
+TESTS:
+- 63 unit tests in tests/detection/volume-baseline.test.ts
+- 15 E2E tests in tests/e2e/volume-baseline.e2e.test.ts
+- Tests cover:
+  - Constructor and configuration
+  - Singleton management (create, get, set, reset)
+  - Market maturity classification by age
+  - Window statistics calculation
+  - Anomaly detection with z-scores
+  - Cache management (hit/miss, invalidation, clearing)
+  - Batch processing
+  - Summary generation
+  - Recommended window selection
+  - Error handling and edge cases
+  - Module export verification
+  - E2E app integration
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all volume-baseline functionality
+- DET-VOL-001 exports grouped separately at end of file
+
+ALL TESTS PASS: 3961 tests total (63 unit + 15 E2E new for DET-VOL-001)
+TYPECHECK: Passes with no errors
+
+VOLUME SPIKE DETECTION PIPELINE STARTED:
+- DET-VOL-001: Market Baseline Volume Calculator ✓
+
+Next: DET-VOL-002 (Volume spike threshold configuration)

@@ -293,3 +293,27 @@ export type {
   AlertListener,
   FreshWalletAlertGeneratorConfig,
 } from "./fresh-wallet-alert";
+
+// DET-VOL-001: Market Baseline Volume Calculator
+export {
+  MarketMaturity,
+  BaselineWindow,
+  VolumeBaselineCalculator,
+  createVolumeBaselineCalculator,
+  getSharedVolumeBaselineCalculator,
+  setSharedVolumeBaselineCalculator,
+  resetSharedVolumeBaselineCalculator,
+  calculateMarketVolumeBaseline,
+  batchCalculateMarketVolumeBaselines,
+  checkVolumeAnomaly,
+  getMarketBaselineSummary,
+} from "./volume-baseline";
+
+export type {
+  WindowVolumeStats,
+  MarketVolumeBaseline,
+  CalculateBaselineOptions,
+  BatchBaselineResult,
+  BaselineSummary,
+  VolumeBaselineCalculatorConfig,
+} from "./volume-baseline";
