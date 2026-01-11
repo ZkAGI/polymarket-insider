@@ -5995,3 +5995,45 @@ NOTES FOR NEXT SESSION:
 - Could integrate watchlist with real-time monitoring system
 - Consider adding persistence layer for watchlist data
 - The watchlist provides excellent foundation for alert/monitoring features
+
+================================================================================
+SESSION: 2026-01-11 - DET-NICHE-008 Implementation
+================================================================================
+
+FEATURE: DET-NICHE-008 - Wallet niche market concentration analyzer
+PRIORITY: 93
+STATUS: COMPLETED
+
+OVERVIEW:
+Implemented a comprehensive wallet concentration analyzer that tracks and 
+identifies wallets focusing on specific niche market categories. The module 
+detects specialist traders, calculates concentration metrics, and flags 
+potentially suspicious trading patterns.
+
+IMPLEMENTATION DETAILS:
+1. ConcentrationLevel enum - Five levels (EXTREME, HIGH, MODERATE, LOW, DIVERSIFIED)
+2. SpecialistType enum - Seven types (POLITICAL, CRYPTO, LEGAL, HEALTH, SPORTS, MULTI, GENERALIST)
+3. ConcentrationSuspicion enum - Suspicion levels (CRITICAL, HIGH, MODERATE, LOW, NONE)
+4. WalletConcentrationAnalyzer class with HHI calculation, caching, and statistics
+
+KEY FEATURES:
+- Category statistics tracking
+- Concentration scoring with HHI
+- Specialist detection (single and multi)
+- Flag/suspicion system for high-value categories
+
+API FUNCTIONS:
+- addTrades(), analyze(), batchAnalyze()
+- querySpecialists(), querySuspicious()
+- getScore(), getSummary(), clear()
+- Shared instance and convenience functions
+
+TESTS: 74 unit tests passing, Typecheck passes
+
+FILES:
+- src/detection/wallet-concentration.ts (new)
+- src/detection/index.ts (updated)
+- tests/detection/wallet-concentration.test.ts (new)
+
+NOTES FOR NEXT SESSION:
+- DET-NICHE-009: Niche market vs mainstream comparator is next

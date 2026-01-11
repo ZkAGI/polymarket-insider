@@ -1841,7 +1841,8 @@
       "priority": 93,
       "name": "Wallet niche market concentration analyzer",
       "description": "Detect wallets focusing on specific niche categories",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T18:36:00Z",
       "steps": [
         "Track wallet trades by category",
         "Calculate category concentration",

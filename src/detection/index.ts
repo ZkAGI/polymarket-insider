@@ -924,3 +924,35 @@ export type {
   WatchlistSummary,
   NicheMarketWatchlistConfig,
 } from "./niche-market-watchlist";
+
+// DET-NICHE-008: Wallet Niche Market Concentration Analyzer
+export {
+  ConcentrationLevel,
+  SpecialistType,
+  ConcentrationSuspicion,
+  DEFAULT_HIGH_VALUE_CATEGORIES,
+  WalletConcentrationAnalyzer,
+  createWalletConcentrationAnalyzer,
+  getSharedWalletConcentrationAnalyzer,
+  setSharedWalletConcentrationAnalyzer,
+  resetSharedWalletConcentrationAnalyzer,
+  addTradesForConcentration,
+  analyzeWalletConcentration,
+  batchAnalyzeWalletConcentration,
+  isWalletSpecialist,
+  hasHighWalletConcentration,
+  getCategorySpecialists,
+  getSuspiciousWallets,
+  getWalletConcentrationScore,
+  getConcentrationAnalysisSummary,
+} from "./wallet-concentration";
+
+export type {
+  TradeForConcentration,
+  CategoryStats,
+  WalletConcentrationResult,
+  ConcentrationAnalysisOptions,
+  BatchConcentrationResult,
+  ConcentrationSummary,
+  WalletConcentrationAnalyzerConfig,
+} from "./wallet-concentration";
