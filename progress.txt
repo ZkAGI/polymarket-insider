@@ -6422,3 +6422,88 @@ FILES:
 
 NOTES FOR NEXT SESSION:
 - Next feature: DET-PAT-005 (Profit/loss calculator) at priority 100
+
+=== Session 2026-01-12 (continued) ===
+
+COMPLETED: DET-PAT-005 - Profit/loss calculator
+Calculate realized and unrealized P&L for wallets
+
+IMPLEMENTATION:
+1. Core types and enums:
+   - PositionStatus: OPEN, CLOSED, EXPIRED, LIQUIDATED
+   - PnlDirection: PROFIT, LOSS, BREAKEVEN
+   - PnlTier: LARGE_LOSS, MODERATE_LOSS, SMALL_LOSS, BREAKEVEN, SMALL_PROFIT, MODERATE_PROFIT, LARGE_PROFIT
+   - PnlSuspicionLevel: NONE, LOW, MEDIUM, HIGH, CRITICAL
+   - PnlWindow: DAY, WEEK, MONTH, QUARTER, YEAR, ALL_TIME
+
+2. Key interfaces:
+   - PnlPosition: Position with cost basis, exit value, status, timestamps
+   - RealizedPnl: Realized gains from closed positions with ROI
+   - UnrealizedPnl: Unrealized gains from open positions with current value
+   - WindowPnlStats: P&L statistics for a specific time window
+   - CategoryPnlStats: P&L statistics per market category
+   - PnlAnalysis: Full analysis result with aggregates, windows, categories, suspicion
+   - PnlSuspicionDetails: Detailed breakdown of suspicion signals
+
+3. ProfitLossCalculator class features:
+   - Position management: addPosition(), addPositions(), closePosition()
+   - Price updates: updatePositionPrice() for real-time P&L updates
+   - Queries: getPositions(), getOpenPositions(), getClosedPositions()
+   - P&L calculation: calculateRealizedPnl(), calculateUnrealizedPnl()
+   - Aggregates: calculateAggregates() for overall P&L summary
+   - Window analysis: calculateWindowStats() for time-window analysis
+   - Category breakdown: Per-category performance tracking
+   - Suspicion scoring: Weighted factors for insider detection
+
+4. Analysis methods:
+   - analyze(walletAddress): Full P&L analysis for a wallet
+   - batchAnalyze(walletAddresses): Batch analysis with sorting
+   - calculateAggregates(): Overall P&L summary
+   - calculateWindowStats(): Time-window statistics
+   - calculateCategoryStats(): Per-category statistics
+   - calculateSuspicionScore(): Weighted scoring (0-100 scale)
+
+5. Detection methods:
+   - getHighReturnWallets(): Find wallets with unusually high returns
+   - getPotentialInsiders(): Find wallets flagged as potential insiders
+   - hasUnusuallyHighReturn(): Check individual wallet
+
+6. Factory and convenience functions:
+   - createProfitLossCalculator()
+   - getSharedProfitLossCalculator() / setSharedProfitLossCalculator()
+   - analyzePnl(), batchAnalyzePnl()
+   - addPositionForPnl(), closePositionForPnl(), updatePositionPriceForPnl()
+
+7. Events emitted:
+   - position-added: When a new position is recorded
+   - position-updated: When position price is updated
+   - position-closed: When a position is closed
+   - positions-cleared: When wallet positions are cleared
+   - all-positions-cleared: When all positions are cleared
+   - high-return-detected: When analysis finds high return wallet
+   - cache-invalidated: When cache is cleared
+
+TESTS: 92 unit tests + 36 E2E tests covering all functionality
+- Constructor and configuration
+- Position management (add, update, close, clear)
+- Realized and unrealized P&L calculation
+- Window-based analysis (day, week, month, quarter, year, all-time)
+- Category breakdown
+- Suspicion scoring and detection
+- Batch analysis
+- Caching behavior
+- Event emission
+- Edge cases (empty data, all profits, all losses, etc.)
+- E2E scenarios: retail traders, potential insiders, whales, category specialists
+
+TYPECHECK: Passes with no errors
+FULL TEST SUITE: 6102 tests pass (97 test files)
+
+FILES:
+- src/detection/profit-loss-calculator.ts (new - ~1800 lines)
+- tests/detection/profit-loss-calculator.test.ts (new - 92 tests)
+- tests/e2e/profit-loss-calculator.e2e.test.ts (new - 36 tests)
+- src/detection/index.ts (updated with exports)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-PAT-006 (Position sizing pattern analyzer) at priority 101

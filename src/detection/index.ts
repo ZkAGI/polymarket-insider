@@ -1178,3 +1178,48 @@ export type {
   WinRateTrackerSummary,
   WinRateTrackerConfig,
 } from "./win-rate-tracker";
+
+// DET-PAT-005: Profit/Loss Calculator
+export {
+  PositionStatus,
+  PnlDirection,
+  PnlTier,
+  PnlSuspicionLevel,
+  PnlWindow,
+  PNL_WINDOW_DURATION_MS,
+  PNL_TIER_THRESHOLDS,
+  DEFAULT_PNL_CONFIG,
+  ProfitLossCalculator,
+  createProfitLossCalculator,
+  getSharedProfitLossCalculator,
+  setSharedProfitLossCalculator,
+  resetSharedProfitLossCalculator,
+  addPositionForPnl,
+  addPositionsForPnl,
+  updatePositionPriceForPnl,
+  closePositionForPnl,
+  analyzePnl,
+  batchAnalyzePnl,
+  hasExceptionalReturns,
+  getHighReturnWallets,
+  getPotentialInsidersByPnl,
+  getPnlCalculatorSummary,
+  getPnlTierDescription,
+  getPnlSuspicionDescription,
+} from "./profit-loss-calculator";
+
+export type {
+  PnlPosition,
+  RealizedPnl,
+  UnrealizedPnl,
+  WindowPnlStats,
+  CategoryPnlStats,
+  PnlDataPoint,
+  PnlTrend,
+  PnlAnomaly,
+  PnlResult,
+  AnalyzePnlOptions,
+  BatchPnlResult,
+  PnlCalculatorSummary,
+  PnlCalculatorConfig,
+} from "./profit-loss-calculator";

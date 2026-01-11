@@ -1982,7 +1982,9 @@
       "priority": 100,
       "name": "Profit/loss calculator",
       "description": "Calculate realized and unrealized P&L for wallets",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T04:48:00Z",
+      "notes": "Implemented ProfitLossCalculator with position tracking, realized/unrealized P&L calculation, window-based analysis (DAY/WEEK/MONTH/QUARTER/YEAR/ALL_TIME), category-specific stats, suspicion scoring for insider detection, and batch analysis. 92 unit tests and 36 E2E tests pass.",
       "steps": [
         "Track position costs",
         "Calculate realized gains",
