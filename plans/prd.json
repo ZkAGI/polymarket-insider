@@ -1302,7 +1302,8 @@
       "priority": 66,
       "name": "Zero trading history detector",
       "description": "Identify wallets with no prior Polymarket trading history",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T06:15:00Z",
       "steps": [
         "Check Polymarket trade count",
         "Distinguish from general blockchain age",

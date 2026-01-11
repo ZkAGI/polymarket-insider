@@ -3599,3 +3599,84 @@ NOTES:
 - Comprehensive threshold evaluation with detailed result breakdown
 - Next up: DET-FRESH-003 (Zero trading history detector)
 
+
+---
+
+## DET-FRESH-003: Zero trading history detector
+COMPLETED: 2026-01-11T06:15:00Z
+
+IMPLEMENTATION:
+- Created ZeroHistoryDetector class in src/detection/zero-history.ts
+- Comprehensive detection system for wallets with no prior Polymarket trading history
+
+KEY FEATURES:
+1. Trading History Status Classification:
+   - TradingHistoryStatus enum: NEVER_TRADED, FIRST_TRADE, MINIMAL_HISTORY, HAS_HISTORY
+   - Configurable minimal history threshold (default: 3 trades)
+   - First-trade detection for identifying wallets making their first Polymarket trade
+
+2. Wallet History Type Classification:
+   - WalletHistoryType enum distinguishes blockchain vs Polymarket history:
+   - NEW_EVERYWHERE: New to blockchain AND new to Polymarket
+   - BLOCKCHAIN_VETERAN_PM_NEW: Established on blockchain but new to Polymarket
+   - BLOCKCHAIN_NEW_PM_ACTIVE: New to blockchain but has Polymarket trades
+   - ESTABLISHED: Established on both blockchain and Polymarket
+
+3. ZeroHistoryDetector Class:
+   - checkWallet(): Comprehensive check of a wallets trading history
+   - checkWallets(): Batch processing for multiple wallets
+   - hasNeverTraded(): Quick check if wallet has zero trades
+   - isFirstTrade(): Check if wallet is making their first trade
+   - getTradeCount(): Get total Polymarket trade count
+
+4. Suspicious First-Timer Detection:
+   - isSuspiciousFirstTimer flag in results
+   - Flags NEW_EVERYWHERE wallets with CRITICAL/HIGH severity
+   - Flags BLOCKCHAIN_NEW_PM_ACTIVE first trades with HIGH severity
+   - Flags dormant wallets (configurable dormancyDays) becoming active
+
+5. Status Change Tracking:
+   - statusHistory map tracks wallet status over time
+   - getStatusHistory(): Get previous status for a wallet
+   - hasStatusChanged(): Detect if status changed
+   - detectStatusChange(): Get detailed change information
+   - TradingStatusChange type for tracking transitions
+
+6. Caching:
+   - In-memory cache with configurable TTL (default: 5 minutes)
+   - Configurable max cache size (default: 1000)
+   - clearCache(), invalidateCacheEntry(), getCacheStats() methods
+   - bypassCache option for fresh data
+
+7. Integration with Other Modules:
+   - Uses calculateWalletAge from wallet-age module
+   - Uses evaluateWalletFreshness from fresh-wallet-config module
+   - Uses getAllTradesByWallet and getWalletActivitySummary from CLOB trades
+
+8. Configuration:
+   - ZeroHistoryDetectorConfig interface for customization
+   - cacheTtlMs, maxCacheSize, defaultMaxTrades, minimalHistoryThreshold, dormancyDays
+
+EXPORTS (src/detection/zero-history.ts):
+- ZeroHistoryDetector class
+- TradingHistoryStatus enum
+- WalletHistoryType enum
+- createZeroHistoryDetector, getSharedZeroHistoryDetector, etc.
+- Convenience functions: checkZeroHistory, batchCheckZeroHistory, hasNeverTradedOnPolymarket, isFirstPolymarketTrade, getPolymarketTradeCount, getZeroHistorySummary
+- Types: ZeroHistoryCheckResult, ZeroHistoryCheckOptions, BatchZeroHistoryResult, ZeroHistorySummary, TradingStatusChange, ZeroHistoryDetectorConfig
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all zero-history functionality
+- DET-FRESH-003 exports grouped separately
+
+TESTS:
+- Created tests/detection/zero-history.test.ts with 48 tests
+- Created tests/e2e/zero-history.e2e.test.ts with 7 tests
+- All 3498 tests pass (55 new + existing tests)
+
+NOTES:
+- Distinguishes between wallets new to blockchain vs new to Polymarket
+- Status tracking enables detection of wallets transitioning from zero history
+- Dormancy detection identifies previously inactive wallets becoming active
+- Integrates with existing fresh wallet config for severity classification
+- Next up: DET-FRESH-004 (First trade size analyzer)

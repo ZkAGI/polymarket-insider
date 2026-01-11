@@ -10,9 +10,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import puppeteer, { Browser, Page } from "puppeteer";
 import {
-  FreshWalletConfigManager,
   FreshWalletAlertSeverity,
-  evaluateWalletFreshness,
   getThresholdsForCategory,
   createFreshWalletConfigManager,
 } from "../../src/detection/fresh-wallet-config";
@@ -45,17 +43,18 @@ describe("Fresh Wallet Config E2E Tests", () => {
       );
 
       // Verify results
-      expect(results[0].isFresh).toBe(true);
-      expect(results[0].severity).toBe(FreshWalletAlertSeverity.HIGH);
+      expect(results).toHaveLength(4);
+      expect(results[0]!.isFresh).toBe(true);
+      expect(results[0]!.severity).toBe(FreshWalletAlertSeverity.HIGH);
 
-      expect(results[1].isFresh).toBe(true); // Politics has 60 day threshold
+      expect(results[1]!.isFresh).toBe(true); // Politics has 60 day threshold
 
-      expect(results[2].isFresh).toBe(false);
-      expect(results[2].ageCategory).toBe(AgeCategory.ESTABLISHED);
+      expect(results[2]!.isFresh).toBe(false);
+      expect(results[2]!.ageCategory).toBe(AgeCategory.ESTABLISHED);
 
-      expect(results[3].isFresh).toBe(true);
-      expect(results[3].severity).toBe(FreshWalletAlertSeverity.CRITICAL);
-      expect(results[3].ageCategory).toBe(AgeCategory.NEW);
+      expect(results[3]!.isFresh).toBe(true);
+      expect(results[3]!.severity).toBe(FreshWalletAlertSeverity.CRITICAL);
+      expect(results[3]!.ageCategory).toBe(AgeCategory.NEW);
     });
 
     it("should support different thresholds per market category", () => {

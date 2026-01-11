@@ -60,3 +60,29 @@ export type {
   FreshWalletConfigInput,
   ThresholdEvaluationResult,
 } from "./fresh-wallet-config";
+
+// DET-FRESH-003: Zero Trading History Detector
+export {
+  TradingHistoryStatus,
+  WalletHistoryType,
+  ZeroHistoryDetector,
+  createZeroHistoryDetector,
+  getSharedZeroHistoryDetector,
+  setSharedZeroHistoryDetector,
+  resetSharedZeroHistoryDetector,
+  checkZeroHistory,
+  batchCheckZeroHistory,
+  hasNeverTradedOnPolymarket,
+  isFirstPolymarketTrade,
+  getPolymarketTradeCount,
+  getZeroHistorySummary,
+} from "./zero-history";
+
+export type {
+  ZeroHistoryCheckResult,
+  ZeroHistoryCheckOptions,
+  BatchZeroHistoryResult,
+  ZeroHistorySummary,
+  TradingStatusChange,
+  ZeroHistoryDetectorConfig,
+} from "./zero-history";
