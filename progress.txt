@@ -5725,3 +5725,83 @@ NOTES FOR NEXT SESSION:
 - Could leverage existing market category classifier for politics
 - Consider adding real-time situation updates based on news feeds
 
+
+
+=== Session: DET-NICHE-005 Implementation ===
+Date: 2026-01-11
+Feature: Regulatory Decision Market Detector
+Status: COMPLETED
+
+IMPLEMENTATION:
+Created comprehensive regulatory decision market detector in
+src/detection/regulatory-decision-detector.ts with ~2600 lines of code.
+
+KEY COMPONENTS:
+1. RegulatoryAgency enum - 29 regulatory agencies:
+   - US Federal: SEC, FDA, FCC, EPA, FTC, FEDERAL_RESERVE, DOJ, CFPB,
+     CFTC, FAA, NHTSA, OFAC, TREASURY, IRS, FERC, NRC, CMS, USPTO
+   - International: ECB, EU_COMMISSION, EMA, BOE, FCA, CMA, BUNDESBANK,
+     PBOC, BOJ, RBI, OTHER
+
+2. RegulatoryDecisionType enum - 17 decision types:
+   - APPROVAL, DENIAL, ENFORCEMENT, FINE, INVESTIGATION
+   - MERGER_APPROVAL, RULE_CHANGE, RATE_DECISION, LICENSE
+   - BAN, SETTLEMENT, EMERGENCY_AUTH, GUIDANCE
+   - PUBLIC_COMMENT, HEARING, COMPLIANCE, GENERAL
+
+3. RegulatorySector enum - 15 sectors:
+   - FINANCE, HEALTHCARE, TECHNOLOGY, ENERGY, ENVIRONMENT
+   - TRANSPORTATION, CONSUMER, CRYPTO, ANTITRUST, TRADE
+   - IMMIGRATION, DEFENSE, AGRICULTURE, MEDIA, OTHER
+
+4. RegulatoryJurisdiction enum - 14 jurisdictions:
+   - US_FEDERAL, US_STATE, EU, UK, CHINA, JAPAN, GERMANY
+   - FRANCE, INDIA, CANADA, AUSTRALIA, SWITZERLAND
+   - INTERNATIONAL, OTHER
+
+5. DEFAULT_REGULATORY_KEYWORDS - 120+ keywords with:
+   - Keyword patterns with weights
+   - Trigger mappings to agencies, decision types, sectors, jurisdictions
+   - Context requirements and exclusions
+   - Insider advantage weights for high-value regulatory markets
+   - Entity extraction for companies and people
+
+KEY FEATURES:
+- Multi-dimensional tagging (agencies, decision types, sectors, jurisdictions)
+- Insider advantage scoring (0-100) to identify high-value regulatory markets
+- Deadline extraction from market text (dates, PDUFA dates, etc.)
+- Entity extraction (company names, regulatory officials)
+- Configurable caching with TTL (default 12 hours)
+- Batch detection with distribution tracking
+- Filter by agency, decision type, sector, or jurisdiction
+- High insider advantage market filtering
+- Summary statistics and metrics
+
+API FUNCTIONS:
+- detectMarket(), detectMarkets()
+- isRegulatoryMarket()
+- getRegulatoryMarkets()
+- getRegulatoryMarketsByAgency()
+- getRegulatoryMarketsByDecisionType()
+- getRegulatoryMarketsBySector()
+- getHighInsiderAdvantageRegulatoryMarkets()
+- getRegulatoryDetectorSummary()
+- getKeywords(), clearCache(), resetStats()
+
+TESTS:
+- 77 unit tests in tests/detection/regulatory-decision-detector.test.ts
+- All tests pass (5214 total tests in suite, excluding 1 pre-existing failure)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/regulatory-decision-detector.ts (new)
+- src/detection/index.ts (updated with exports)
+- tests/detection/regulatory-decision-detector.test.ts (new)
+
+NOTES FOR NEXT SESSION:
+- DET-NICHE-006: Market liquidity scorer is next in priority
+- Could use order book depth data from existing CLOB API
+- Consider integrating with whale threshold calculator
+- One pre-existing test failure in political-market-identifier.test.ts
+  (unrelated to this feature)
+

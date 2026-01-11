@@ -825,3 +825,40 @@ export type {
   PoliticalIdentifierSummary,
   PoliticalMarketIdentifierConfig,
 } from "./political-market-identifier";
+
+// DET-NICHE-005: Regulatory Decision Market Detector
+export {
+  RegulatoryAgency,
+  RegulatoryDecisionType,
+  RegulatorySector,
+  RegulatoryJurisdiction,
+  RegulatoryConfidence,
+  InsiderAdvantageLevel,
+  DEFAULT_REGULATORY_KEYWORDS,
+  RegulatoryDecisionDetector,
+  createRegulatoryDecisionDetector,
+  getSharedRegulatoryDecisionDetector,
+  setSharedRegulatoryDecisionDetector,
+  resetSharedRegulatoryDecisionDetector,
+  detectRegulatoryMarket,
+  detectRegulatoryMarkets,
+  isRegulatoryMarket,
+  getRegulatoryMarkets,
+  getRegulatoryMarketsByAgency,
+  getRegulatoryMarketsByDecisionType,
+  getRegulatoryMarketsBySector,
+  getHighInsiderAdvantageRegulatoryMarkets,
+  getRegulatoryDetectorSummary,
+} from "./regulatory-decision-detector";
+
+export type {
+  RegulatoryTag,
+  RegulatoryDeadline,
+  RegulatoryMarketResult,
+  MarketForRegulatoryDetection,
+  RegulatoryKeyword,
+  DetectRegulatoryOptions,
+  BatchRegulatoryDetectionResult,
+  RegulatoryDetectorSummary,
+  RegulatoryDecisionDetectorConfig,
+} from "./regulatory-decision-detector";

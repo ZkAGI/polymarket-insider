@@ -1781,7 +1781,8 @@
       "priority": 90,
       "name": "Regulatory decision market detector",
       "description": "Detect markets about regulatory decisions",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T23:25:00Z",
       "steps": [
         "Define regulatory keywords",
         "Identify agency-related markets",
