@@ -9,3 +9,6 @@ export const VERSION = "1.0.0";
 export function greet(name: string): string {
   return `Welcome to ${APP_NAME}, ${name}!`;
 }
+
+// Re-export detection module
+export * from "./detection";

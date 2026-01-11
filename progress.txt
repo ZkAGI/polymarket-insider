@@ -3428,3 +3428,82 @@ NOTES:
 - Recommendations generated based on archived/uncompressed data ratios
 - Next up: DET-FRESH-001 (Wallet age calculator)
 
+---
+
+## DET-FRESH-001: Wallet age calculator
+COMPLETED: 2026-01-11T05:47:00Z
+
+IMPLEMENTATION:
+- Created WalletAgeCalculator class in src/detection/wallet-age.ts
+- Wraps the existing WalletCreationDateClient from src/api/chain/creation-date.ts
+- Provides detection-specific functionality for fresh wallet detection
+
+KEY FEATURES:
+1. Age Calculation:
+   - calculateAge() - get wallet age from first on-chain transaction
+   - Calculates age in days and hours with precision
+   - Uses existing Polygonscan API integration for transaction history
+   - Supports including internal transactions for more accurate age
+
+2. Age Categories:
+   - AgeCategory enum: NEW, VERY_FRESH, FRESH, RECENT, ESTABLISHED, MATURE
+   - Configurable thresholds via AgeCategoryThresholds interface
+   - Default thresholds: 7/30/90/365 days for category boundaries
+   - classifyAge() - classify any age into a category
+
+3. Freshness Detection:
+   - isFresh() - check if wallet age is under configurable threshold
+   - Default fresh threshold: 30 days
+   - New wallets (no transactions) are considered fresh
+   - checkWalletFreshness() convenience function
+
+4. Batch Processing:
+   - batchCalculateAge() - calculate age for multiple addresses
+   - Returns BatchWalletAgeResult with success/error tracking
+   - Processing time measurement
+
+5. Summary Statistics:
+   - getSummary() - get statistics for multiple wallet ages
+   - Average, median, min, max age calculations
+   - Category distribution
+   - Fresh and new wallet percentages
+
+6. Caching:
+   - Leverages underlying WalletCreationDateClient cache
+   - Configurable TTL and max entries
+   - Cache clear, invalidate, and statistics methods
+
+EXPORTS (src/detection/wallet-age.ts):
+- WalletAgeCalculator class
+- createWalletAgeCalculator, getSharedWalletAgeCalculator, setSharedWalletAgeCalculator, resetSharedWalletAgeCalculator
+- AgeCategory enum, DEFAULT_AGE_THRESHOLDS
+- Convenience functions: calculateWalletAge, batchCalculateWalletAge, checkWalletFreshness, getWalletAgeCategory, getWalletAgeSummary
+- Types: AgeCategoryThresholds, WalletAgeResult, WalletAgeOptions, BatchWalletAgeResult, WalletAgeSummary, WalletAgeCalculatorConfig
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Created module index exporting all wallet-age functionality
+- Detection module now exported from src/index.ts
+
+TESTS:
+- Created tests/detection/wallet-age.test.ts with 56 comprehensive tests:
+  - Constructor and configuration tests
+  - Age calculation tests (with transactions, new wallets, errors)
+  - Age classification tests (all categories, custom thresholds)
+  - Freshness detection tests
+  - Timestamp-to-age conversion tests
+  - Batch calculation tests
+  - Summary statistics tests (average, median, distributions)
+  - Cache operations tests
+  - Factory function tests
+  - Convenience function tests
+  - Edge case tests (very old wallets, today, boundaries, internal txs)
+- All 3345 tests pass (56 new + 3289 existing)
+
+NOTES:
+- Wraps existing chain API functionality for detection use case
+- Age categories provide semantic meaning for freshness levels
+- Batch processing enables efficient multi-wallet analysis
+- Summary statistics help identify patterns in wallet populations
+- All convenience functions use shared singleton by default
+- Next up: DET-FRESH-002 (Fresh wallet threshold configuration)
+

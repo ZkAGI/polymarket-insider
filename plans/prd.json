@@ -1262,7 +1262,8 @@
       "priority": 64,
       "name": "Wallet age calculator",
       "description": "Calculate wallet age from first on-chain transaction",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T05:47:00Z",
       "steps": [
         "Fetch first transaction timestamp",
         "Calculate age in days",
