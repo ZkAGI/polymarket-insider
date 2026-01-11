@@ -5353,3 +5353,93 @@ VOLUME/WHALE DETECTION PIPELINE PROGRESS:
 
 Next: DET-VOL-012 (Pre-event volume spike detector)
 
+
+================================================================================
+DET-VOL-012: PRE-EVENT VOLUME SPIKE DETECTOR
+================================================================================
+Date: 2026-01-11
+Status: COMPLETED
+
+IMPLEMENTATION:
+Created src/detection/pre-event-volume.ts (~1300 lines) implementing a pre-event volume
+spike detector that identifies unusual volume activity before scheduled events.
+
+KEY FEATURES:
+1. Event Type Support (EventType):
+   - RESOLUTION: Market resolution/end dates
+   - EXTERNAL_EVENT: External scheduled events (elections, announcements)
+   - CUSTOM: User-defined events
+
+2. Pre-Event Time Windows (PreEventWindow):
+   - ONE_HOUR, FOUR_HOURS, TWELVE_HOURS
+   - ONE_DAY, TWO_DAYS, ONE_WEEK
+
+3. Anomaly Detection:
+   - Z-score based detection against historical patterns
+   - Volume ratio detection (current vs expected)
+   - Severity levels: LOW, MEDIUM, HIGH, CRITICAL
+   - Direction tracking: SURGE or DROUGHT
+
+4. Market Event Tracking:
+   - Register events with event times and metadata
+   - Track time until events in real-time
+   - Auto-detect which pre-event window applies
+   - Handle event updates and unregistration
+
+5. Historical Pattern Building:
+   - Store per-market historical pre-event volume
+   - Build category-level patterns (e.g., "politics" category)
+   - Calculate statistics: mean, stddev, percentiles
+
+6. Spike Detection Features:
+   - Volume trend tracking (increasing, stable, decreasing)
+   - Cooldown period to prevent alert fatigue
+   - Event emission for real-time monitoring
+   - Batch analysis for multiple markets
+
+7. Pre-Event Volume Spike Structure:
+   - Event ID and market ID
+   - Market event details (time, type, description)
+   - Severity and direction
+   - Window and hours until event
+   - Volume metrics (current, expected, ratio, z-score)
+   - Context (previous spikes, volume trend, data reliability)
+   - Flag reasons for human review
+
+EXPORTS:
+- EventType enum
+- PreEventWindow enum
+- PreEventSeverity enum
+- VolumeDirection enum
+- PRE_EVENT_WINDOW_DURATION_MS constants
+- PRE_EVENT_WINDOW_HOURS constants
+- ALL_PRE_EVENT_WINDOWS array
+- DEFAULT_PRE_EVENT_THRESHOLDS
+- getPreEventWindow helper function
+- PreEventVolumeDetector class
+- Singleton management: create, get, set, reset
+- Convenience functions:
+    - registerMarketEvent
+    - analyzePreEventVolume
+    - batchAnalyzePreEventVolume
+    - isInPreEventPeriod
+    - getCurrentPreEventWindow
+    - getRecentPreEventSpikes
+    - getPreEventDetectorSummary
+    - addHistoricalPreEventData
+
+TESTS:
+- 68 unit tests in tests/detection/pre-event-volume.test.ts
+- All tests pass (4807 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/pre-event-volume.ts: Main implementation
+- src/detection/index.ts: Exports added
+- tests/detection/pre-event-volume.test.ts: Unit tests
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001 to DET-VOL-012: All DONE
+
+Next: Check for remaining features in prd.json with passes:false
+

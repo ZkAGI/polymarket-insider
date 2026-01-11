@@ -651,3 +651,42 @@ export type {
   AnalyzeTradesOptions,
   ClusteringAnalyzerSummary,
 } from "./volume-clustering";
+
+// DET-VOL-012: Pre-Event Volume Spike Detector
+export {
+  EventType,
+  PreEventWindow,
+  PreEventSeverity,
+  VolumeDirection,
+  PRE_EVENT_WINDOW_DURATION_MS,
+  PRE_EVENT_WINDOW_HOURS,
+  ALL_PRE_EVENT_WINDOWS,
+  DEFAULT_PRE_EVENT_THRESHOLDS,
+  getPreEventWindow,
+  PreEventVolumeDetector,
+  createPreEventVolumeDetector,
+  getSharedPreEventVolumeDetector,
+  setSharedPreEventVolumeDetector,
+  resetSharedPreEventVolumeDetector,
+  registerMarketEvent,
+  analyzePreEventVolume,
+  batchAnalyzePreEventVolume,
+  isInPreEventPeriod,
+  getCurrentPreEventWindow,
+  getRecentPreEventSpikes,
+  getPreEventDetectorSummary,
+  addHistoricalPreEventData,
+} from "./pre-event-volume";
+
+export type {
+  MarketEvent,
+  PreEventPattern,
+  PreEventAnalysis,
+  PreEventVolumeSpike,
+  PreEventThresholdConfig,
+  PreEventVolumeDetectorConfig,
+  AnalyzePreEventOptions,
+  RegisterEventOptions,
+  BatchPreEventAnalysisResult,
+  PreEventDetectorSummary,
+} from "./pre-event-volume";

@@ -1680,7 +1680,8 @@
       "priority": 85,
       "name": "Pre-event volume spike detector",
       "description": "Detect volume spikes before scheduled events",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T18:40:00Z",
       "steps": [
         "Track market event dates",
         "Monitor pre-event volume",
