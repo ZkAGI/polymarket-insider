@@ -896,7 +896,6 @@
         "manual_verification": "Verify event delivery"
       }
     },
-
     {
       "id": "API-CHAIN-001",
       "priority": 46,
@@ -1456,7 +1455,7 @@
         "manual_verification": "Verify alert content"
       }
     },
-      {
+    {
       "id": "DET-VOL-001",
       "priority": 74,
       "name": "Market baseline volume calculator",
@@ -1481,7 +1480,7 @@
       "priority": 75,
       "name": "Rolling volume average tracker",
       "description": "Track rolling average volume over configurable windows",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Implement sliding window",
         "Support multiple time windows",
@@ -1493,7 +1492,8 @@
         "typecheck": "Verify types",
         "e2e": "Track live volume",
         "manual_verification": "Verify rolling accuracy"
-      }
+      },
+      "completed_at": "2026-01-11T07:36:59.017Z"
     },
     {
       "id": "DET-VOL-003",

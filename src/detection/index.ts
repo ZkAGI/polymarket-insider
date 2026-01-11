@@ -317,3 +317,33 @@ export type {
   BaselineSummary,
   VolumeBaselineCalculatorConfig,
 } from "./volume-baseline";
+
+// DET-VOL-002: Rolling Volume Average Tracker
+export {
+  RollingWindow,
+  WINDOW_DURATION_MS,
+  WINDOW_DURATION_MINUTES,
+  ALL_ROLLING_WINDOWS,
+  RollingVolumeTracker,
+  createRollingVolumeTracker,
+  getSharedRollingVolumeTracker,
+  setSharedRollingVolumeTracker,
+  resetSharedRollingVolumeTracker,
+  addVolumeData,
+  getMarketRollingAverages,
+  batchGetRollingAverages,
+  isVolumeAnomalous,
+  getRollingVolumesSummary,
+} from "./rolling-volume";
+
+export type {
+  VolumeDataEntry,
+  RollingAverageResult,
+  MarketRollingAverages,
+  VolumeThresholdBreach,
+  RollingVolumeTrackerConfig,
+  AddVolumeOptions,
+  GetRollingAveragesOptions,
+  BatchRollingAveragesResult,
+  RollingAveragesSummary,
+} from "./rolling-volume";

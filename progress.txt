@@ -4352,3 +4352,137 @@ VOLUME SPIKE DETECTION PIPELINE STARTED:
 - DET-VOL-001: Market Baseline Volume Calculator ✓
 
 Next: DET-VOL-002 (Volume spike threshold configuration)
+
+================================================================================
+DET-VOL-002: Rolling Volume Average Tracker
+================================================================================
+COMPLETED: 2026-01-11
+
+IMPLEMENTATION (src/detection/rolling-volume.ts):
+A highly efficient rolling volume average tracker that maintains multiple sliding
+windows for real-time volume monitoring and anomaly detection.
+
+KEY COMPONENTS:
+
+1. RollingWindow Enum - Supported time windows:
+   - ONE_MINUTE: 60 seconds (60,000ms)
+   - FIVE_MINUTES: 5 minutes (300,000ms)
+   - FIFTEEN_MINUTES: 15 minutes (900,000ms)
+   - ONE_HOUR: 60 minutes (3,600,000ms)
+   - FOUR_HOURS: 4 hours (14,400,000ms)
+   - TWENTY_FOUR_HOURS: 24 hours (86,400,000ms)
+
+2. VolumeRingBuffer Class - Efficient circular buffer implementation:
+   - O(1) insertions using ring buffer pattern
+   - Automatic window sliding (removes stale data)
+   - Configurable maximum capacity
+   - Memory-efficient storage
+   - Data export/import functionality
+
+3. RollingVolumeTracker Class - Main tracker functionality:
+   - addVolume(): Add volume data point for a market
+   - getRollingAverages(): Get averages across all configured windows
+   - getBatchRollingAverages(): Process multiple markets
+   - getSummary(): Generate summary statistics
+   - calculateZScore(): Calculate z-score for volume vs. rolling average
+   - isAboveThreshold()/isBelowThreshold(): Threshold checks
+   - exportMarketData()/importMarketData(): Data portability
+   - clearMarket()/clearAll(): Data management
+   - getStats(): Tracker statistics
+
+4. Rolling Average Results (RollingAverageResult):
+   - averageVolumePerMinute: Normalized per-minute average
+   - totalVolume: Sum of all volume in window
+   - dataPointCount: Number of data points
+   - standardDeviation: Volume volatility
+   - minVolume/maxVolume: Volume range
+   - coefficientOfVariation: Normalized volatility (CV)
+   - volumeVelocity: Rate of change
+   - dataDensity: Data completeness ratio
+   - isReliable: Whether enough data for reliable stats
+   - averageTradeCountPerMinute: Trades per minute (if tracked)
+
+5. Data Density & Reliability:
+   - Calculates expected vs. actual data points
+   - dataDensity = actual / expected
+   - isReliable when density >= minDataDensity threshold
+   - Default minDataDensity: 0.5 (50% coverage required)
+
+6. Event Emission:
+   - Emits 'breach' events when volume exceeds z-score threshold
+   - Configurable breachZScoreThreshold (default: 2.0)
+   - Breach includes: marketId, window, currentVolume, threshold, isHigh, zScore
+
+7. Configuration Options (RollingVolumeTrackerConfig):
+   - windows: Which windows to track (default: all 6)
+   - maxDataPoints: Ring buffer capacity (default: 10,000)
+   - dataPointIntervalMs: Expected interval (default: 1000ms)
+   - minDataDensity: Reliability threshold (default: 0.5)
+   - enableEvents: Enable breach events (default: true)
+   - breachZScoreThreshold: Anomaly threshold (default: 2.0)
+
+TYPES EXPORTED:
+- VolumeDataEntry: Individual volume data point
+- RollingAverageResult: Results for a single window
+- MarketRollingAverages: All window results for a market
+- VolumeThresholdBreach: Breach event data
+- RollingVolumeTrackerConfig: Configuration options
+- AddVolumeOptions: Options for addVolume()
+- GetRollingAveragesOptions: Options for getRollingAverages()
+- BatchRollingAveragesResult: Batch processing results
+- RollingAveragesSummary: Summary statistics
+
+CONSTANTS EXPORTED:
+- WINDOW_DURATION_MS: Duration in milliseconds per window
+- WINDOW_DURATION_MINUTES: Duration in minutes per window
+- ALL_ROLLING_WINDOWS: Array of all window types
+
+CONVENIENCE FUNCTIONS:
+- addVolumeData: Add volume using shared tracker
+- getMarketRollingAverages: Get averages using shared tracker
+- batchGetRollingAverages: Batch get using shared tracker
+- isVolumeAnomalous: Check if volume is anomalous
+- getRollingVolumesSummary: Get summary using shared tracker
+
+SINGLETON MANAGEMENT:
+- createRollingVolumeTracker: Create new instance
+- getSharedRollingVolumeTracker: Get/create shared instance
+- setSharedRollingVolumeTracker: Set shared instance
+- resetSharedRollingVolumeTracker: Reset shared instance
+
+TESTS:
+- 68 unit tests in tests/detection/rolling-volume.test.ts
+- 26 E2E tests in tests/e2e/rolling-volume.e2e.test.ts
+- Tests cover:
+  - Constructor and configuration validation
+  - Ring buffer capacity and overflow behavior
+  - Singleton management
+  - Volume tracking and data storage
+  - Rolling average calculations across windows
+  - Standard deviation and statistical accuracy
+  - Coefficient of variation calculation
+  - Volume velocity (rate of change)
+  - Data density and reliability scoring
+  - Z-score calculations and anomaly detection
+  - Threshold breach detection
+  - Event emission for breaches
+  - Multi-market tracking
+  - Batch processing
+  - Summary generation
+  - Data export/import functionality
+  - Market clearing operations
+  - Module export verification
+  - E2E app integration
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all rolling-volume functionality
+- DET-VOL-002 exports grouped at end of file
+
+ALL TESTS PASS: 4055 tests total (68 unit + 26 E2E new for DET-VOL-002)
+TYPECHECK: Passes with no errors
+
+VOLUME SPIKE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator ✓
+- DET-VOL-002: Rolling Volume Average Tracker ✓
+
+Next: DET-VOL-003 (Volume spike threshold configuration)
