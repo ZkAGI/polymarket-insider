@@ -1801,7 +1801,8 @@
       "priority": 91,
       "name": "Market liquidity scorer",
       "description": "Score markets by liquidity to identify thin markets",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T23:45:00Z",
       "steps": [
         "Calculate order book depth",
         "Track average trade size",

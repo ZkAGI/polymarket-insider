@@ -862,3 +862,32 @@ export type {
   RegulatoryDetectorSummary,
   RegulatoryDecisionDetectorConfig,
 } from "./regulatory-decision-detector";
+
+// DET-NICHE-006: Market Liquidity Scorer
+export {
+  LiquidityCategory,
+  LiquidityConfidence,
+  ThinMarketSeverity,
+  MarketLiquidityScorer,
+  createMarketLiquidityScorer,
+  getSharedMarketLiquidityScorer,
+  setSharedMarketLiquidityScorer,
+  resetSharedMarketLiquidityScorer,
+  scoreMarketLiquidity,
+  scoreMarketsLiquidity,
+  isThinMarket,
+  getThinMarkets,
+  getHighInsiderAdvantageMarkets,
+  getLiquidityScorerSummary,
+} from "./market-liquidity-scorer";
+
+export type {
+  OrderBookData,
+  TradeVolumeStats,
+  MarketLiquidityScore,
+  ThinMarketAlert,
+  BatchLiquidityScoreResult,
+  LiquidityScorerSummary,
+  ScoreLiquidityOptions,
+  MarketLiquidityScorerConfig,
+} from "./market-liquidity-scorer";

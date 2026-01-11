@@ -5805,3 +5805,85 @@ NOTES FOR NEXT SESSION:
 - One pre-existing test failure in political-market-identifier.test.ts
   (unrelated to this feature)
 
+
+
+
+=== Session: DET-NICHE-006 Implementation ===
+Date: 2026-01-11
+Feature: Market Liquidity Scorer
+Status: COMPLETED
+
+IMPLEMENTATION:
+Created comprehensive market liquidity scorer in
+src/detection/market-liquidity-scorer.ts with ~1100 lines of code.
+
+KEY COMPONENTS:
+1. LiquidityCategory enum - 7 categories:
+   - EXTREMELY_THIN, THIN, BELOW_AVERAGE, AVERAGE
+   - ABOVE_AVERAGE, DEEP, VERY_DEEP
+
+2. LiquidityConfidence enum - 4 levels:
+   - HIGH, MEDIUM, LOW, VERY_LOW
+
+3. ThinMarketSeverity enum - 5 severity levels:
+   - INFO, LOW, MEDIUM, HIGH, CRITICAL
+
+4. OrderBookData interface - Captures order book state:
+   - totalBidVolumeUsd, totalAskVolumeUsd
+   - bestBid, bestAsk, spreadPercent
+   - bidLevelCount, askLevelCount
+   - Optional price impact volumes
+
+5. TradeVolumeStats interface - Trade statistics:
+   - tradeCount, totalVolumeUsd, volume24hUsd
+   - averageTradeSizeUsd, medianTradeSizeUsd
+   - maxTradeSizeUsd, minTradeSizeUsd
+   - tradeSizeStdDev
+
+6. MarketLiquidityScore interface - Full scoring result:
+   - liquidityScore (0-100)
+   - category, isThinMarket, thinMarketSeverity
+   - confidence, confidenceScore
+   - componentScores (orderBookDepth, tradeVolume, spread, participation)
+   - insiderAdvantageMultiplier (3.0x for thin, 0.4x for deep)
+   - estimatedPriceImpact1k, estimatedPriceImpact10k
+
+KEY FEATURES:
+- Weighted component scoring system:
+  - Order book depth: 35% weight
+  - Trade volume: 30% weight
+  - Spread: 20% weight
+  - Participation: 15% weight
+- Dynamic thin market threshold (default: 35)
+- Insider advantage multipliers by category
+- Price impact estimation based on liquidity
+- Event emission for thin market alerts
+- Configurable caching with TTL
+- Batch scoring with statistics
+
+API FUNCTIONS:
+- scoreMarket(), scoreMarkets()
+- isThinMarket(), getThinMarkets()
+- getMarketsByCategory()
+- getHighInsiderAdvantageMarkets()
+- getSummary(), resetStats()
+- clearCache(), getCacheSize()
+
+TESTS:
+- 68 unit tests in tests/detection/market-liquidity-scorer.test.ts
+- All tests pass (5282 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/market-liquidity-scorer.ts (new)
+- src/detection/index.ts (updated with exports)
+- tests/detection/market-liquidity-scorer.test.ts (new)
+- tests/detection/political-market-identifier.test.ts (fixed test ID collision bug)
+
+NOTES FOR NEXT SESSION:
+- DET-NICHE-007: Niche market watchlist manager is next in priority
+- Could integrate with existing thin market detection for watchlist population
+- Consider adding persistence for watchlist across restarts
+- Fixed a pre-existing test failure in political-market-identifier.test.ts
+  (was caused by test ID collision with shared classifier cache)
+

@@ -658,7 +658,7 @@ describe("PoliticalMarketIdentifier", () => {
 
     it("should return false for non-political market", () => {
       const market = createTestMarket(
-        "test-2",
+        "test-bitcoin-non-political",
         "Will Bitcoin reach $100,000 by end of year?"
       );
       const result = identifier.isPoliticalMarket(market);
