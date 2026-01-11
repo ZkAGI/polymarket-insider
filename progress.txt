@@ -6258,3 +6258,79 @@ FILES:
 
 NOTES FOR NEXT SESSION:
 - Next feature: DET-PAT-002 (Trading pattern classifier) at priority 97
+
+---
+
+## DET-PAT-003: Timing Pattern Analyzer
+COMPLETED: 2026-01-12
+
+IMPLEMENTATION:
+Created timing pattern analyzer to detect suspicious timing patterns in wallet trades.
+
+1. Comprehensive enums:
+   - TimeOfDayPeriod: EARLY_MORNING, MORNING, AFTERNOON, EVENING, NIGHT, LATE_NIGHT
+   - DayOfWeekType: SUNDAY through SATURDAY (0-6)
+   - TimingPatternType: NORMAL, OFF_HOURS, CONCENTRATED, DISTRIBUTED, PRE_EVENT, UNUSUAL, BOT_LIKE, UNKNOWN
+   - TimingSuspicionLevel: NONE, LOW, MEDIUM, HIGH, CRITICAL
+   - TimingAnomalyType: PRE_NEWS_TRADING, UNUSUAL_HOURS, CLUSTERED_TRADES, PERFECT_TIMING, REGULAR_INTERVALS, etc.
+
+2. Comprehensive interfaces:
+   - TimingTrade: Trade data with timestamp, side, size, winner status, timeToResolution, hadNearbyNews
+   - HourDistribution: Hour-by-hour trade count and volume distribution
+   - DayDistribution: Day-of-week trade distribution
+   - PeriodDistribution: Time period (morning/afternoon/etc) distribution
+   - IntervalStats: Statistics on time between trades
+   - TimingAnomaly: Detected anomaly with type, severity, description
+   - TimingPatternResult: Complete analysis result
+
+3. TimingPatternAnalyzer class:
+   - analyze(): Analyze timing patterns for a wallet
+   - batchAnalyze(): Analyze multiple wallets at once
+   - addTrades(): Add trade data for later analysis
+   - hasSuspiciousTiming(): Quick check for suspicious timing
+   - getHighSuspicionWallets(): Get wallets with high suspicion
+   - getSummary(): Get analyzer statistics
+   - Event emission (analysis-complete, high-suspicion)
+   - Caching with configurable TTL
+
+4. Key algorithms:
+   - calculateHourDistribution(): Build 24-hour distribution
+   - calculateDayDistribution(): Build 7-day distribution
+   - calculatePeriodDistribution(): Build period distribution
+   - calculateIntervalStats(): Calculate trade interval statistics
+   - calculateConcentrationScore(): Entropy-based concentration measurement
+   - calculateRegularityScore(): Detect bot-like regular intervals
+   - detectAnomalies(): Identify suspicious patterns
+   - calculateSuspicionScore(): Weighted scoring (0-100 scale)
+
+5. Factory and convenience functions:
+   - createTimingPatternAnalyzer()
+   - getSharedTimingPatternAnalyzer() / setSharedTimingPatternAnalyzer()
+   - analyzeTimingPattern(), batchAnalyzeTimingPatterns()
+   - hasSuspiciousTiming(), getTimingAnalyzerSummary()
+   - addTradesForTimingAnalysis()
+   - getTimingPatternDescription(), getSuspicionLevelDescription()
+
+TESTS: 86 unit tests + 25 E2E tests covering all functionality
+- Constructor and configuration
+- Trade management (add, clear)
+- Timing analysis and distributions
+- Pattern classification
+- Anomaly detection
+- Suspicion scoring
+- Batch analysis
+- Caching behavior
+- Event emission
+- Edge cases
+
+TYPECHECK: Passes
+FULL TEST SUITE: 5861 tests pass (93 test files)
+
+FILES:
+- src/detection/timing-pattern-analyzer.ts (new - ~1500 lines)
+- tests/detection/timing-pattern-analyzer.test.ts (new - ~1100 lines)
+- tests/e2e/timing-pattern-analyzer.e2e.test.ts (new - ~600 lines)
+- src/detection/index.ts (updated with exports)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-PAT-004 (Win rate tracker) at priority 99

@@ -9,10 +9,8 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from
 import puppeteer, { Browser, Page } from "puppeteer";
 import {
   TradingPatternType,
-  PatternConfidence,
   PatternRiskFlag,
   createTradingPatternClassifier,
-  setSharedTradingPatternClassifier,
   resetSharedTradingPatternClassifier,
   classifyTradingPattern,
   batchClassifyTradingPatterns,
@@ -30,20 +28,6 @@ const SKIP_BROWSER_TESTS = process.env.SKIP_BROWSER_TESTS === "true";
 const TEST_WALLET = "0x1234567890123456789012345678901234567890";
 const TEST_WALLET_2 = "0xabcdef1234567890abcdef1234567890abcdef12";
 const TEST_WALLET_3 = "0x0987654321098765432109876543210987654321";
-
-/**
- * Create a sample trade entry
- */
-function createTrade(
-  overrides: Partial<PatternTrade> & { tradeId: string; marketId: string; sizeUsd: number }
-): PatternTrade {
-  return {
-    side: "buy",
-    price: 0.5,
-    timestamp: new Date(),
-    ...overrides,
-  };
-}
 
 /**
  * Create trades for a wallet with specific patterns
@@ -260,7 +244,7 @@ describe("Trading Pattern Classifier E2E Tests", () => {
 
       try {
         page.on("pageerror", (error) => {
-          jsErrors.push(error.message);
+          jsErrors.push(String(error));
         });
 
         await page.goto(baseUrl, { waitUntil: "networkidle0", timeout: 30000 });

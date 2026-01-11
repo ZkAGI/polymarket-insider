@@ -1099,3 +1099,41 @@ export type {
   ClassificationSummary as PatternClassificationSummary,
   TradingPatternClassifierConfig,
 } from "./trading-pattern-classifier";
+
+// DET-PAT-003: Timing Pattern Analyzer
+export {
+  TimeOfDayPeriod,
+  DayOfWeekType,
+  TimingPatternType,
+  TimingSuspicionLevel,
+  TimingAnomalyType,
+  DEFAULT_TIMING_ANALYZER_CONFIG,
+  TimingPatternAnalyzer,
+  createTimingPatternAnalyzer,
+  getSharedTimingPatternAnalyzer,
+  setSharedTimingPatternAnalyzer,
+  resetSharedTimingPatternAnalyzer,
+  analyzeTimingPattern,
+  batchAnalyzeTimingPatterns,
+  hasSuspiciousTiming,
+  getCachedTimingAnalysis,
+  getWalletsWithSuspiciousTiming,
+  getTimingAnalyzerSummary,
+  addTradesForTimingAnalysis,
+  getTimingPatternDescription,
+  getSuspicionLevelDescription,
+} from "./timing-pattern-analyzer";
+
+export type {
+  TimingTrade,
+  HourDistribution,
+  DayDistribution,
+  PeriodDistribution,
+  IntervalStats,
+  TimingAnomaly,
+  TimingPatternResult,
+  TimingPatternAnalyzerConfig,
+  AnalyzeTimingOptions,
+  BatchTimingAnalysisResult,
+  TimingAnalyzerSummary,
+} from "./timing-pattern-analyzer";

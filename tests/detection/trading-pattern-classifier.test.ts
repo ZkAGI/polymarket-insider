@@ -15,9 +15,7 @@ import {
   TradingPatternClassifier,
   TradingPatternType,
   PatternConfidence,
-  PatternFeature,
   PatternRiskFlag,
-  DEFAULT_CLASSIFIER_CONFIG,
   DEFAULT_PATTERN_DEFINITIONS,
   createTradingPatternClassifier,
   getSharedTradingPatternClassifier,
@@ -33,7 +31,6 @@ import {
   isSuspiciousPattern,
   getPatternDescription,
   PatternTrade,
-  PatternClassificationResult,
 } from "../../src/detection/trading-pattern-classifier";
 
 // Test wallets (valid Ethereum addresses)
@@ -252,7 +249,9 @@ describe("TradingPatternClassifier", () => {
       classifier.classify(TEST_WALLET, trades);
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener.mock.calls[0][0].address).toBe(TEST_WALLET);
+      const firstCall = listener.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      expect(firstCall![0].address).toBe(TEST_WALLET);
     });
 
     it("should emit highRisk event for high risk score", () => {
