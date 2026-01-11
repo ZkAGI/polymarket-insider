@@ -1741,7 +1741,8 @@
       "priority": 88,
       "name": "Geopolitical event market tagger",
       "description": "Tag markets related to geopolitical events",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T22:10:00Z",
       "steps": [
         "Define geopolitical keywords",
         "Parse market metadata",

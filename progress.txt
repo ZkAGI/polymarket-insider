@@ -5641,3 +5641,87 @@ NOTES FOR NEXT SESSION:
 - Could build on classification and information advantage modules
 - Consider adding real-time ranking updates based on market activity
 
+
+
+=== Session: DET-NICHE-003 Implementation ===
+Date: 2026-01-11
+Feature: Geopolitical Event Market Tagger
+Status: COMPLETED
+
+IMPLEMENTATION:
+Created comprehensive geopolitical event market tagging system in
+src/detection/geopolitical-event-tagger.ts with ~2100 lines of code.
+
+KEY COMPONENTS:
+1. GeopoliticalRegion enum - 14 regions:
+   - EASTERN_EUROPE, WESTERN_EUROPE, MENA, EAST_ASIA
+   - SOUTH_ASIA, SOUTHEAST_ASIA, NORTH_AMERICA, LATIN_AMERICA
+   - SUB_SAHARAN_AFRICA, CENTRAL_ASIA, RUSSIA_FSU, OCEANIA
+   - ARCTIC, GLOBAL
+
+2. GeopoliticalEventType enum - 16 event types:
+   - ARMED_CONFLICT, SANCTIONS, DIPLOMACY, MILITARY_ACTIVITY
+   - TERRITORIAL_DISPUTE, NUCLEAR_WMD, TRADE_CONFLICT, CYBER_WARFARE
+   - MIGRATION_CRISIS, ENERGY_RESOURCES, INTERNATIONAL_ORG
+   - REGIME_CHANGE, HUMAN_RIGHTS, ALLIANCE_DYNAMICS, BORDER_INCIDENT
+   - GENERAL
+
+3. GeopoliticalActor enum - 26 major actors:
+   - Major powers: US, RUSSIA, CHINA, EU, UK
+   - Regional powers: INDIA, JAPAN, GERMANY, FRANCE, TURKEY, etc.
+   - Conflict parties: UKRAINE, TAIWAN, NORTH_KOREA, PALESTINE, SYRIA
+   - International orgs: NATO, UN, G7, G20, BRICS, OPEC
+
+4. TagConfidence enum - 4 confidence levels:
+   - VERY_HIGH, HIGH, MEDIUM, LOW
+
+5. DEFAULT_GEOPOLITICAL_KEYWORDS - 140+ keywords with:
+   - Keyword patterns with weights
+   - Trigger mappings to regions, event types, and actors
+   - Context requirements and exclusions
+   - Categories: conflict, sanctions, nuclear, territory, diplomacy,
+     international orgs, countries, cyber warfare, energy, migration,
+     human rights, regime change
+
+6. DEFAULT_GEOPOLITICAL_SITUATIONS - 6 known situations:
+   - russia-ukraine-war
+   - israel-hamas-conflict
+   - china-taiwan-tensions
+   - north-korea-nuclear
+   - iran-nuclear-deal
+   - us-china-competition
+
+KEY FEATURES:
+- Multi-dimensional tagging (regions, event types, actors)
+- Situation assignment for grouping related markets
+- Related market detection based on shared geopolitical context
+- Configurable caching with TTL (default 12 hours)
+- Batch tagging support with distributions
+- Filter by region, event type, actor, or situation
+- Manual market linking capability
+- Summary statistics and metrics
+
+API FUNCTIONS:
+- tagMarket(), tagMarkets()
+- isGeopoliticalMarket()
+- getMarketsByRegion(), getMarketsByEventType()
+- getMarketsByActor(), getMarketsBySituation()
+- getRelatedMarkets(), linkRelatedMarkets()
+- getSituations(), getSituation()
+- getKeywords(), getSummary()
+
+TESTS:
+- 63 unit tests in tests/detection/geopolitical-event-tagger.test.ts
+- All tests pass (5046 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/geopolitical-event-tagger.ts (new)
+- src/detection/index.ts (updated with exports)
+- tests/detection/geopolitical-event-tagger.test.ts (new)
+
+NOTES FOR NEXT SESSION:
+- DET-NICHE-004: Political market identifier is next in priority
+- Could leverage existing market category classifier for politics
+- Consider adding real-time situation updates based on news feeds
+

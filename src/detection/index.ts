@@ -751,3 +751,40 @@ export type {
   IdentifierSummary,
   InformationAdvantageIdentifierConfig,
 } from "./information-advantage-identifier";
+
+// DET-NICHE-003: Geopolitical Event Market Tagger
+export {
+  GeopoliticalRegion,
+  GeopoliticalEventType,
+  GeopoliticalActor,
+  TagConfidence,
+  DEFAULT_GEOPOLITICAL_KEYWORDS,
+  DEFAULT_GEOPOLITICAL_SITUATIONS,
+  GeopoliticalEventTagger,
+  createGeopoliticalEventTagger,
+  getSharedGeopoliticalEventTagger,
+  setSharedGeopoliticalEventTagger,
+  resetSharedGeopoliticalEventTagger,
+  tagMarket,
+  tagMarkets,
+  isGeopoliticalMarket,
+  getGeopoliticalMarketsByRegion,
+  getGeopoliticalMarketsByEventType,
+  getGeopoliticalMarketsByActor,
+  getGeopoliticalMarketsBySituation,
+  getRelatedGeopoliticalMarkets,
+  linkRelatedGeopoliticalMarkets,
+  getGeopoliticalTaggerSummary,
+} from "./geopolitical-event-tagger";
+
+export type {
+  GeopoliticalTag,
+  GeopoliticalTagResult,
+  MarketForGeopoliticalTagging,
+  GeopoliticalKeyword,
+  GeopoliticalSituation,
+  TagMarketOptions,
+  BatchTaggingResult,
+  TaggerSummary,
+  GeopoliticalEventTaggerConfig,
+} from "./geopolitical-event-tagger";
