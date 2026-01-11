@@ -3939,3 +3939,98 @@ NOTES:
 - Multi-factor clusters get 1.3x confidence boost
 - Ready for integration with alert system
 - Next up: DET-FRESH-007 (Wallet reactivation detector)
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: DET-FRESH-007 - Wallet reactivation detector
+- Created src/detection/wallet-reactivation.ts with comprehensive dormancy and reactivation detection
+
+IMPLEMENTATION:
+
+1. Core Enums:
+   - ReactivationStatus: NEVER_DORMANT, DORMANT, JUST_REACTIVATED, RECENTLY_REACTIVATED, NO_HISTORY
+   - DormancySeverity: SHORT (<=60 days), MEDIUM (<=180 days), LONG (<=365 days), EXTENDED (>365 days)
+   - ActivityPatternType: REGULAR, SPORADIC, BURST, SINGLE_SHOT
+
+2. WalletReactivationDetector Class:
+   - checkWallet(): Analyzes single wallet for dormancy/reactivation
+   - checkWallets(): Batch analysis with summary statistics
+   - getSummary(): Returns summary of batch results
+   - isDormant(): Check if wallet currently dormant
+   - wasReactivated(): Check if wallet was recently reactivated
+   - getDaysSinceActivity(): Get days since last activity
+
+3. Configuration Options (WalletReactivationDetectorConfig):
+   - dormancyThresholdDays: Days of inactivity to consider dormant (default: 30)
+   - recentReactivationWindowDays: Window for "recently reactivated" (default: 7)
+   - justReactivatedWindowDays: Window for "just reactivated" (default: 1)
+   - cacheTtlMs: Cache TTL for results (default: 300000 - 5 min)
+   - cacheMaxSize: Max cached entries (default: 5000)
+   - severityThresholds: Custom thresholds for dormancy severity
+
+4. Default Severity Thresholds:
+   - shortMaxDays: 60
+   - mediumMaxDays: 180
+   - longMaxDays: 365
+   - Extended: > 365 days
+
+5. Activity Pattern Analysis:
+   - Analyzes trade history to determine activity pattern
+   - REGULAR: Consistent trading (stddev < 0.5 * mean interval)
+   - SPORADIC: Inconsistent trading (stddev >= 0.5 * mean)
+   - BURST: Multiple trades in a short burst
+   - SINGLE_SHOT: Only one trade in history
+
+6. Reactivation Detection Logic:
+   - Tracks last activity timestamp for each wallet
+   - Compares against dormancy threshold
+   - Determines if reactivation is "just" (within 1 day) or "recent" (within 7 days)
+   - Calculates dormancy severity based on inactivity duration
+
+7. Result Types:
+   - WalletReactivationResult: Individual wallet analysis result
+   - BatchReactivationResult: Multi-wallet batch analysis
+   - ReactivationEvent: Details of reactivation event
+   - ActivityTimelineEntry: Individual activity entries
+   - ReactivationSummary: Statistics for batch results
+
+EXPORTS (src/detection/wallet-reactivation.ts):
+- WalletReactivationDetector class
+- ReactivationStatus, DormancySeverity, ActivityPatternType enums
+- DEFAULT_DORMANCY_SEVERITY_THRESHOLDS constant
+- createWalletReactivationDetector, getSharedWalletReactivationDetector, etc.
+- Convenience functions: checkWalletReactivation, batchCheckWalletReactivation, isWalletDormant, wasWalletRecentlyReactivated, getWalletDaysSinceActivity, getReactivationSummary
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all wallet-reactivation functionality
+- DET-FRESH-007 exports grouped separately
+
+TESTS:
+- Created tests/detection/wallet-reactivation.test.ts with 51 unit tests covering:
+  - Constructor and configuration
+  - Singleton management
+  - Dormancy detection
+  - Reactivation detection (just, recent)
+  - Activity pattern analysis (REGULAR, SPORADIC, BURST, SINGLE_SHOT)
+  - Severity classification
+  - Cache behavior
+  - Convenience functions
+  - Edge cases (no history, empty trades)
+
+- Created tests/e2e/wallet-reactivation.e2e.test.ts with 25 E2E tests covering:
+  - Module exports verification
+  - Type exports verification
+  - Singleton management
+  - Browser module loading
+  - Console error free execution
+  - Multiple script executions
+
+TECHNICAL NOTES:
+- Uses Trade interface from src/api/clob/types.ts (created_at field for timestamps)
+- Implements caching with TTL and max size to optimize repeated checks
+- Activity timeline built from trade history
+- Pattern analysis uses standard deviation of trade intervals
+- All 3755 tests pass
+- TypeScript strict mode compliant
+
+- Next up: DET-FRESH-008 (Fresh wallet confidence scorer)

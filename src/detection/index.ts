@@ -176,3 +176,33 @@ export type {
   ClusteringThresholds,
   FreshWalletClusterAnalyzerConfig,
 } from "./fresh-wallet-clustering";
+
+// DET-FRESH-007: Wallet Reactivation Detector
+export {
+  ReactivationStatus,
+  DormancySeverity,
+  ActivityPatternType,
+  DEFAULT_DORMANCY_SEVERITY_THRESHOLDS,
+  WalletReactivationDetector,
+  createWalletReactivationDetector,
+  getSharedWalletReactivationDetector,
+  setSharedWalletReactivationDetector,
+  resetSharedWalletReactivationDetector,
+  checkWalletReactivation,
+  batchCheckWalletReactivation,
+  isWalletDormant,
+  wasWalletRecentlyReactivated,
+  getWalletDaysSinceActivity,
+  getReactivationSummary,
+} from "./wallet-reactivation";
+
+export type {
+  ReactivationEvent,
+  ActivityTimelineEntry,
+  WalletReactivationResult,
+  ReactivationCheckOptions,
+  BatchReactivationResult,
+  ReactivationSummary,
+  WalletReactivationDetectorConfig,
+  DormancySeverityThresholds,
+} from "./wallet-reactivation";

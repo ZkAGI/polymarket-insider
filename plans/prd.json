@@ -1382,7 +1382,8 @@
       "priority": 70,
       "name": "Wallet reactivation detector",
       "description": "Detect dormant wallets suddenly becoming active",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T08:30:00Z",
       "steps": [
         "Track last activity timestamp",
         "Define dormancy threshold",
@@ -1451,6 +1452,234 @@
         "typecheck": "Verify Alert type",
         "e2e": "Trigger fresh wallet alert",
         "manual_verification": "Verify alert content"
+      }
+    },
+      {
+      "id": "DET-VOL-001",
+      "priority": 74,
+      "name": "Market baseline volume calculator",
+      "description": "Calculate normal volume baseline for each market",
+      "passes": false,
+      "steps": [
+        "Collect historical volume data",
+        "Calculate rolling averages",
+        "Account for market maturity",
+        "Update baselines periodically"
+      ],
+      "test_instructions": {
+        "unit": "Test baseline calculation",
+        "typecheck": "Verify types",
+        "e2e": "Calculate for active markets",
+        "manual_verification": "Verify baseline accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-002",
+      "priority": 75,
+      "name": "Rolling volume average tracker",
+      "description": "Track rolling average volume over configurable windows",
+      "passes": false,
+      "steps": [
+        "Implement sliding window",
+        "Support multiple time windows",
+        "Handle sparse data",
+        "Provide current averages"
+      ],
+      "test_instructions": {
+        "unit": "Test rolling calculation",
+        "typecheck": "Verify types",
+        "e2e": "Track live volume",
+        "manual_verification": "Verify rolling accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-003",
+      "priority": 76,
+      "name": "Volume spike detector",
+      "description": "Detect sudden spikes in trading volume above threshold",
+      "passes": false,
+      "steps": [
+        "Compare current to baseline",
+        "Define spike thresholds",
+        "Detect sustained vs momentary spikes",
+        "Emit spike events"
+      ],
+      "test_instructions": {
+        "unit": "Test spike detection",
+        "typecheck": "Verify types",
+        "e2e": "Detect live spikes",
+        "manual_verification": "Verify spike accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-004",
+      "priority": 77,
+      "name": "Individual trade size analyzer",
+      "description": "Flag individual trades significantly larger than average",
+      "passes": false,
+      "steps": [
+        "Calculate trade size percentiles",
+        "Define large trade thresholds",
+        "Flag outlier trades",
+        "Track large trade frequency"
+      ],
+      "test_instructions": {
+        "unit": "Test size analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze live trades",
+        "manual_verification": "Verify flagging accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-005",
+      "priority": 78,
+      "name": "Whale trade threshold calculator",
+      "description": "Dynamically calculate whale thresholds per market",
+      "passes": false,
+      "steps": [
+        "Analyze market liquidity",
+        "Calculate dynamic threshold",
+        "Update as market changes",
+        "Provide threshold API"
+      ],
+      "test_instructions": {
+        "unit": "Test threshold calculation",
+        "typecheck": "Verify types",
+        "e2e": "Calculate for various markets",
+        "manual_verification": "Verify threshold appropriateness"
+      }
+    },
+    {
+      "id": "DET-VOL-006",
+      "priority": 79,
+      "name": "Volume-to-liquidity ratio analyzer",
+      "description": "Analyze trade volume relative to available liquidity",
+      "passes": false,
+      "steps": [
+        "Get order book depth",
+        "Calculate volume/liquidity ratio",
+        "Flag high ratio trades",
+        "Track ratio over time"
+      ],
+      "test_instructions": {
+        "unit": "Test ratio calculation",
+        "typecheck": "Verify types",
+        "e2e": "Analyze live trades",
+        "manual_verification": "Verify ratio accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-007",
+      "priority": 80,
+      "name": "Time-of-day volume normalizer",
+      "description": "Normalize volume analysis for time-of-day patterns",
+      "passes": false,
+      "steps": [
+        "Build hour-of-day profiles",
+        "Normalize by expected volume",
+        "Handle timezone differences",
+        "Detect off-hours anomalies"
+      ],
+      "test_instructions": {
+        "unit": "Test normalization",
+        "typecheck": "Verify types",
+        "e2e": "Normalize live data",
+        "manual_verification": "Verify normalization accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-008",
+      "priority": 81,
+      "name": "Consecutive large trade detector",
+      "description": "Detect series of large trades in quick succession",
+      "passes": false,
+      "steps": [
+        "Track trade sequences",
+        "Define consecutive trade window",
+        "Flag burst patterns",
+        "Calculate burst intensity"
+      ],
+      "test_instructions": {
+        "unit": "Test burst detection",
+        "typecheck": "Verify types",
+        "e2e": "Detect trade bursts",
+        "manual_verification": "Verify burst accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-009",
+      "priority": 82,
+      "name": "Market impact calculator",
+      "description": "Calculate price impact of large trades",
+      "passes": false,
+      "steps": [
+        "Track price before/after trade",
+        "Calculate slippage",
+        "Compare to expected impact",
+        "Flag excessive impact"
+      ],
+      "test_instructions": {
+        "unit": "Test impact calculation",
+        "typecheck": "Verify types",
+        "e2e": "Calculate live impact",
+        "manual_verification": "Verify impact accuracy"
+      }
+    },
+    {
+      "id": "DET-VOL-010",
+      "priority": 83,
+      "name": "Unusual volume alert generator",
+      "description": "Generate alerts when volume anomalies are detected",
+      "passes": false,
+      "steps": [
+        "Define volume alert conditions",
+        "Create alert with volume context",
+        "Set severity by anomaly size",
+        "Include comparison data"
+      ],
+      "test_instructions": {
+        "unit": "Test alert generation",
+        "typecheck": "Verify Alert type",
+        "e2e": "Trigger volume alert",
+        "manual_verification": "Verify alert content"
+      }
+    },
+    {
+      "id": "DET-VOL-011",
+      "priority": 84,
+      "name": "Volume clustering analyzer",
+      "description": "Detect coordinated volume from multiple wallets",
+      "passes": false,
+      "steps": [
+        "Group trades by time window",
+        "Identify wallet clusters",
+        "Calculate coordination score",
+        "Flag suspicious clusters"
+      ],
+      "test_instructions": {
+        "unit": "Test clustering logic",
+        "typecheck": "Verify types",
+        "e2e": "Detect volume clusters",
+        "manual_verification": "Verify cluster detection"
+      }
+    },
+    {
+      "id": "DET-VOL-012",
+      "priority": 85,
+      "name": "Pre-event volume spike detector",
+      "description": "Detect volume spikes before scheduled events",
+      "passes": false,
+      "steps": [
+        "Track market event dates",
+        "Monitor pre-event volume",
+        "Compare to normal pre-event",
+        "Flag unusual pre-event activity"
+      ],
+      "test_instructions": {
+        "unit": "Test pre-event logic",
+        "typecheck": "Verify types",
+        "e2e": "Monitor pre-event markets",
+        "manual_verification": "Verify detection accuracy"
       }
     },
     {
