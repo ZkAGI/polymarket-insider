@@ -200,3 +200,27 @@ export type {
   QueryPattern,
   IndexServiceConfig,
 } from "./indexes";
+
+// Time-series data storage exports
+export {
+  TimeSeriesService,
+  timeSeriesService,
+  createTimeSeriesService,
+  CHUNK_SIZES,
+  DEFAULT_COMPRESSION_CONFIGS,
+} from "./timeseries";
+export type {
+  TimeSeriesDataType,
+  TimeChunk,
+  ChunkConfig,
+  CompressionLevel,
+  CompressionConfig,
+  AggregatedPricePoint,
+  AggregatedTradeStats,
+  TimeSeriesResult,
+  DownsampleConfig,
+  TimeSeriesServiceConfig,
+  CompressionResult,
+  StorageStats,
+  ChunkAnalysis,
+} from "./timeseries";

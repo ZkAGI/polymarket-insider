@@ -1242,7 +1242,8 @@
       "priority": 63,
       "name": "Time-series data storage",
       "description": "Optimize storage for time-series market data",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T00:38:00Z",
       "steps": [
         "Consider TimescaleDB extension",
         "Implement chunking",

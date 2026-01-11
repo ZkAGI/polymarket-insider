@@ -3360,3 +3360,71 @@ NOTES:
 - Query performance analysis uses PostgreSQL EXPLAIN
 - Next up: API-DB-010 (Time-series data storage)
 
+---
+
+## API-DB-010: Time-series data storage
+COMPLETED: 2026-01-11T00:38:00Z
+
+IMPLEMENTATION:
+- Created TimeSeriesService in src/db/timeseries.ts
+- Implements optimized storage and querying for time-series market data
+- Supports PriceHistory, Trade, MarketSnapshot, and WalletSnapshot tables
+
+KEY FEATURES:
+1. Chunking (Time-based Partitioning):
+   - Configurable chunk sizes: 1/5/15 minutes, 1/4 hours, 1 day, 1 week, 1 month
+   - getChunkBoundaries() - get chunk boundaries for time ranges
+   - analyzeChunks() - analyze data distribution across chunks
+
+2. Compression (Data Aggregation):
+   - Configurable compression levels by data age
+   - Default configs: 7/30/90/365 day thresholds with HOUR_1/4, DAY_1, WEEK_1 intervals
+   - compressPriceHistory() - compress records to larger intervals
+   - runAutoCompression() - automatic compression based on age thresholds
+   - VWAP (Volume-Weighted Average Price) calculation for aggregation
+
+3. Optimized Range Queries:
+   - queryPriceHistory() - auto-selects optimal interval for time range
+   - queryOHLCV() - OHLCV (Open-High-Low-Close-Volume) aggregation
+   - queryTradeStats() - aggregated trade statistics by interval
+   - downsampleLTTB() - Largest-Triangle-Three-Buckets algorithm for visual preservation
+
+4. Storage Statistics:
+   - getStorageStats() - stats by data type (records, age, compression)
+   - getAllStorageStats() - stats for all time-series types
+   - getStorageSummary() - comprehensive summary with recommendations
+
+EXPORTS (src/db/timeseries.ts):
+- TimeSeriesService, timeSeriesService, createTimeSeriesService
+- CHUNK_SIZES, DEFAULT_COMPRESSION_CONFIGS
+- All type exports: TimeSeriesDataType, TimeChunk, ChunkConfig, CompressionConfig, etc.
+
+INDEX EXPORTS (src/db/index.ts):
+- All timeseries exports re-exported from main db index
+
+TESTS:
+- Created tests/db/timeseries.test.ts with 59 comprehensive tests:
+  - Constructor and configuration tests
+  - CHUNK_SIZES and DEFAULT_COMPRESSION_CONFIGS validation
+  - Chunk boundary calculation tests
+  - Compression configuration by age tests
+  - Chunk analysis tests for all data types
+  - Price history compression tests
+  - Auto-compression tests
+  - Price history querying with optimal intervals
+  - OHLCV calculation tests
+  - Trade statistics aggregation tests
+  - LTTB downsampling tests
+  - Storage statistics tests for all data types
+  - Storage summary and recommendation tests
+  - Edge case handling tests
+- All 3309 tests pass (59 new + 3250 existing)
+
+NOTES:
+- Uses existing Prisma schema tables (no schema changes needed)
+- TimeInterval enum already exists in schema for PriceHistory
+- LTTB algorithm preserves visual characteristics during downsampling
+- Compression is non-destructive by default (keepOriginal: true for recent data)
+- Recommendations generated based on archived/uncompressed data ratios
+- Next up: DET-FRESH-001 (Wallet age calculator)
+
