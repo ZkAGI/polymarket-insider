@@ -6037,3 +6037,101 @@ FILES:
 
 NOTES FOR NEXT SESSION:
 - DET-NICHE-009: Niche market vs mainstream comparator is next
+
+================================================================================
+SESSION: 2026-01-12 - DET-NICHE-009 Implementation
+================================================================================
+
+FEATURE: DET-NICHE-009 - Cross-market correlation detector
+PRIORITY: 94
+STATUS: COMPLETED
+
+OVERVIEW:
+Implemented a comprehensive cross-market correlation detector that identifies
+correlated trading activity across related niche markets. This module helps
+detect coordinated trading, information-based trading patterns, and potential
+manipulation across market pairs.
+
+IMPLEMENTATION DETAILS:
+1. MarketRelationType enum - Six types of market relationships:
+   - SAME_TOPIC, SAME_CATEGORY, OPPOSING, COMPLEMENTARY
+   - KEYWORD_OVERLAP, TEMPORAL, CUSTOM
+
+2. CorrelationType enum - Six correlation patterns:
+   - POSITIVE (same direction trades)
+   - NEGATIVE (opposite direction/hedging)
+   - SEQUENTIAL (ordered trades)
+   - SIMULTANEOUS (very close timing)
+   - VOLUME (similar trade sizes)
+   - MIXED
+
+3. CorrelationSeverity enum - Four levels:
+   - LOW, MEDIUM, HIGH, CRITICAL
+
+4. CorrelationStatus enum - Four states:
+   - ACTIVE, RESOLVED, FLAGGED, DISMISSED
+
+5. CrossMarketCorrelationDetector class with:
+   - Market relation management (add, remove, get, auto-detect)
+   - Correlation analysis with overlapping wallet detection
+   - Pearson coefficient calculation for volume correlation
+   - Timing analysis and pattern detection
+   - Event emission for correlations and critical alerts
+   - Cooldown system to prevent alert spam
+
+KEY FEATURES:
+- Auto-detection of related markets via keyword matching
+- Order-independent market pair keys
+- Case-insensitive wallet address handling
+- Trade pair matching within configurable time windows
+- Correlation score calculation with configurable weights:
+  - Wallet overlap (25%)
+  - Trade pair count (20%)
+  - Volume correlation (20%)
+  - Timing correlation (20%)
+  - Direction alignment (15%)
+- Severity determination based on score thresholds
+- Flag reason generation for investigation
+- Status management for correlations
+
+API FUNCTIONS:
+- addRelation(), removeRelation(), getRelation()
+- areMarketsRelated(), getRelationsForMarket()
+- getAllRelations(), autoDetectRelations()
+- analyzeCorrelation(), analyzeMultiplePairs()
+- getMarketCorrelations(), getWalletCorrelations()
+- getRecentCorrelations(), getCorrelationsBySeverity()
+- getCorrelationsByType(), getFlaggedCorrelations()
+- updateCorrelationStatus(), flagCorrelation(), dismissCorrelation()
+- getSummary(), getStats(), getThresholds()
+- clearAll(), clearCorrelations()
+
+CONVENIENCE FUNCTIONS:
+- addMarketRelation(), areMarketsRelated()
+- analyzeCrossMarketCorrelation()
+- analyzeMultipleMarketPairCorrelations()
+- getRecentCrossMarketCorrelations()
+- getMarketCrossMarketCorrelations()
+- getWalletCrossMarketCorrelations()
+- getCrossMarketCorrelationSummary()
+- autoDetectMarketRelations()
+
+TESTS: 53 unit tests passing, Typecheck passes
+TOTAL TEST SUITE: 5525 tests passing
+
+FILES:
+- src/detection/cross-market-correlation.ts (new - ~1000 lines)
+- src/detection/index.ts (updated with exports)
+- tests/detection/cross-market-correlation.test.ts (new - ~950 lines)
+
+INTEGRATION:
+- Exports added to src/detection/index.ts
+- Works with MarketCategory from api/gamma/types
+- Integrates with CorrelationTrade for trade data
+- Uses EventEmitter for event notifications
+
+NOTES FOR NEXT SESSION:
+- DET-NICHE-010: Niche market alert generator is next
+- Could integrate with real-time trade monitoring
+- Consider adding persistence layer for correlations
+- May want to add visualization of correlation networks

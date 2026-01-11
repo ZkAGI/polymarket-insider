@@ -559,14 +559,9 @@ describe("WalletConcentrationAnalyzer", () => {
         { category: MarketCategory.OTHER, count: 90, size: 10 },      // 90% trades, ~1% volume
       ]);
 
-      const result = analyzer.analyze(walletAddress, trades);
-
-      // Primary category by trade count is OTHER (90 trades)
-      // But SPORTS has volume percentage = 100000 / 100900 = ~99.1%
-      // The primary category (OTHER) has volume percentage < 1%
-      // Since the primary category doesn't have high volume %, we need to check
-      // that the flag is based on primary category's volume percentage
-      // In this case, OTHER is the primary with low volume, so it won't flag
+      // Just call analyze - we're setting up a scenario where OTHER is primary
+      // but doesn't have high volume, so it won't flag for volume concentration
+      analyzer.analyze(walletAddress, trades);
 
       // Let's flip it - make SPORTS the primary by trade count too
       const trades2 = createTradesForWallet(walletAddress, [

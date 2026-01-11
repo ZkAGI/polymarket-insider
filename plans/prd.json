@@ -1861,7 +1861,8 @@
       "priority": 94,
       "name": "Cross-market correlation detector",
       "description": "Detect correlated trading across related niche markets",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T00:20:00Z",
       "steps": [
         "Identify related markets",
         "Track cross-market trades",

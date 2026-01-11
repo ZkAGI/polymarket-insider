@@ -956,3 +956,39 @@ export type {
   ConcentrationSummary,
   WalletConcentrationAnalyzerConfig,
 } from "./wallet-concentration";
+
+// DET-NICHE-009: Cross-Market Correlation Detector
+export {
+  MarketRelationType,
+  CorrelationType,
+  CorrelationSeverity,
+  CorrelationStatus,
+  DEFAULT_CORRELATION_THRESHOLDS,
+  CrossMarketCorrelationDetector,
+  createCrossMarketCorrelationDetector,
+  getSharedCrossMarketCorrelationDetector,
+  setSharedCrossMarketCorrelationDetector,
+  resetSharedCrossMarketCorrelationDetector,
+  addMarketRelation,
+  areMarketsRelated,
+  analyzeCrossMarketCorrelation,
+  analyzeMultipleMarketPairCorrelations,
+  getRecentCrossMarketCorrelations,
+  getMarketCrossMarketCorrelations,
+  getWalletCrossMarketCorrelations,
+  getCrossMarketCorrelationSummary,
+  autoDetectMarketRelations,
+} from "./cross-market-correlation";
+
+export type {
+  CorrelationTrade,
+  MarketRelation,
+  CrossMarketTradePair,
+  CrossMarketCorrelation,
+  CorrelationAnalysisResult,
+  BatchCorrelationResult,
+  CorrelationSummary,
+  CorrelationThresholdConfig,
+  CrossMarketCorrelationDetectorConfig,
+  AnalyzeCorrelationOptions,
+} from "./cross-market-correlation";
