@@ -1223,3 +1223,43 @@ export type {
   PnlCalculatorSummary,
   PnlCalculatorConfig,
 } from "./profit-loss-calculator";
+
+// DET-PAT-006: Position Sizing Pattern Analyzer
+export {
+  SizingCategory,
+  SizingPatternType,
+  SizingAnomalyType,
+  SizingSuspicionLevel,
+  DEFAULT_SIZING_ANALYZER_CONFIG,
+  SIZING_CATEGORY_THRESHOLDS,
+  PositionSizingAnalyzer,
+  createPositionSizingAnalyzer,
+  getSharedPositionSizingAnalyzer,
+  setSharedPositionSizingAnalyzer,
+  resetSharedPositionSizingAnalyzer,
+  addPositionForSizing,
+  addPositionsForSizing,
+  analyzePositionSizing,
+  batchAnalyzePositionSizing,
+  hasSuspiciousSizingPattern,
+  getWalletsWithSuspiciousSizing,
+  getHighConvictionTradersFromSizing,
+  getPositionSizingAnalyzerSummary,
+  getSizingCategoryDescription,
+  getSizingPatternDescription,
+  getSizingSuspicionDescription,
+} from "./position-sizing-analyzer";
+
+export type {
+  SizingPosition,
+  SizeDistribution,
+  SizingPatternMatch,
+  SizingAnomaly,
+  CategorySizingStats,
+  SizingTrend,
+  SizingAnalysisResult,
+  BatchSizingAnalysisResult,
+  SizingAnalyzerSummary,
+  PositionSizingAnalyzerConfig,
+  AnalyzeSizingOptions,
+} from "./position-sizing-analyzer";

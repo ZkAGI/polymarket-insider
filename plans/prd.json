@@ -1695,7 +1695,6 @@
         "manual_verification": "Verify detection accuracy"
       }
     },
-
     {
       "id": "DET-NICHE-001",
       "priority": 86,
@@ -2003,7 +2002,7 @@
       "priority": 101,
       "name": "Position sizing pattern analyzer",
       "description": "Analyze how wallets size their positions",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Track position sizes",
         "Calculate size distribution",
@@ -2015,7 +2014,8 @@
         "typecheck": "Verify types",
         "e2e": "Analyze live sizing",
         "manual_verification": "Verify sizing insights"
-      }
+      },
+      "completed_at": "2026-01-11T23:06:09.078Z"
     },
     {
       "id": "DET-PAT-007",
