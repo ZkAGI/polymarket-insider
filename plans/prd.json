@@ -1600,7 +1600,8 @@
       "priority": 81,
       "name": "Consecutive large trade detector",
       "description": "Detect series of large trades in quick succession",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T12:15:25Z",
       "steps": [
         "Track trade sequences",
         "Define consecutive trade window",

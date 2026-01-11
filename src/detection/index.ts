@@ -520,3 +520,33 @@ export type {
   BatchNormalizeResult,
   TimeOfDayNormalizerSummary,
 } from "./time-of-day-normalizer";
+
+// DET-VOL-008: Consecutive Large Trade Detector
+export {
+  BurstPatternType,
+  BurstSeverity,
+  BurstState,
+  DEFAULT_BURST_THRESHOLDS,
+  ConsecutiveLargeTradeDetector,
+  createConsecutiveLargeTradeDetector,
+  getSharedConsecutiveLargeTradeDetector,
+  setSharedConsecutiveLargeTradeDetector,
+  resetSharedConsecutiveLargeTradeDetector,
+  processTradeForBurst,
+  processTradesForBurst,
+  isMarketInBurstState,
+  isWalletInBurstState,
+  getRecentBurstEvents,
+  getBurstDetectorSummary,
+} from "./consecutive-large-trades";
+
+export type {
+  SequenceTrade,
+  BurstDetectionResult,
+  BurstEvent,
+  BurstThresholdConfig,
+  ConsecutiveLargeTradeDetectorConfig,
+  ProcessTradeOptions,
+  BatchBurstDetectionResult,
+  BurstDetectorSummary,
+} from "./consecutive-large-trades";

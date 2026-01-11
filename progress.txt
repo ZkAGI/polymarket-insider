@@ -4997,3 +4997,113 @@ VOLUME/WHALE DETECTION PIPELINE PROGRESS:
 - DET-VOL-007: Time-of-Day Volume Normalizer ✓
 
 Next: DET-VOL-008 (Consecutive large trade detector)
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: DET-VOL-008 - Consecutive Large Trade Detector
+- Created src/detection/consecutive-large-trades.ts with full implementation
+
+IMPLEMENTATION DETAILS:
+1. Trade Sequence Tracking:
+   - Tracks consecutive large trades per market
+   - Tracks consecutive large trades per wallet
+   - Configurable gap threshold (default: 5 minutes)
+   - Resets sequence when gap exceeds threshold
+
+2. Large Trade Detection:
+   - Z-score based (configurable threshold, default: 2.0)
+   - Percentile based (configurable threshold, default: 75th)
+   - Absolute USD threshold (configurable, default: $10,000)
+   - Pre-flagged trades (isLargeTrade field)
+   - Force flag option in ProcessTradeOptions
+
+3. Burst Pattern Types:
+   - WALLET_BURST: Single wallet making multiple large trades
+   - MARKET_BURST: Multiple wallets making large trades on same market
+   - COMBINED_BURST: Both wallet and market burst detected
+   - COORDINATED_BURST: Multiple wallets on multiple markets
+
+4. Burst Detection:
+   - Configurable minimum consecutive trades (default: 3)
+   - Tracks burst volume, duration, intensity
+   - Calculates average trade size in burst
+   - Identifies largest trade in burst
+   - Tracks participating wallets/markets
+
+5. Severity Levels:
+   - LOW: Intensity < 1 trades/min, count < 5
+   - MEDIUM: Intensity >= 1 trades/min, or count >= 5, or volume 3x average
+   - HIGH: Intensity >= 2 trades/min, or count >= 7, or volume 6x average
+   - CRITICAL: Intensity >= 5 trades/min, or count >= 10, or volume 9x average
+
+6. Event Emission:
+   - burstDetected: Emitted when burst threshold reached
+   - burstEnded: Emitted when burst ends (gap exceeded)
+   - criticalBurst: Emitted for CRITICAL severity bursts
+   - Alert cooldown to prevent spam (configurable, default: 60s)
+   - Bypass cooldown option for testing
+
+7. State Management:
+   - Per-market burst state tracking
+   - Per-wallet burst state tracking
+   - Configurable tracking (enable/disable market/wallet)
+   - Clear individual market/wallet state
+   - Clear all state
+
+8. Batch Processing:
+   - Process multiple trades at once
+   - Automatic timestamp sorting
+   - Processing time tracking
+   - Summary statistics
+
+9. State Queries:
+   - isMarketInBurst: Check market burst state
+   - isWalletInBurst: Check wallet burst state
+   - getMarketBurstState: Detailed market state
+   - getWalletBurstState: Detailed wallet state
+   - Case-insensitive wallet address handling
+
+10. Statistics and Summaries:
+    - Total markets/wallets tracked
+    - Active bursts count
+    - Total burst events detected
+    - Events by severity and pattern type
+    - Recent burst events (configurable limit)
+    - Top burst markets/wallets
+
+11. Singleton Management:
+    - createConsecutiveLargeTradeDetector: Create new instance
+    - getSharedConsecutiveLargeTradeDetector: Get/create shared instance
+    - setSharedConsecutiveLargeTradeDetector: Set shared instance
+    - resetSharedConsecutiveLargeTradeDetector: Reset shared instance
+
+12. Convenience Functions:
+    - processTradeForBurst: Process single trade
+    - processTradesForBurst: Batch process trades
+    - isMarketInBurstState: Check market state
+    - isWalletInBurstState: Check wallet state
+    - getRecentBurstEvents: Get recent events
+    - getBurstDetectorSummary: Get summary
+
+TESTS:
+- 65 unit tests in tests/detection/consecutive-large-trades.test.ts
+- All tests pass (4578 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/consecutive-large-trades.ts: Main implementation
+- src/detection/index.ts: Exports added
+- tests/detection/consecutive-large-trades.test.ts: Unit tests
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator DONE
+- DET-VOL-002: Rolling Volume Average Tracker DONE
+- DET-VOL-003: Volume Spike Detector DONE
+- DET-VOL-004: Individual Trade Size Analyzer DONE
+- DET-VOL-005: Whale Trade Threshold Calculator DONE
+- DET-VOL-006: Volume-to-Liquidity Ratio Analyzer DONE
+- DET-VOL-007: Time-of-Day Volume Normalizer DONE
+- DET-VOL-008: Consecutive Large Trade Detector DONE
+
+Next: DET-VOL-009 (Market impact calculator)
+
