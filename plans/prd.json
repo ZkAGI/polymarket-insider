@@ -1695,6 +1695,388 @@
         "manual_verification": "Verify detection accuracy"
       }
     },
+
+    {
+      "id": "DET-NICHE-001",
+      "priority": 86,
+      "name": "Market category classifier",
+      "description": "Classify markets into categories (political, geopolitical, etc.)",
+      "passes": true,
+      "completed_at": "2026-01-11T21:47:00Z",
+      "steps": [
+        "Define category taxonomy",
+        "Parse market titles/descriptions",
+        "Apply ML or rule-based classification",
+        "Store category assignments"
+      ],
+      "test_instructions": {
+        "unit": "Test classification logic",
+        "typecheck": "Verify types",
+        "e2e": "Classify live markets",
+        "manual_verification": "Verify classification accuracy"
+      }
+    },
+    {
+      "id": "DET-NICHE-002",
+      "priority": 87,
+      "name": "Information-advantage market identifier",
+      "description": "Identify markets where insider info would be most valuable",
+      "passes": false,
+      "steps": [
+        "Define high-value categories",
+        "Score by information asymmetry potential",
+        "Rank markets by insider value",
+        "Update rankings periodically"
+      ],
+      "test_instructions": {
+        "unit": "Test scoring logic",
+        "typecheck": "Verify types",
+        "e2e": "Score active markets",
+        "manual_verification": "Verify ranking reasonableness"
+      }
+    },
+    {
+      "id": "DET-NICHE-003",
+      "priority": 88,
+      "name": "Geopolitical event market tagger",
+      "description": "Tag markets related to geopolitical events",
+      "passes": false,
+      "steps": [
+        "Define geopolitical keywords",
+        "Parse market metadata",
+        "Apply geopolitical tags",
+        "Link related markets"
+      ],
+      "test_instructions": {
+        "unit": "Test tagging logic",
+        "typecheck": "Verify types",
+        "e2e": "Tag live markets",
+        "manual_verification": "Verify tag accuracy"
+      }
+    },
+    {
+      "id": "DET-NICHE-004",
+      "priority": 89,
+      "name": "Political market identifier",
+      "description": "Identify markets related to political decisions/events",
+      "passes": false,
+      "steps": [
+        "Define political keywords",
+        "Identify election/policy markets",
+        "Tag political markets",
+        "Track political category"
+      ],
+      "test_instructions": {
+        "unit": "Test identification",
+        "typecheck": "Verify types",
+        "e2e": "Identify political markets",
+        "manual_verification": "Verify identification accuracy"
+      }
+    },
+    {
+      "id": "DET-NICHE-005",
+      "priority": 90,
+      "name": "Regulatory decision market detector",
+      "description": "Detect markets about regulatory decisions",
+      "passes": false,
+      "steps": [
+        "Define regulatory keywords",
+        "Identify agency-related markets",
+        "Track regulatory deadlines",
+        "Flag regulatory markets"
+      ],
+      "test_instructions": {
+        "unit": "Test detection logic",
+        "typecheck": "Verify types",
+        "e2e": "Detect regulatory markets",
+        "manual_verification": "Verify detection accuracy"
+      }
+    },
+    {
+      "id": "DET-NICHE-006",
+      "priority": 91,
+      "name": "Market liquidity scorer",
+      "description": "Score markets by liquidity to identify thin markets",
+      "passes": false,
+      "steps": [
+        "Calculate order book depth",
+        "Track average trade size",
+        "Score liquidity 0-100",
+        "Identify thin markets"
+      ],
+      "test_instructions": {
+        "unit": "Test scoring logic",
+        "typecheck": "Verify types",
+        "e2e": "Score live markets",
+        "manual_verification": "Verify liquidity scores"
+      }
+    },
+    {
+      "id": "DET-NICHE-007",
+      "priority": 92,
+      "name": "Niche market watchlist manager",
+      "description": "Maintain watchlist of high-priority niche markets",
+      "passes": false,
+      "steps": [
+        "Create watchlist data structure",
+        "Add/remove markets",
+        "Prioritize by insider potential",
+        "Emit watchlist updates"
+      ],
+      "test_instructions": {
+        "unit": "Test watchlist operations",
+        "typecheck": "Verify types",
+        "e2e": "Manage live watchlist",
+        "manual_verification": "Verify watchlist behavior"
+      }
+    },
+    {
+      "id": "DET-NICHE-008",
+      "priority": 93,
+      "name": "Wallet niche market concentration analyzer",
+      "description": "Detect wallets focusing on specific niche categories",
+      "passes": false,
+      "steps": [
+        "Track wallet trades by category",
+        "Calculate category concentration",
+        "Flag specialists",
+        "Score concentration level"
+      ],
+      "test_instructions": {
+        "unit": "Test concentration analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze wallet categories",
+        "manual_verification": "Verify concentration accuracy"
+      }
+    },
+    {
+      "id": "DET-NICHE-009",
+      "priority": 94,
+      "name": "Cross-market correlation detector",
+      "description": "Detect correlated trading across related niche markets",
+      "passes": false,
+      "steps": [
+        "Identify related markets",
+        "Track cross-market trades",
+        "Calculate correlation scores",
+        "Flag unusual correlations"
+      ],
+      "test_instructions": {
+        "unit": "Test correlation logic",
+        "typecheck": "Verify types",
+        "e2e": "Detect live correlations",
+        "manual_verification": "Verify correlation accuracy"
+      }
+    },
+    {
+      "id": "DET-NICHE-010",
+      "priority": 95,
+      "name": "Niche market alert generator",
+      "description": "Generate alerts for suspicious niche market activity",
+      "passes": false,
+      "steps": [
+        "Define niche alert conditions",
+        "Create alert with market context",
+        "Include category information",
+        "Set niche-specific severity"
+      ],
+      "test_instructions": {
+        "unit": "Test alert generation",
+        "typecheck": "Verify types",
+        "e2e": "Trigger niche alerts",
+        "manual_verification": "Verify alert content"
+      }
+    },
+    {
+      "id": "DET-PAT-001",
+      "priority": 96,
+      "name": "Wallet behavior profiler",
+      "description": "Build behavioral profiles for tracked wallets",
+      "passes": false,
+      "steps": [
+        "Define profile attributes",
+        "Collect behavioral data",
+        "Build profile over time",
+        "Update profiles with new activity"
+      ],
+      "test_instructions": {
+        "unit": "Test profiling logic",
+        "typecheck": "Verify Profile type",
+        "e2e": "Profile active wallets",
+        "manual_verification": "Verify profile accuracy"
+      }
+    },
+    {
+      "id": "DET-PAT-002",
+      "priority": 97,
+      "name": "Trading pattern classifier",
+      "description": "Classify wallet trading patterns (scalper, insider, etc.)",
+      "passes": false,
+      "steps": [
+        "Define pattern types",
+        "Extract pattern features",
+        "Apply classification algorithm",
+        "Assign pattern labels"
+      ],
+      "test_instructions": {
+        "unit": "Test classification",
+        "typecheck": "Verify types",
+        "e2e": "Classify live wallets",
+        "manual_verification": "Verify classification accuracy"
+      }
+    },
+    {
+      "id": "DET-PAT-003",
+      "priority": 98,
+      "name": "Timing pattern analyzer",
+      "description": "Analyze timing patterns of wallet trades",
+      "passes": false,
+      "steps": [
+        "Extract trade timestamps",
+        "Analyze time-of-day patterns",
+        "Detect unusual timing",
+        "Score timing suspicion"
+      ],
+      "test_instructions": {
+        "unit": "Test timing analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze live timing",
+        "manual_verification": "Verify timing insights"
+      }
+    },
+    {
+      "id": "DET-PAT-004",
+      "priority": 99,
+      "name": "Win rate tracker",
+      "description": "Track historical win rate for each wallet",
+      "passes": false,
+      "steps": [
+        "Track resolved positions",
+        "Calculate win/loss ratio",
+        "Track win rate over time",
+        "Identify unusually high rates"
+      ],
+      "test_instructions": {
+        "unit": "Test win rate calculation",
+        "typecheck": "Verify types",
+        "e2e": "Track live win rates",
+        "manual_verification": "Verify win rate accuracy"
+      }
+    },
+    {
+      "id": "DET-PAT-005",
+      "priority": 100,
+      "name": "Profit/loss calculator",
+      "description": "Calculate realized and unrealized P&L for wallets",
+      "passes": false,
+      "steps": [
+        "Track position costs",
+        "Calculate realized gains",
+        "Calculate unrealized gains",
+        "Aggregate total P&L"
+      ],
+      "test_instructions": {
+        "unit": "Test P&L calculation",
+        "typecheck": "Verify types",
+        "e2e": "Calculate live P&L",
+        "manual_verification": "Verify P&L accuracy"
+      }
+    },
+    {
+      "id": "DET-PAT-006",
+      "priority": 101,
+      "name": "Position sizing pattern analyzer",
+      "description": "Analyze how wallets size their positions",
+      "passes": false,
+      "steps": [
+        "Track position sizes",
+        "Calculate size distribution",
+        "Detect size anomalies",
+        "Score sizing patterns"
+      ],
+      "test_instructions": {
+        "unit": "Test sizing analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze live sizing",
+        "manual_verification": "Verify sizing insights"
+      }
+    },
+    {
+      "id": "DET-PAT-007",
+      "priority": 102,
+      "name": "Market selection pattern analyzer",
+      "description": "Analyze which markets wallets tend to trade",
+      "passes": false,
+      "steps": [
+        "Track market selection",
+        "Identify market preferences",
+        "Detect selection shifts",
+        "Score selection patterns"
+      ],
+      "test_instructions": {
+        "unit": "Test selection analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze selections",
+        "manual_verification": "Verify selection insights"
+      }
+    },
+    {
+      "id": "DET-PAT-008",
+      "priority": 103,
+      "name": "Coordinated trading detector",
+      "description": "Detect multiple wallets trading in coordination",
+      "passes": false,
+      "steps": [
+        "Identify simultaneous trades",
+        "Analyze trade similarity",
+        "Calculate coordination score",
+        "Flag coordinated groups"
+      ],
+      "test_instructions": {
+        "unit": "Test coordination detection",
+        "typecheck": "Verify types",
+        "e2e": "Detect live coordination",
+        "manual_verification": "Verify detection accuracy"
+      }
+    },
+    {
+      "id": "DET-PAT-009",
+      "priority": 104,
+      "name": "Sybil attack detector",
+      "description": "Detect potential sybil attacks using multiple wallets",
+      "passes": false,
+      "steps": [
+        "Identify wallet clusters",
+        "Analyze cluster behavior",
+        "Detect sybil patterns",
+        "Score sybil probability"
+      ],
+      "test_instructions": {
+        "unit": "Test sybil detection",
+        "typecheck": "Verify types",
+        "e2e": "Detect sybil patterns",
+        "manual_verification": "Verify detection accuracy"
+      }
+    },
+    {
+      "id": "DET-PAT-010",
+      "priority": 105,
+      "name": "Historical accuracy scorer",
+      "description": "Score wallets based on historical prediction accuracy",
+      "passes": false,
+      "steps": [
+        "Track prediction outcomes",
+        "Calculate accuracy rate",
+        "Weight by conviction level",
+        "Rank by accuracy"
+      ],
+      "test_instructions": {
+        "unit": "Test accuracy scoring",
+        "typecheck": "Verify types",
+        "e2e": "Score live wallets",
+        "manual_verification": "Verify accuracy scores"
+      }
+    },
     {
       "id": "TEST-PERF-001",
       "priority": 200,
