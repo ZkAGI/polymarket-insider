@@ -1402,7 +1402,7 @@
       "priority": 71,
       "name": "Fresh wallet confidence scorer",
       "description": "Score likelihood that fresh wallet activity is suspicious",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Combine multiple signals",
         "Weight by signal importance",

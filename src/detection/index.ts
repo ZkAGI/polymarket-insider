@@ -206,3 +206,30 @@ export type {
   WalletReactivationDetectorConfig,
   DormancySeverityThresholds,
 } from "./wallet-reactivation";
+
+// DET-FRESH-008: Fresh Wallet Confidence Scorer
+export {
+  ConfidenceLevel,
+  SignalCategory,
+  DEFAULT_SIGNAL_WEIGHTS,
+  FreshWalletConfidenceScorer,
+  createFreshWalletConfidenceScorer,
+  getSharedFreshWalletConfidenceScorer,
+  setSharedFreshWalletConfidenceScorer,
+  resetSharedFreshWalletConfidenceScorer,
+  scoreFreshWalletConfidence,
+  batchScoreFreshWalletConfidence,
+  isFreshWalletSuspicious,
+  getConfidenceSummary,
+} from "./fresh-wallet-confidence";
+
+export type {
+  SignalContribution,
+  SignalCategoryBreakdown,
+  FreshWalletConfidenceResult,
+  ConfidenceScorerOptions,
+  SignalWeights,
+  BatchConfidenceResult,
+  ConfidenceSummary,
+  FreshWalletConfidenceScorerConfig,
+} from "./fresh-wallet-confidence";

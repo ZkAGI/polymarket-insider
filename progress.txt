@@ -4033,4 +4033,90 @@ TECHNICAL NOTES:
 - All 3755 tests pass
 - TypeScript strict mode compliant
 
-- Next up: DET-FRESH-008 (Fresh wallet confidence scorer)
+---
+
+SESSION: Fresh Wallet Confidence Scorer Implementation (DET-FRESH-008)
+
+FEATURE COMPLETE: DET-FRESH-008 - Fresh Wallet Confidence Scorer
+
+IMPLEMENTATION SUMMARY:
+The fresh wallet confidence scorer combines multiple detection signals into a single 0-100 confidence score to determine how likely a fresh wallet's activity is suspicious.
+
+KEY COMPONENTS:
+1. Signal Categories:
+   - WALLET_AGE: Signals related to wallet age (age category, is fresh, is new)
+   - TRADING_BEHAVIOR: Zero history status, first trade size, trade count
+   - FUNDING_PATTERN: Pattern type, timing category, flash trading
+   - COORDINATION: Cluster membership, coordination score
+   - ACTIVITY_PATTERN: Reactivation status, dormancy patterns
+
+2. Signal Weighting System:
+   - Each signal has a weight (0.0-1.0) indicating importance
+   - Categories have base weights that influence category scores
+   - Final score is weighted average of category scores
+
+3. Confidence Levels:
+   - VERY_HIGH (80-100): Almost certainly suspicious
+   - HIGH (60-79): Likely suspicious
+   - MEDIUM (40-59): Possibly suspicious
+   - LOW (20-39): Unlikely suspicious
+   - VERY_LOW (0-19): Not suspicious
+
+4. FreshWalletConfidenceScorer Class:
+   - Integrates with all DET-FRESH-001 through DET-FRESH-007 detectors
+   - Collects signals from each detector
+   - Calculates weighted confidence score
+   - Provides detailed breakdown by category and signal
+
+5. Caching:
+   - Results cached with configurable TTL (default 5 minutes)
+   - Max cache size configurable (default 1000 entries)
+   - Cache prevents redundant detector calls
+
+6. Batch Processing:
+   - batchScoreFreshWalletConfidence for multiple wallets
+   - Returns summary statistics (avg/min/max scores, level distribution)
+
+TYPES EXPORTED:
+- SignalContribution: Individual signal's contribution to score
+- SignalCategoryBreakdown: Category-level score breakdown
+- FreshWalletConfidenceResult: Full scoring result
+- ConfidenceScorerOptions: Options for scoring operations
+- SignalWeights: Weight configuration for signals
+- BatchConfidenceResult: Multi-wallet batch results
+- ConfidenceSummary: Summary statistics
+- FreshWalletConfidenceScorerConfig: Configuration type
+
+ENUMS EXPORTED:
+- ConfidenceLevel: VERY_HIGH, HIGH, MEDIUM, LOW, VERY_LOW
+- SignalCategory: WALLET_AGE, TRADING_BEHAVIOR, FUNDING_PATTERN, COORDINATION, ACTIVITY_PATTERN
+
+CONVENIENCE FUNCTIONS:
+- scoreFreshWalletConfidence: Score single wallet
+- batchScoreFreshWalletConfidence: Score multiple wallets
+- isFreshWalletSuspicious: Check if wallet meets suspicious threshold
+- getConfidenceSummary: Get summary for batch results
+
+SINGLETON MANAGEMENT:
+- getSharedFreshWalletConfidenceScorer
+- setSharedFreshWalletConfidenceScorer
+- resetSharedFreshWalletConfidenceScorer
+- createFreshWalletConfidenceScorer
+
+TESTS:
+- 44 unit tests in tests/detection/fresh-wallet-confidence.test.ts
+- Tests cover: constructor, singleton management, signal collection, scoring algorithm, category breakdown, caching, batch processing, convenience functions, edge cases
+
+BUG FIXES:
+- Fixed critical scoring bug in buildCategoryBreakdown method that was multiplying by 100 incorrectly, causing scores to be 700-1400 instead of 0-100
+- Removed unused imports: calculateWalletAge, checkZeroHistory, analyzeFirstTradeSize, analyzeFundingPattern, analyzeWalletClusterMembership, checkWalletReactivation
+- Removed unused _configManager field and getSharedFreshWalletConfigManager import
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all fresh-wallet-confidence functionality
+- DET-FRESH-008 exports grouped separately
+
+ALL TESTS PASS: 44 tests for DET-FRESH-008
+TYPECHECK: Passes with no errors
+
+- Next up: DET-FRESH-009 (Wallet history depth analyzer)
