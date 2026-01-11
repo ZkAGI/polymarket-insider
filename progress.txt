@@ -6188,3 +6188,73 @@ FILES:
 NOTES FOR NEXT SESSION:
 - Next feature TBD based on PRD priority
 
+=== Session 2026-01-12 ===
+
+COMPLETED: DET-PAT-001 - Wallet behavior profiler
+Build behavioral profiles for tracked wallets to analyze trading patterns,
+identify suspicious behavior, and classify wallet types.
+
+IMPLEMENTATION:
+
+1. Enums for classifications:
+   - TradingFrequency: RARE, OCCASIONAL, REGULAR, FREQUENT, VERY_FREQUENT
+   - TradingStyle: SCALPER, DAY_TRADER, SWING_TRADER, POSITION_TRADER, MARKET_MAKER, ARBITRAGEUR, POTENTIAL_INSIDER, UNKNOWN
+   - RiskAppetite: CONSERVATIVE, MODERATE, AGGRESSIVE, VERY_AGGRESSIVE
+   - ProfileConfidence: LOW, MEDIUM, HIGH, VERY_HIGH
+   - BehaviorFlag: 10 suspicious behavior indicators
+
+2. Comprehensive interfaces:
+   - ProfileTrade: Trade data input for profiling
+   - TimeDistribution: When wallet trades (hour/day distributions)
+   - MarketPreferences: Category preferences, concentration scores
+   - PositionSizing: Trade size metrics (avg, median, stddev, whale counts)
+   - PerformanceMetrics: Win rate, PnL, ROI, best/worst trades
+   - TradingPatterns: Time between trades, holding period, clustering
+   - WalletBehaviorProfile: Complete profile with all metrics
+
+3. WalletBehaviorProfiler class:
+   - buildProfile(): Create full profile from trade history
+   - updateProfile(): Incrementally update with new trades
+   - Profile caching with configurable TTL
+   - Event emission (profile-created, profile-updated, suspicious-profile)
+   - Suspicion scoring algorithm (0-100 scale)
+   - Insight generation for profile summaries
+
+4. Helper functions:
+   - classifyTradingFrequency(): Based on trades per month
+   - classifyTradingStyle(): Based on patterns and flags
+   - classifyRiskAppetite(): Based on position sizing
+   - detectBehaviorFlags(): 10+ suspicious behavior checks
+   - calculateSuspicionScore(): Weighted flag-based scoring
+
+5. Factory and convenience functions:
+   - createWalletBehaviorProfiler()
+   - getSharedWalletBehaviorProfiler() / setSharedWalletBehaviorProfiler()
+   - buildWalletBehaviorProfile(), updateWalletBehaviorProfile()
+   - batchBuildWalletBehaviorProfiles()
+   - hasHighSuspicionProfile(), getPotentialInsiderProfiles()
+   - getWalletBehaviorProfilerSummary()
+
+TESTS: 96 unit tests covering all functionality
+- Constructor and configuration
+- Profile building and updating
+- Time distribution analysis
+- Market preference detection
+- Position sizing calculations
+- Performance metrics
+- Trading pattern analysis
+- Frequency/style/risk classification
+- Behavior flag detection
+- Suspicion scoring
+- Edge cases (empty trades, nulls, extremes)
+
+TYPECHECK: Passes
+FULL TEST SUITE: 5621 tests pass (89 test files)
+
+FILES:
+- src/detection/wallet-behavior-profiler.ts (new - ~1600 lines)
+- tests/detection/wallet-behavior-profiler.test.ts (new - ~1500 lines)
+- src/detection/index.ts (updated with exports)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-PAT-002 (Trading pattern classifier) at priority 97

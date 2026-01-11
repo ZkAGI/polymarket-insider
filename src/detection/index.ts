@@ -1026,3 +1026,40 @@ export type {
   NicheAlertListener,
   NicheMarketAlertGeneratorConfig,
 } from "./niche-market-alert";
+
+// DET-PAT-001: Wallet Behavior Profiler
+export {
+  TradingFrequency,
+  TradingStyle,
+  RiskAppetite,
+  ProfileConfidence,
+  BehaviorFlag,
+  DEFAULT_PROFILER_CONFIG,
+  WalletBehaviorProfiler,
+  createWalletBehaviorProfiler,
+  getSharedWalletBehaviorProfiler,
+  setSharedWalletBehaviorProfiler,
+  resetSharedWalletBehaviorProfiler,
+  buildWalletBehaviorProfile,
+  updateWalletBehaviorProfile,
+  getWalletBehaviorProfile,
+  batchBuildWalletBehaviorProfiles,
+  hasHighSuspicionProfile,
+  getPotentialInsiderProfiles,
+  getWalletBehaviorProfilerSummary,
+} from "./wallet-behavior-profiler";
+
+export type {
+  ProfileTrade,
+  TimeDistribution,
+  MarketPreferences,
+  PositionSizing,
+  PerformanceMetrics,
+  TradingPatterns,
+  WalletBehaviorProfile,
+  BuildProfileOptions,
+  UpdateProfileOptions,
+  BatchProfileResult,
+  ProfileSummary,
+  WalletBehaviorProfilerConfig,
+} from "./wallet-behavior-profiler";
