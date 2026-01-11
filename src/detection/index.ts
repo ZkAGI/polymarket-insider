@@ -690,3 +690,64 @@ export type {
   BatchPreEventAnalysisResult,
   PreEventDetectorSummary,
 } from "./pre-event-volume";
+
+// DET-NICHE-001: Market Category Classifier
+export {
+  ClassificationConfidence,
+  DEFAULT_CATEGORY_PATTERNS,
+  HIGH_INSIDER_CATEGORIES,
+  MarketCategoryClassifier,
+  createMarketCategoryClassifier,
+  getSharedMarketCategoryClassifier,
+  setSharedMarketCategoryClassifier,
+  resetSharedMarketCategoryClassifier,
+  classifyMarket,
+  classifyMarkets,
+  isMarketInCategory,
+  getMarketsByCategory,
+  getHighInsiderPotentialMarkets,
+  getClassificationSummary,
+} from "./market-category-classifier";
+
+export type {
+  KeywordPattern,
+  CategoryPatterns,
+  CategoryScore,
+  MarketForClassification,
+  MarketClassificationResult,
+  ClassifyMarketOptions,
+  BatchClassificationResult,
+  ClassificationSummary,
+  MarketCategoryClassifierConfig,
+} from "./market-category-classifier";
+
+// DET-NICHE-002: Information-Advantage Market Identifier
+export {
+  InformationAdvantageType,
+  InformationAdvantageTier,
+  DEFAULT_CATEGORY_CONFIGS,
+  CROSS_CATEGORY_HIGH_VALUE_KEYWORDS,
+  InformationAdvantageIdentifier,
+  createInformationAdvantageIdentifier,
+  getSharedInformationAdvantageIdentifier,
+  setSharedInformationAdvantageIdentifier,
+  resetSharedInformationAdvantageIdentifier,
+  analyzeMarketInformationAdvantage,
+  analyzeMarketsInformationAdvantage,
+  getHighValueMarketsForInsiderPotential,
+  isHighValueMarketForInsider,
+  getRankedMarketsForInsiderValue,
+  getInformationAdvantageSummary,
+} from "./information-advantage-identifier";
+
+export type {
+  HighValueKeywordPattern,
+  CategoryAdvantageConfig,
+  AsymmetryFactor,
+  InformationAdvantageResult,
+  AnalyzeMarketOptions,
+  BatchAnalysisResult as InformationAdvantageBatchResult,
+  MarketRanking,
+  IdentifierSummary,
+  InformationAdvantageIdentifierConfig,
+} from "./information-advantage-identifier";

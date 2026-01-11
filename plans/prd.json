@@ -1721,7 +1721,8 @@
       "priority": 87,
       "name": "Information-advantage market identifier",
       "description": "Identify markets where insider info would be most valuable",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T21:58:00Z",
       "steps": [
         "Define high-value categories",
         "Score by information asymmetry potential",
