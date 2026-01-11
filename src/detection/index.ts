@@ -1063,3 +1063,39 @@ export type {
   ProfileSummary,
   WalletBehaviorProfilerConfig,
 } from "./wallet-behavior-profiler";
+
+// DET-PAT-002: Trading Pattern Classifier
+export {
+  TradingPatternType,
+  PatternConfidence,
+  PatternFeature,
+  PatternRiskFlag,
+  DEFAULT_CLASSIFIER_CONFIG,
+  DEFAULT_PATTERN_DEFINITIONS,
+  TradingPatternClassifier,
+  createTradingPatternClassifier,
+  getSharedTradingPatternClassifier,
+  setSharedTradingPatternClassifier,
+  resetSharedTradingPatternClassifier,
+  classifyTradingPattern,
+  updateTradingPatternClassification,
+  getTradingPatternClassification,
+  batchClassifyTradingPatterns,
+  hasHighRiskPattern,
+  getWalletsWithPotentialInsiderPattern,
+  getTradingPatternClassifierSummary,
+  isSuspiciousPattern,
+  getPatternDescription,
+} from "./trading-pattern-classifier";
+
+export type {
+  PatternTrade,
+  ExtractedFeatures,
+  FeatureContribution,
+  PatternMatch,
+  PatternClassificationResult,
+  PatternDefinition,
+  BatchClassificationResult as PatternBatchClassificationResult,
+  ClassificationSummary as PatternClassificationSummary,
+  TradingPatternClassifierConfig,
+} from "./trading-pattern-classifier";
