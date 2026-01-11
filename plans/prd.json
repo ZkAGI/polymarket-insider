@@ -1362,7 +1362,8 @@
       "priority": 69,
       "name": "Fresh wallet clustering",
       "description": "Detect multiple fresh wallets potentially controlled by same entity",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T07:00:00Z",
       "steps": [
         "Identify similar funding sources",
         "Detect coordinated creation times",

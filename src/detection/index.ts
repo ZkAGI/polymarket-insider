@@ -144,3 +144,35 @@ export type {
   FundingPatternSummary,
   FundingPatternAnalyzerConfig,
 } from "./funding-pattern";
+
+// DET-FRESH-006: Fresh Wallet Clustering
+export {
+  ClusterType,
+  ClusterConfidenceLevel,
+  DEFAULT_CLUSTERING_THRESHOLDS,
+  FreshWalletClusterAnalyzer,
+  createFreshWalletClusterAnalyzer,
+  getSharedFreshWalletClusterAnalyzer,
+  setSharedFreshWalletClusterAnalyzer,
+  resetSharedFreshWalletClusterAnalyzer,
+  analyzeWalletClusters,
+  analyzeWalletClusterMembership,
+  isWalletInCluster,
+  hasHighCoordinationScore,
+  getClusteringSummary,
+} from "./fresh-wallet-clustering";
+
+export type {
+  ClusterCharacteristic,
+  WalletCluster,
+  FundingSourceCluster,
+  TemporalCluster,
+  TradingPatternMetrics,
+  TradingPatternCluster,
+  WalletClusteringResult,
+  BatchClusteringResult,
+  ClusteringSummary,
+  ClusteringOptions,
+  ClusteringThresholds,
+  FreshWalletClusterAnalyzerConfig,
+} from "./fresh-wallet-clustering";

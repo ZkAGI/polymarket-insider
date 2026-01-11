@@ -3847,3 +3847,95 @@ NOTES:
 - Cache with configurable TTL and max size
 - Ready for integration with alert system
 - Next up: DET-FRESH-006 (Fresh wallet clustering)
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: DET-FRESH-006 - Fresh wallet clustering
+- Implemented fresh wallet clustering to detect multiple fresh wallets potentially controlled by same entity
+- This feature helps identify sybil attacks, coordinated trading activity, and wash trading
+
+IMPLEMENTATION (src/detection/fresh-wallet-clustering.ts):
+1. ClusterType enum:
+   - FUNDING_SOURCE: Wallets sharing funding sources
+   - TEMPORAL: Wallets created around the same time
+   - TRADING_PATTERN: Wallets with similar trading patterns
+   - MULTI_FACTOR: Multi-factor cluster (combines multiple signals)
+
+2. ClusterConfidenceLevel enum:
+   - VERY_HIGH: >90% confidence
+   - HIGH: 70-90% confidence
+   - MEDIUM: 50-70% confidence
+   - LOW: 30-50% confidence
+   - VERY_LOW: <30% confidence
+
+3. FreshWalletClusterAnalyzer class:
+   - analyzeWallets: Batch analysis of wallets for clustering
+   - analyzeWallet: Single wallet analysis with related wallets
+   - getSummary: Get summary statistics for batch results
+   - isWalletClustered: Check if wallet is in any cluster
+   - hasHighCoordination: Check if wallet has high coordination score
+
+4. Key Features:
+   - Funding Source Clustering: Identifies wallets sharing same funding sources
+   - Temporal Clustering: Detects wallets created within same time window (sliding window algorithm)
+   - Trading Pattern Clustering: Finds wallets with similar trading behavior using:
+     - Market overlap (Jaccard similarity)
+     - Buy ratio similarity
+     - Average trade size similarity (log scale)
+     - Trading frequency similarity
+     - Trading hour distribution (cosine similarity)
+   - Multi-Factor Clustering: Detects wallets appearing in multiple cluster types
+   - Coordination Score: 0-100 score indicating likelihood of coordinated activity
+
+5. Default Thresholds (DEFAULT_CLUSTERING_THRESHOLDS):
+   - minClusterSize: 2
+   - temporalWindowHours: 24
+   - minConfidence: 30
+   - fundingSimilarityThreshold: 0.5
+   - tradingSimilarityThreshold: 0.5
+   - minSharedMarkets: 2
+   - sharedFundingSourcePoints: 30
+   - temporalProximityPoints: 25
+   - tradingPatternPoints: 25
+   - sharedMarketPoints: 20
+   - highCoordinationThreshold: 60
+   - criticalCoordinationThreshold: 80
+
+6. Severity Mapping:
+   - Critical: Coordination score >= 80 or suspicious funding
+   - High: Coordination score >= 60 or in high severity cluster
+   - Medium: In any cluster with score >= 30
+   - Low: Default
+
+7. Result Types:
+   - WalletClusteringResult: Individual wallet analysis
+   - BatchClusteringResult: Multi-wallet batch analysis
+   - WalletCluster: Cluster definition with members and characteristics
+   - FundingSourceCluster: Funding source based cluster
+   - TemporalCluster: Time-based cluster
+   - TradingPatternCluster: Trading behavior cluster
+   - ClusteringSummary: Statistics for batch results
+
+EXPORTS (src/detection/fresh-wallet-clustering.ts):
+- FreshWalletClusterAnalyzer class
+- ClusterType, ClusterConfidenceLevel enums
+- DEFAULT_CLUSTERING_THRESHOLDS constant
+- createFreshWalletClusterAnalyzer, getSharedFreshWalletClusterAnalyzer, etc.
+- Convenience functions: analyzeWalletClusters, analyzeWalletClusterMembership, isWalletInCluster, hasHighCoordinationScore, getClusteringSummary
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all fresh-wallet-clustering functionality
+- DET-FRESH-006 exports grouped separately
+
+TESTS:
+- Created tests/detection/fresh-wallet-clustering.test.ts with 38 unit tests
+- Created tests/e2e/fresh-wallet-clustering.e2e.test.ts with 23 E2E tests
+- All 3679 tests pass
+
+NOTES:
+- Uses graph-based clustering with union-find for trading pattern clustering
+- Temporal clustering uses sliding window with duplicate removal
+- Cache with configurable TTL and max size
+- Multi-factor clusters get 1.3x confidence boost
+- Ready for integration with alert system
+- Next up: DET-FRESH-007 (Wallet reactivation detector)
