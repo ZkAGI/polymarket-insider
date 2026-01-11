@@ -86,3 +86,31 @@ export type {
   TradingStatusChange,
   ZeroHistoryDetectorConfig,
 } from "./zero-history";
+
+// DET-FRESH-004: First Trade Size Analyzer
+export {
+  FirstTradeSizeCategory,
+  DEFAULT_FIRST_TRADE_THRESHOLDS,
+  DEFAULT_FIRST_TRADE_STATS,
+  FirstTradeSizeAnalyzer,
+  createFirstTradeSizeAnalyzer,
+  getSharedFirstTradeSizeAnalyzer,
+  setSharedFirstTradeSizeAnalyzer,
+  resetSharedFirstTradeSizeAnalyzer,
+  analyzeFirstTradeSize,
+  batchAnalyzeFirstTradeSize,
+  isFirstTradeOutlier,
+  getFirstTradeInfo,
+  getFirstTradeSizeSummary,
+} from "./first-trade-size";
+
+export type {
+  FirstTradeSizeResult,
+  FirstTradeInfo,
+  FirstTradeStats,
+  FirstTradeSizeThresholds,
+  FirstTradeSizeOptions,
+  BatchFirstTradeSizeResult,
+  FirstTradeSizeSummary,
+  FirstTradeSizeAnalyzerConfig,
+} from "./first-trade-size";

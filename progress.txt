@@ -3679,4 +3679,83 @@ NOTES:
 - Status tracking enables detection of wallets transitioning from zero history
 - Dormancy detection identifies previously inactive wallets becoming active
 - Integrates with existing fresh wallet config for severity classification
-- Next up: DET-FRESH-004 (First trade size analyzer)
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: DET-FRESH-004 - First trade size analyzer
+- Implemented first trade size analyzer to flag when a wallet's first trade is unusually large
+- This feature helps detect potential insider trading or whale activity
+
+IMPLEMENTATION (src/detection/first-trade-size.ts):
+1. FirstTradeSizeCategory enum:
+   - SMALL: Below average first trade
+   - NORMAL: Average first trade size
+   - LARGE: Above average (75th percentile)
+   - VERY_LARGE: 90th percentile
+   - OUTLIER: 95th percentile or absolute threshold
+
+2. FirstTradeSizeAnalyzer class:
+   - analyzeWallet: Full analysis of first trade size
+   - analyzeWallets: Batch processing for multiple wallets
+   - isFirstTradeOutlier: Quick check if first trade is an outlier
+   - getFirstTrade: Get first trade info for a wallet
+   - getSummary: Get summary statistics for analyzed results
+   - addSample: Add historical samples for statistics
+   - resetStats: Reset to default statistics
+
+3. Outlier Detection:
+   - Percentile-based flagging (configurable thresholds)
+   - Z-score calculation for statistical outlier detection
+   - Multiple of average comparison
+   - Absolute USD threshold for automatic flagging ($10,000 default)
+
+4. Default Thresholds (FirstTradeSizeThresholds):
+   - minSizeUsd: 10 (minimum trade to analyze)
+   - outlierZScore: 2.5 (standard deviations)
+   - largePercentile: 75
+   - veryLargePercentile: 90
+   - outlierPercentile: 95
+   - suspiciousMultiple: 5x average
+   - absoluteThresholdUsd: 10000
+
+5. Default Statistics (FirstTradeStats):
+   - Based on typical Polymarket first trade behavior
+   - averageSizeUsd: $150
+   - medianSizeUsd: $50
+   - percentile75: $200, percentile90: $500, percentile95: $1000, percentile99: $5000
+
+6. Features:
+   - Historical sample tracking for dynamic stats recalculation
+   - Rolling window of 10,000 samples maximum
+   - Cache with configurable TTL and max size
+   - Integration with FreshWalletConfigManager for future enhancements
+   - Batch processing with error handling per wallet
+   - Comprehensive summary statistics
+
+EXPORTS (src/detection/first-trade-size.ts):
+- FirstTradeSizeAnalyzer class
+- FirstTradeSizeCategory enum
+- DEFAULT_FIRST_TRADE_THRESHOLDS, DEFAULT_FIRST_TRADE_STATS constants
+- createFirstTradeSizeAnalyzer, getSharedFirstTradeSizeAnalyzer, etc.
+- Convenience functions: analyzeFirstTradeSize, batchAnalyzeFirstTradeSize, isFirstTradeOutlier, getFirstTradeInfo, getFirstTradeSizeSummary
+- Types: FirstTradeSizeResult, FirstTradeInfo, FirstTradeStats, FirstTradeSizeThresholds, FirstTradeSizeOptions, BatchFirstTradeSizeResult, FirstTradeSizeSummary, FirstTradeSizeAnalyzerConfig
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all first-trade-size functionality
+- DET-FRESH-004 exports grouped separately
+
+TESTS:
+- Created tests/detection/first-trade-size.test.ts with 43 unit tests
+- Created tests/e2e/first-trade-size.e2e.test.ts with 13 E2E tests
+- Fixed unused import in tests/e2e/zero-history.e2e.test.ts
+- All 3561 tests pass
+
+NOTES:
+- Tracks first trade per wallet and compares to historical averages
+- Calculates percentile rank and z-score for outlier detection
+- Flags trades exceeding configurable thresholds
+- Multiple flag reasons accumulate for higher severity classification
+- Severity levels: LOW (normal) -> MEDIUM (large) -> HIGH (very large) -> CRITICAL (outlier)
+- Historical stats self-update as new samples are added
+- Ready for integration with alert system
+- Next up: DET-FRESH-005 (Wallet funding pattern analyzer)

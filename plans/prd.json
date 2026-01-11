@@ -1322,7 +1322,8 @@
       "priority": 67,
       "name": "First trade size analyzer",
       "description": "Flag when first trade from wallet is unusually large",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T06:25:00Z",
       "steps": [
         "Track first trade per wallet",
         "Compare to average first trades",

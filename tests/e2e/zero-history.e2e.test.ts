@@ -17,7 +17,6 @@ import {
   getSharedZeroHistoryDetector,
   resetSharedZeroHistoryDetector,
 } from "../../src/detection/zero-history";
-import { FreshWalletAlertSeverity } from "../../src/detection/fresh-wallet-config";
 
 describe("Zero History Detector E2E Tests", () => {
   describe("Detection Module Integration", () => {
