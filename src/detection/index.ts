@@ -114,3 +114,33 @@ export type {
   FirstTradeSizeSummary,
   FirstTradeSizeAnalyzerConfig,
 } from "./first-trade-size";
+
+// DET-FRESH-005: Wallet Funding Pattern Analyzer
+export {
+  FundingPatternType,
+  FundingTimingCategory,
+  DEFAULT_FUNDING_PATTERN_THRESHOLDS,
+  FundingPatternAnalyzer,
+  createFundingPatternAnalyzer,
+  getSharedFundingPatternAnalyzer,
+  setSharedFundingPatternAnalyzer,
+  resetSharedFundingPatternAnalyzer,
+  analyzeFundingPattern,
+  batchAnalyzeFundingPattern,
+  hasSuspiciousFundingPattern,
+  hasFlashTrading,
+  getFundingTimingCategory,
+  getFundingPatternSummary,
+} from "./funding-pattern";
+
+export type {
+  FundingDeposit,
+  FirstTradeAfterFunding,
+  FundingPatternResult,
+  FundingRiskSummary,
+  FundingPatternOptions,
+  FundingPatternThresholds,
+  BatchFundingPatternResult,
+  FundingPatternSummary,
+  FundingPatternAnalyzerConfig,
+} from "./funding-pattern";

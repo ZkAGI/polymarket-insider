@@ -3759,3 +3759,91 @@ NOTES:
 - Historical stats self-update as new samples are added
 - Ready for integration with alert system
 - Next up: DET-FRESH-005 (Wallet funding pattern analyzer)
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: DET-FRESH-005 - Wallet funding pattern analyzer
+- Implemented wallet funding pattern analyzer to detect suspicious funding patterns before trading
+- This feature helps identify immediate trading after funding, flash trading, and other suspicious patterns
+
+IMPLEMENTATION (src/detection/funding-pattern.ts):
+1. FundingPatternType enum:
+   - NORMAL: Adequate time between funding and trading
+   - QUICK: Started trading relatively quickly
+   - IMMEDIATE: Started trading very soon after funding
+   - FLASH: Trading within minutes of funding
+   - SUSPICIOUS: Multiple concerning signals
+
+2. FundingTimingCategory enum:
+   - FLASH: Under 5 minutes
+   - VERY_FAST: 5 minutes to 1 hour
+   - FAST: 1 hour to 24 hours
+   - MODERATE: 24 hours to 7 days
+   - SLOW: Over 7 days
+   - NO_TRADES: No trades yet
+
+3. FundingPatternAnalyzer class:
+   - analyzeWallet: Full analysis of wallet funding pattern
+   - analyzeWallets: Batch processing for multiple wallets
+   - getSummary: Get summary statistics for analyzed results
+   - hasSuspiciousFundingPattern: Quick check if wallet has suspicious pattern
+   - hasFlashTrading: Check if wallet engaged in flash trading
+   - getFundingTimingCategory: Get timing category for a wallet
+
+4. Key Features:
+   - Track pre-trade deposits (only direct deposits before first trade)
+   - Identify funding timing relative to first trade
+   - Flag immediate trading after funding
+   - Score funding patterns for suspiciousness
+   - Detect sanctioned sources (critical severity)
+   - Detect mixer/privacy tool sources (high severity)
+   - Detect multiple quick consecutive deposits
+   - Detect high unknown source percentage
+   - Integrate with existing FundingSourceTracker
+
+5. Default Thresholds (DEFAULT_FUNDING_PATTERN_THRESHOLDS):
+   - Flash timing: 5 minutes (40 points)
+   - Very fast timing: 1 hour (25 points)
+   - Fast timing: 24 hours (10 points)
+   - Sanctioned source: 50 points
+   - Mixer source: 30 points
+   - Large deposit: 15 points ($10,000 threshold)
+   - Multiple quick deposits: 20 points
+   - Suspicious pattern threshold: 60 points
+   - Immediate pattern threshold: 40 points
+   - Quick pattern threshold: 20 points
+
+6. Severity Mapping:
+   - Sanctioned sources -> CRITICAL
+   - Suspicious pattern -> CRITICAL
+   - Flash pattern with mixer -> CRITICAL
+   - Flash pattern -> HIGH
+   - Immediate pattern -> MEDIUM
+   - Quick pattern -> LOW
+   - Normal pattern -> LOW
+
+EXPORTS (src/detection/funding-pattern.ts):
+- FundingPatternAnalyzer class
+- FundingPatternType, FundingTimingCategory enums
+- DEFAULT_FUNDING_PATTERN_THRESHOLDS constant
+- createFundingPatternAnalyzer, getSharedFundingPatternAnalyzer, etc.
+- Convenience functions: analyzeFundingPattern, batchAnalyzeFundingPattern, hasSuspiciousFundingPattern, hasFlashTrading, getFundingTimingCategory, getFundingPatternSummary
+- Types: FundingDeposit, FirstTradeAfterFunding, FundingPatternResult, FundingRiskSummary, FundingPatternOptions, FundingPatternThresholds, BatchFundingPatternResult, FundingPatternSummary, FundingPatternAnalyzerConfig
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all funding-pattern functionality
+- DET-FRESH-005 exports grouped separately
+
+TESTS:
+- Created tests/detection/funding-pattern.test.ts with 50+ unit tests
+- Created tests/e2e/funding-pattern.e2e.test.ts with 17 E2E tests
+- All 3618 tests pass
+
+NOTES:
+- Integrates with existing FundingSourceTracker for deposit analysis
+- Only considers direct deposits (depth === 1) before first trade
+- Calculates suspicion score based on multiple factors
+- Severity escalates with sanctioned sources, mixer sources, and flash timing
+- Cache with configurable TTL and max size
+- Ready for integration with alert system
+- Next up: DET-FRESH-006 (Fresh wallet clustering)
