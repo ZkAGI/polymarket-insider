@@ -1282,7 +1282,8 @@
       "priority": 65,
       "name": "Fresh wallet threshold configuration",
       "description": "Configurable thresholds for what constitutes a fresh wallet",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T06:00:00Z",
       "steps": [
         "Define threshold config",
         "Support age and tx count thresholds",

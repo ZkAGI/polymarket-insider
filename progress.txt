@@ -3507,3 +3507,95 @@ NOTES:
 - All convenience functions use shared singleton by default
 - Next up: DET-FRESH-002 (Fresh wallet threshold configuration)
 
+---
+
+## DET-FRESH-002: Fresh wallet threshold configuration
+COMPLETED: 2026-01-11T06:00:00Z
+
+IMPLEMENTATION:
+- Created FreshWalletConfigManager class in src/detection/fresh-wallet-config.ts
+- Comprehensive threshold configuration system for fresh wallet detection
+
+KEY FEATURES:
+1. Age and Transaction Count Thresholds:
+   - FreshWalletThreshold interface with maxAgeDays, minTransactionCount, minPolymarketTrades
+   - treatNoHistoryAsFresh flag for handling wallets with no on-chain history
+   - Default: 30 days age, 5 transactions, 3 Polymarket trades
+
+2. Per-Category Thresholds:
+   - CategoryThresholds type supporting all MarketCategory values
+   - Politics/Geopolitics: Stricter thresholds (60 days, 10 txs, 5 trades)
+   - Crypto: More relaxed thresholds (14 days, 3 txs, 2 trades)
+   - Default thresholds used when no category-specific override exists
+
+3. Severity Classification:
+   - FreshWalletAlertSeverity enum: LOW, MEDIUM, HIGH, CRITICAL
+   - SeverityThresholds configuration for each level
+   - Critical: <1 day, <1 tx; High: <7 days, <3 txs; Medium: <30 days, <5 txs
+
+4. Trade Size Thresholds:
+   - minTradeSize (100 USD) - minimum to trigger fresh wallet check
+   - largeTradeSize (1000 USD) - elevated scrutiny
+   - whaleTradeSize (10000 USD) - maximum scrutiny
+
+5. Time-Based Modifiers:
+   - increaseNearClose flag to apply stricter thresholds near market close
+   - closeWindowHours (24) - hours before close to apply modifier
+   - closeMultiplier (0.5) - multiplies age thresholds, divides count thresholds
+
+6. Environment Variable Configuration:
+   - ENV_VARS constants for all configurable values
+   - loadConfigFromEnv() loads from process.env
+   - Environment variables override defaults but can be further overridden
+
+7. Wallet Evaluation:
+   - evaluateWallet() - comprehensive evaluation returning ThresholdEvaluationResult
+   - Returns: isFresh, severity, ageCategory, triggeredBy flags, appliedThresholds
+   - getAdjustedThresholds() - applies time modifiers when near close
+
+8. Configuration Management:
+   - getConfig(), updateConfig() - access and modify config
+   - validate() - validates configuration with detailed errors
+   - toJSON(), fromJSON() - serialization support
+   - reset() - restore to defaults
+
+EXPORTS (src/detection/fresh-wallet-config.ts):
+- FreshWalletConfigManager class
+- createFreshWalletConfigManager, getSharedFreshWalletConfigManager, etc.
+- FreshWalletAlertSeverity enum
+- DEFAULT_* constants for all default values
+- ENV_VARS for environment variable names
+- Convenience functions: getThresholdsForCategory, evaluateWalletFreshness, etc.
+- Types: FreshWalletThreshold, SeverityThresholds, CategoryThresholds, etc.
+
+DETECTION MODULE INDEX (src/detection/index.ts):
+- Updated to export all fresh-wallet-config functionality
+- DET-FRESH-002 exports grouped separately from DET-FRESH-001
+
+TESTS:
+- Created tests/detection/fresh-wallet-config.test.ts with 80 tests:
+  - Default values tests (7 tests)
+  - FreshWalletConfigManager tests (45 tests)
+    - Constructor, updateConfig, getThresholdsForCategory
+    - getAdjustedThresholds, evaluateWallet
+    - isEnabled/setEnabled, getTradeSizeThresholds
+    - reset, toJSON/fromJSON, validate
+  - Environment variable loading tests (10 tests)
+  - Singleton management tests (4 tests)
+  - Convenience function tests (5 tests)
+  - Age category classification tests (7 tests)
+  - Edge case tests (6 tests)
+  - Integration tests (2 tests)
+- Created tests/e2e/fresh-wallet-config.e2e.test.ts with 5 tests:
+  - Configuration module integration tests
+  - Browser integration tests (app loads, responsive layout)
+- All 3450 tests pass (85 new + 3365 existing)
+
+NOTES:
+- Supports both environment variable and programmatic configuration
+- Per-category thresholds allow different rules for different market types
+- Time modifiers enable dynamic threshold adjustment near market close
+- Validation ensures configuration consistency
+- Comprehensive threshold evaluation with detailed result breakdown
+- Next up: DET-FRESH-003 (Zero trading history detector)
+
