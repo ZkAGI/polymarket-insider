@@ -1520,7 +1520,8 @@
       "priority": 77,
       "name": "Individual trade size analyzer",
       "description": "Flag individual trades significantly larger than average",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T11:51:00Z",
       "steps": [
         "Calculate trade size percentiles",
         "Define large trade thresholds",

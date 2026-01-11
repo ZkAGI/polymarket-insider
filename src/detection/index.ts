@@ -377,3 +377,41 @@ export type {
   BatchSpikeDetectionResult,
   SpikeDetectionSummary,
 } from "./volume-spike";
+
+// DET-VOL-004: Individual Trade Size Analyzer
+export {
+  TradeSizeCategory,
+  TradeSizeSeverity,
+  ThresholdMethod,
+  DEFAULT_PERCENTILE_THRESHOLDS,
+  DEFAULT_ZSCORE_THRESHOLDS,
+  DEFAULT_ABSOLUTE_THRESHOLDS,
+  DEFAULT_TRADE_SIZE_THRESHOLD_CONFIG,
+  TradeSizeAnalyzer,
+  createTradeSizeAnalyzer,
+  getSharedTradeSizeAnalyzer,
+  setSharedTradeSizeAnalyzer,
+  resetSharedTradeSizeAnalyzer,
+  analyzeTrade,
+  analyzeTrades,
+  isTradeOutlier,
+  getTradeSizePercentileRank,
+  getMarketTradeSizeStats,
+  getTradeSizeAnalyzerSummary,
+  getRecentLargeTrades,
+} from "./trade-size";
+
+export type {
+  TradeEntry,
+  TradeSizePercentiles,
+  MarketTradeSizeStats,
+  TradeSizeThresholdConfig,
+  TradeSizeAnalysisResult,
+  LargeTradeEvent,
+  WalletLargeTradeStats,
+  MarketLargeTradeStats,
+  BatchTradeSizeAnalysisResult,
+  TradeSizeAnalyzerSummary,
+  TradeSizeAnalyzerConfig,
+  AnalyzeTradeOptions,
+} from "./trade-size";

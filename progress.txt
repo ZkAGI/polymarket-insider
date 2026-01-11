@@ -4607,3 +4607,111 @@ VOLUME SPIKE DETECTION PIPELINE PROGRESS:
 - DET-VOL-003: Volume Spike Detector ✓
 
 Next: DET-VOL-004 (Volume spike threshold configuration) or other priority features
+
+=== DET-VOL-004: Individual Trade Size Analyzer ===
+Date: 2026-01-11
+
+FEATURE SUMMARY:
+Implemented comprehensive trade size analyzer to flag individual trades
+significantly larger than average for whale detection.
+
+IMPLEMENTATION:
+
+1. TradeSizeAnalyzer Class:
+   - Extends EventEmitter for large trade events
+   - Uses TradeRingBuffer for efficient trade storage (configurable max per market)
+   - Calculates trade size percentiles (p10, p25, p50, p75, p90, p95, p99, p995, p999)
+   - Multiple threshold detection methods (PERCENTILE, Z_SCORE, ABSOLUTE, COMBINED)
+   - Tracks large trade frequency per wallet and market
+   - Alert cooldown to prevent alert fatigue
+   - Comprehensive summary and statistics
+
+2. Trade Size Categories (TradeSizeCategory enum):
+   - SMALL: Below average trade size
+   - MEDIUM: Average trade size
+   - LARGE: Above average but not unusual
+   - VERY_LARGE: Significantly above average
+   - WHALE: Extreme outlier trade
+
+3. Severity Levels (TradeSizeSeverity enum):
+   - LOW: z-score >= 2.0
+   - MEDIUM: z-score >= 2.5
+   - HIGH: z-score >= 3.0
+   - CRITICAL: z-score >= 4.0
+
+4. Threshold Methods (ThresholdMethod enum):
+   - PERCENTILE: Based on percentile ranking
+   - Z_SCORE: Based on z-score deviation
+   - ABSOLUTE: Based on absolute USD value
+   - COMBINED: Uses highest category from all methods
+
+5. Default Threshold Configuration:
+   - Percentile thresholds: large=75, veryLarge=90, whale=99
+   - Z-score thresholds: low=2.0, medium=2.5, high=3.0, critical=4.0
+   - Absolute thresholds: large=$10k, veryLarge=$50k, whale=$100k
+   - Default method: COMBINED
+
+6. Key Features:
+   - analyzeTrade(): Analyze single trade and return result
+   - analyzeTrades(): Batch analyze multiple trades
+   - isOutlierTrade(): Quick check if trade is outlier
+   - getPercentileRank(): Get percentile rank for trade size
+   - getZScore(): Calculate z-score for trade size
+   - getWalletLargeTradeStats(): Get large trade stats for wallet
+   - getMarketLargeTradeStats(): Get large trade stats for market
+   - getSummary(): Get comprehensive analyzer summary
+   - getRecentLargeTradeEvents(): Get recent large trade events
+
+7. Event Emission:
+   - 'largeTradeDetected': Emitted for any flagged trade
+   - 'whaleTradeDetected': Emitted specifically for WHALE trades
+   - 'statsUpdated': Emitted when market stats are recalculated
+
+8. Types Exported:
+   - TradeEntry: Trade data input
+   - TradeSizePercentiles: Percentile distribution
+   - MarketTradeSizeStats: Market statistics
+   - TradeSizeThresholdConfig: Threshold configuration
+   - TradeSizeAnalysisResult: Analysis result
+   - LargeTradeEvent: Large trade event data
+   - WalletLargeTradeStats: Wallet statistics
+   - MarketLargeTradeStats: Market large trade stats
+   - BatchTradeSizeAnalysisResult: Batch analysis result
+   - TradeSizeAnalyzerSummary: Summary statistics
+   - TradeSizeAnalyzerConfig: Analyzer configuration
+   - AnalyzeTradeOptions: Options for analysis
+
+9. Singleton Management:
+   - createTradeSizeAnalyzer: Create new instance
+   - getSharedTradeSizeAnalyzer: Get/create shared instance
+   - setSharedTradeSizeAnalyzer: Set shared instance
+   - resetSharedTradeSizeAnalyzer: Reset shared instance
+
+10. Convenience Functions:
+    - analyzeTrade: Analyze single trade using shared instance
+    - analyzeTrades: Batch analyze using shared instance
+    - isTradeOutlier: Quick outlier check
+    - getTradeSizePercentileRank: Get percentile rank
+    - getMarketTradeSizeStats: Get market statistics
+    - getTradeSizeAnalyzerSummary: Get summary
+    - getRecentLargeTrades: Get recent large trade events
+
+TESTS:
+- 56 unit tests in tests/detection/trade-size.test.ts
+- 24 E2E tests in tests/e2e/trade-size.e2e.test.ts
+- All tests pass
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/trade-size.ts: Main implementation (1569 lines)
+- src/detection/index.ts: Exports added
+- tests/detection/trade-size.test.ts: Unit tests
+- tests/e2e/trade-size.e2e.test.ts: E2E tests
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator ✓
+- DET-VOL-002: Rolling Volume Average Tracker ✓
+- DET-VOL-003: Volume Spike Detector ✓
+- DET-VOL-004: Individual Trade Size Analyzer ✓
+
+Next: DET-VOL-005 (Whale trade threshold calculator)
