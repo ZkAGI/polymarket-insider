@@ -415,3 +415,42 @@ export type {
   TradeSizeAnalyzerConfig,
   AnalyzeTradeOptions,
 } from "./trade-size";
+
+// DET-VOL-005: Whale Trade Threshold Calculator
+export {
+  LiquidityLevel,
+  ThresholdStrategy,
+  WhaleThresholdTier,
+  DEFAULT_LIQUIDITY_PERCENTAGES,
+  DEFAULT_VOLUME_PERCENTAGES,
+  DEFAULT_IMPACT_THRESHOLDS,
+  DEFAULT_FIXED_THRESHOLDS,
+  DEFAULT_MINIMUM_THRESHOLDS,
+  DEFAULT_MAXIMUM_THRESHOLDS,
+  DEFAULT_COMBINED_WEIGHTS,
+  DEFAULT_LIQUIDITY_CLASSIFICATION,
+  DEFAULT_THRESHOLD_CONFIG,
+  WhaleThresholdCalculator,
+  createWhaleThresholdCalculator,
+  getSharedWhaleThresholdCalculator,
+  setSharedWhaleThresholdCalculator,
+  resetSharedWhaleThresholdCalculator,
+  calculateWhaleThresholds,
+  batchCalculateWhaleThresholds,
+  isWhaleTradeSize,
+  getTierForTradeSize,
+  getCachedWhaleThresholds,
+  getWhaleThresholdSummary,
+} from "./whale-threshold";
+
+export type {
+  LiquidityData,
+  VolumeData,
+  WhaleThresholds,
+  ThresholdConfig,
+  CalculateThresholdOptions,
+  ThresholdChangeEvent,
+  BatchThresholdResult,
+  ThresholdCalculatorSummary,
+  WhaleThresholdCalculatorConfig,
+} from "./whale-threshold";
