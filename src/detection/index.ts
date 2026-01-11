@@ -621,3 +621,33 @@ export type {
   VolumeAlertListener,
   UnusualVolumeAlertGeneratorConfig,
 } from "./unusual-volume-alert";
+
+// DET-VOL-011: Volume Clustering Analyzer
+export {
+  CoordinationType,
+  ClusterSeverity,
+  DEFAULT_CLUSTER_THRESHOLDS,
+  VolumeClusteringAnalyzer,
+  createVolumeClusteringAnalyzer,
+  getSharedVolumeClusteringAnalyzer,
+  setSharedVolumeClusteringAnalyzer,
+  resetSharedVolumeClusteringAnalyzer,
+  analyzeTradesForClustering,
+  analyzeTradesWithSlidingWindow,
+  analyzeMultipleMarketsForClustering,
+  getRecentVolumeClusters,
+  getMarketVolumeClusters,
+  getWalletVolumeClusters,
+  getVolumeClusteringSummary,
+} from "./volume-clustering";
+
+export type {
+  ClusterTrade,
+  VolumeCluster,
+  ClusterDetectionResult,
+  BatchClusterDetectionResult,
+  ClusterThresholdConfig,
+  VolumeClusteringAnalyzerConfig,
+  AnalyzeTradesOptions,
+  ClusteringAnalyzerSummary,
+} from "./volume-clustering";

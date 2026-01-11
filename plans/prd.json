@@ -1660,7 +1660,8 @@
       "priority": 84,
       "name": "Volume clustering analyzer",
       "description": "Detect coordinated volume from multiple wallets",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T18:28:00Z",
       "steps": [
         "Group trades by time window",
         "Identify wallet clusters",

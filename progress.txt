@@ -5301,3 +5301,55 @@ VOLUME/WHALE DETECTION PIPELINE PROGRESS:
 
 Next: DET-VOL-011 (Volume clustering analyzer)
 
+
+================================================================================
+DET-VOL-011: VOLUME CLUSTERING ANALYZER
+================================================================================
+Date: 2026-01-11
+Status: COMPLETED
+
+IMPLEMENTATION:
+Created src/detection/volume-clustering.ts (~1000 lines) implementing a volume clustering
+analyzer that detects coordinated volume from multiple wallets.
+
+KEY FEATURES:
+1. Coordination Type Detection (CoordinationType):
+   - DIRECTIONAL: Multiple wallets trading same direction
+   - COUNTER_TRADING: Balanced buy/sell (potential wash trading)
+   - SPLIT_ORDERS: Wallets splitting large positions
+   - TIMED_COORDINATION: Trades at regular intervals
+   - MIXED: Multiple coordination signals
+
+2. Cluster Severity Levels (ClusterSeverity):
+   - LOW, MEDIUM, HIGH, CRITICAL
+
+3. Cluster Detection Algorithm:
+   - Groups trades by configurable time window (default 5 min)
+   - Identifies clusters with minimum wallets (default 3)
+   - Calculates coordination score based on wallet count, trade count,
+     direction alignment, timing regularity, volume concentration
+   - Flags suspicious clusters above threshold
+
+4. Volume Cluster Structure:
+   - Cluster ID and market ID
+   - Coordination type and severity
+   - Wallet addresses and trade IDs
+   - Volume metrics (total, buy, sell, average)
+   - Timing metrics (duration, intervals, regularity)
+   - Flag reasons for human review
+
+TESTS:
+- 55 unit tests in tests/detection/volume-clustering.test.ts
+- All tests pass (4739 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/volume-clustering.ts: Main implementation
+- src/detection/index.ts: Exports added
+- tests/detection/volume-clustering.test.ts: Unit tests
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001 to DET-VOL-011: All DONE
+
+Next: DET-VOL-012 (Pre-event volume spike detector)
+
