@@ -6334,3 +6334,91 @@ FILES:
 
 NOTES FOR NEXT SESSION:
 - Next feature: DET-PAT-004 (Win rate tracker) at priority 99
+
+=== Session 2026-01-12 ===
+
+COMPLETED: DET-PAT-004 - Win rate tracker
+Track historical win rate for each wallet to identify potential insiders
+
+IMPLEMENTATION:
+1. Core types and enums:
+   - PositionOutcome: WIN, LOSS, PUSH (market resolved without clear winner)
+   - WinRateCategory: POLITICS, CRYPTO, SPORTS, ENTERTAINMENT, SCIENCE, BUSINESS, WEATHER, OTHER
+   - WinRateSuspicionLevel: NONE, LOW, MEDIUM, HIGH, CRITICAL
+   - WinRateWindow: WEEK, MONTH, QUARTER, YEAR, ALL_TIME
+
+2. ResolvedPosition interface:
+   - id, walletAddress, marketId, marketCategory
+   - outcome (WIN/LOSS/PUSH)
+   - entryPrice, exitPrice, sizeUsd
+   - entryTimestamp, resolutionTimestamp
+   - profitLossUsd (optional)
+
+3. WinRateTracker class features:
+   - Position tracking with deduplication
+   - Multi-window win rate calculation (7d, 30d, 90d, 365d, all-time)
+   - Category breakdown (win rates per market category)
+   - Streak tracking (current and longest winning/losing streaks)
+   - Trend analysis (recent performance vs historical)
+   - Anomaly detection for unusually high win rates
+   - Suspicion scoring with weighted factors:
+     * Base win rate contribution
+     * Sample size bonus (more positions = higher confidence)
+     * Trend acceleration bonus
+     * Streak bonus
+     * Category dominance bonus
+
+4. Analysis methods:
+   - analyze(walletAddress): Full win rate analysis for a wallet
+   - batchAnalyze(walletAddresses): Batch analysis with sorting
+   - calculateWinRate(): Core calculation with confidence scoring
+   - calculateCategoryBreakdown(): Per-category statistics
+   - calculateStreaks(): Winning/losing streak detection
+   - calculateHistory(): Historical win rate over configurable windows
+   - calculateTrend(): Recent vs historical performance comparison
+   - detectAnomaly(): Statistical anomaly detection
+
+5. Factory and convenience functions:
+   - createWinRateTracker()
+   - getSharedWinRateTracker() / setSharedWinRateTracker()
+   - analyzeWinRate(), batchAnalyzeWinRates()
+   - hasUnusuallyHighWinRate()
+   - getHighWinRateWallets(), getPotentialInsidersByWinRate()
+   - getWinRateTrackerSummary()
+   - addPositionForWinRate(), addPositionsForWinRate()
+
+6. Events emitted:
+   - positionAdded: When a new position is recorded
+   - positionsCleared: When wallet positions are cleared
+   - allPositionsCleared: When all positions are cleared
+   - highWinRateDetected: When analysis finds high win rate
+   - cacheInvalidated: When cache is cleared
+
+TESTS: 90 unit tests + 23 E2E tests covering all functionality
+- Constructor and configuration
+- Position management (add, get, clear, dedupe)
+- Win rate calculation with various outcomes
+- Multi-window analysis
+- Category breakdown
+- Streak tracking
+- Trend analysis
+- Anomaly detection
+- Suspicion scoring
+- Batch analysis
+- Caching behavior
+- Event emission
+- Edge cases (empty data, all wins, all losses, etc.)
+- E2E scenarios: retail traders, insiders, whales, multi-wallet
+
+TYPECHECK: Passes with no errors
+FULL TEST SUITE: 5973 tests pass (95 test files)
+- Note: 1 flaky test in chain/client.test.ts (uptime timing) - unrelated to win-rate-tracker
+
+FILES:
+- src/detection/win-rate-tracker.ts (new - ~1500 lines)
+- tests/detection/win-rate-tracker.test.ts (new - ~1200 lines)
+- tests/e2e/win-rate-tracker.e2e.test.ts (new - ~550 lines)
+- src/detection/index.ts (updated with exports, aliased WINDOW_DURATION_MS)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-PAT-005 (Profit/loss calculator) at priority 100

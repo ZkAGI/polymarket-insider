@@ -1137,3 +1137,44 @@ export type {
   BatchTimingAnalysisResult,
   TimingAnalyzerSummary,
 } from "./timing-pattern-analyzer";
+
+// DET-PAT-004: Win Rate Tracker
+export {
+  PositionOutcome,
+  WinRateCategory,
+  WinRateSuspicionLevel,
+  WinRateWindow,
+  WINDOW_DURATION_MS as WIN_RATE_WINDOW_DURATION_MS,
+  DEFAULT_WIN_RATE_CONFIG,
+  WIN_RATE_CATEGORY_THRESHOLDS,
+  WinRateTracker,
+  createWinRateTracker,
+  getSharedWinRateTracker,
+  setSharedWinRateTracker,
+  resetSharedWinRateTracker,
+  addPositionForWinRate,
+  addPositionsForWinRate,
+  analyzeWinRate,
+  batchAnalyzeWinRates,
+  hasUnusuallyHighWinRate,
+  getHighWinRateWallets,
+  getPotentialInsidersByWinRate,
+  getWinRateTrackerSummary,
+  getWinRateCategoryDescription,
+  getWinRateSuspicionDescription,
+} from "./win-rate-tracker";
+
+export type {
+  ResolvedPosition,
+  WindowStats,
+  CategoryWinRate,
+  StreakInfo,
+  WinRateDataPoint,
+  WinRateTrend,
+  WinRateAnomaly,
+  WinRateResult,
+  AnalyzeWinRateOptions,
+  BatchWinRateResult,
+  WinRateTrackerSummary,
+  WinRateTrackerConfig,
+} from "./win-rate-tracker";

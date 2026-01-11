@@ -1962,7 +1962,8 @@
       "priority": 99,
       "name": "Win rate tracker",
       "description": "Track historical win rate for each wallet",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T04:05:00Z",
       "steps": [
         "Track resolved positions",
         "Calculate win/loss ratio",
