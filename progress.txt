@@ -6135,3 +6135,56 @@ NOTES FOR NEXT SESSION:
 - Could integrate with real-time trade monitoring
 - Consider adding persistence layer for correlations
 - May want to add visualization of correlation networks
+
+================================================================================
+SESSION: 2026-01-12 - DET-NICHE-010 Implementation
+================================================================================
+
+FEATURE: DET-NICHE-010 - Niche market alert generator
+PRIORITY: 95
+STATUS: COMPLETED
+
+OVERVIEW:
+Implemented a comprehensive niche market alert generator that creates alerts for
+suspicious activity in niche prediction markets. This module defines alert
+conditions, generates alerts with rich market context, and sets niche-specific
+severity based on insider advantage potential.
+
+IMPLEMENTATION DETAILS:
+1. NicheMarketAlertType enum - Eleven alert types:
+   - HIGH_INSIDER_POTENTIAL, SPECIALIST_WALLET, CROSS_MARKET_CORRELATION
+   - THIN_MARKET_ACTIVITY, REGULATORY_DEADLINE, PRE_EVENT_ACTIVITY
+   - WATCHLIST_TRIGGER, COORDINATED_NICHE_ACTIVITY, SPECIALIST_CONVERGENCE
+   - INFORMATION_ASYMMETRY, GENERAL_NICHE_ANOMALY
+
+2. NicheAlertSeverity enum - Four levels:
+   - LOW, MEDIUM, HIGH, CRITICAL
+
+3. NicheAlertStatus enum - Six states:
+   - NEW, READ, ACKNOWLEDGED, INVESTIGATING, DISMISSED, RESOLVED
+
+4. Context Interfaces:
+   - NicheMarketContext - Market info with insider potential and liquidity
+   - NicheWalletContext - Wallet concentration and specialist data
+   - NicheCorrelationContext - Cross-market correlation data
+   - NicheAlertContext - Full context for alert evaluation
+
+5. NicheMarketAlertGenerator class extending EventEmitter with process methods
+   for different signal sources and alert management methods
+
+KEY FEATURES:
+- 14 default alert conditions with customizable thresholds
+- Condition evaluation with predicates and score thresholds
+- Alert generation with titles, messages, and context
+- Cooldown system to prevent alert spam
+- Event emission for new, high, and critical alerts
+- Custom alert listeners support
+
+TESTS: Typecheck passes, Full suite (5525 tests) passes
+FILES:
+- src/detection/niche-market-alert.ts (new - ~2400 lines)
+- src/detection/index.ts (updated with exports)
+
+NOTES FOR NEXT SESSION:
+- Next feature TBD based on PRD priority
+

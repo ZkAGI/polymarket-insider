@@ -992,3 +992,37 @@ export type {
   CrossMarketCorrelationDetectorConfig,
   AnalyzeCorrelationOptions,
 } from "./cross-market-correlation";
+
+// DET-NICHE-010: Niche Market Alert Generator
+export {
+  NicheMarketAlertType,
+  NicheAlertSeverity,
+  NicheAlertStatus,
+  DEFAULT_NICHE_ALERT_CONDITIONS,
+  NicheMarketAlertGenerator,
+  createNicheMarketAlertGenerator,
+  getSharedNicheMarketAlertGenerator,
+  setSharedNicheMarketAlertGenerator,
+  resetSharedNicheMarketAlertGenerator,
+  generateNicheMarketAlerts,
+  getNicheMarketAlertsByType,
+  getNicheMarketAlertsBySeverity,
+  getNicheMarketAlertSummary,
+  shouldTriggerNicheAlert,
+  getNicheMarketAlertsForMarket,
+} from "./niche-market-alert";
+
+export type {
+  NicheMarketContext,
+  NicheWalletContext,
+  NicheCorrelationContext,
+  NicheAlertContext,
+  NicheMarketAlert,
+  NicheAlertCondition,
+  GenerateNicheAlertOptions,
+  ProcessAlertResult,
+  BatchNicheAlertResult,
+  NicheAlertSummary,
+  NicheAlertListener,
+  NicheMarketAlertGeneratorConfig,
+} from "./niche-market-alert";

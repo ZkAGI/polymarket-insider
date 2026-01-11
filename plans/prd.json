@@ -1881,7 +1881,8 @@
       "priority": 95,
       "name": "Niche market alert generator",
       "description": "Generate alerts for suspicious niche market activity",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T02:52:00Z",
       "steps": [
         "Define niche alert conditions",
         "Create alert with market context",
