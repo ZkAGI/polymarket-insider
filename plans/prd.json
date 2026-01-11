@@ -1421,7 +1421,8 @@
       "priority": 72,
       "name": "Wallet history depth analyzer",
       "description": "Analyze depth of wallet transaction history across chains",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T12:17:00Z",
       "steps": [
         "Query multiple chains if possible",
         "Count total transactions",

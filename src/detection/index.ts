@@ -233,3 +233,35 @@ export type {
   ConfidenceSummary,
   FreshWalletConfidenceScorerConfig,
 } from "./fresh-wallet-confidence";
+
+// DET-FRESH-009: Wallet History Depth Analyzer
+export {
+  HistoryDepthCategory,
+  DEFAULT_DEPTH_THRESHOLDS,
+  DEFAULT_SCORE_WEIGHTS,
+  WalletHistoryDepthAnalyzer,
+  createWalletHistoryDepthAnalyzer,
+  getSharedWalletHistoryDepthAnalyzer,
+  setSharedWalletHistoryDepthAnalyzer,
+  resetSharedWalletHistoryDepthAnalyzer,
+  analyzeWalletHistoryDepth,
+  batchAnalyzeWalletHistoryDepth,
+  hasShallowWalletHistory,
+  getWalletHistoryDepthScore,
+  getWalletHistoryDepthCategory,
+  getWalletTotalTransactionCount,
+  getHistoryDepthSummary,
+} from "./wallet-history-depth";
+
+export type {
+  TransactionTypeDistribution,
+  ActivityMetrics,
+  WalletHistoryDepthResult,
+  DepthScoreFactor,
+  HistoryDepthOptions,
+  BatchHistoryDepthResult,
+  HistoryDepthSummary,
+  WalletHistoryDepthAnalyzerConfig,
+  DepthThresholds,
+  DepthScoreWeights,
+} from "./wallet-history-depth";
