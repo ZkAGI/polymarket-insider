@@ -5200,3 +5200,104 @@ VOLUME/WHALE DETECTION PIPELINE PROGRESS:
 
 Next: DET-VOL-010 (Unusual volume alert generator)
 
+================================================================================
+DET-VOL-010: UNUSUAL VOLUME ALERT GENERATOR
+================================================================================
+Date: 2026-01-11
+Status: COMPLETED
+
+IMPLEMENTATION:
+Created src/detection/unusual-volume-alert.ts (~1500 lines) implementing an unusual volume alert generator that integrates with existing volume detection modules.
+
+KEY FEATURES:
+1. Alert Type System (UnusualVolumeAlertType):
+   - VOLUME_SPIKE: Sudden volume increase
+   - WHALE_TRADE: Very large single trade
+   - LARGE_TRADE: Significantly large trade
+   - TRADE_BURST: Series of rapid trades
+   - EXCESSIVE_IMPACT: High market impact
+   - COORDINATED_VOLUME: Coordinated trading pattern
+   - GENERAL_ANOMALY: Other volume anomalies
+
+2. Alert Severity Levels (VolumeAlertSeverity):
+   - LOW, MEDIUM, HIGH, CRITICAL
+
+3. Alert Status Management (VolumeAlertStatus):
+   - NEW, READ, ACKNOWLEDGED, RESOLVED
+
+4. Alert Conditions:
+   - Configurable conditions with predicates
+   - Z-score thresholds for volume spikes
+   - Trade size thresholds for whale detection
+   - Impact ratio thresholds for market impact
+   - Burst pattern detection for coordinated activity
+   - 11 default conditions provided
+
+5. Alert Context:
+   - Volume comparison data (current vs baseline)
+   - Trade info (size, wallet, category)
+   - Impact info (BPS, ratio, anomaly type)
+   - Burst info (count, pattern type, volume)
+
+6. Integration Points:
+   - Processes VolumeSpikeEvent from volume-spike module
+   - Processes LargeTradeEvent from trade-size module
+   - Processes HighImpactEvent from market-impact module
+   - Processes BurstEvent from consecutive-large-trades module
+   - Uses RollingVolumeTracker for volume baseline
+
+7. Alert Management:
+   - Storage with configurable max alerts
+   - Retrieval by ID, market, type, severity
+   - Status updates (acknowledge, resolve)
+   - Automatic expiration and cleanup
+   - Cooldown management per market
+
+8. Event Emission:
+   - alertGenerated: All alerts
+   - criticalAlert: Critical severity alerts
+   - highAlert: High severity alerts
+   - Custom listener support
+
+EXPORTS:
+- UnusualVolumeAlertType enum
+- VolumeAlertSeverity enum
+- VolumeAlertStatus enum
+- DEFAULT_VOLUME_ALERT_CONDITIONS
+- UnusualVolumeAlertGenerator class
+- createUnusualVolumeAlertGenerator factory
+- getSharedUnusualVolumeAlertGenerator singleton
+- setSharedUnusualVolumeAlertGenerator
+- resetSharedUnusualVolumeAlertGenerator
+- Convenience functions:
+    - generateVolumeAlertFromSpike
+    - generateVolumeAlertFromLargeTrade
+    - generateVolumeAlertFromHighImpact
+    - generateVolumeAlertFromBurst
+    - getUnusualVolumeAlerts
+    - getUnusualVolumeAlertSummary
+
+TESTS:
+- 68 unit tests in tests/detection/unusual-volume-alert.test.ts
+- All tests pass (4684 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/unusual-volume-alert.ts: Main implementation (~1500 lines)
+- src/detection/index.ts: Exports added
+- tests/detection/unusual-volume-alert.test.ts: Unit tests (~1350 lines)
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator DONE
+- DET-VOL-002: Rolling Volume Average Tracker DONE
+- DET-VOL-003: Volume Spike Detector DONE
+- DET-VOL-004: Individual Trade Size Analyzer DONE
+- DET-VOL-005: Whale Trade Threshold Calculator DONE
+- DET-VOL-006: Volume-to-Liquidity Ratio Analyzer DONE
+- DET-VOL-007: Time-of-Day Volume Normalizer DONE
+- DET-VOL-008: Consecutive Large Trade Detector DONE
+- DET-VOL-009: Market Impact Calculator DONE
+- DET-VOL-010: Unusual Volume Alert Generator DONE
+
+Next: DET-VOL-011 (Volume clustering analyzer)
+

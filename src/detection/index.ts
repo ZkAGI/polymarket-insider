@@ -586,3 +586,38 @@ export type {
   BatchImpactResult,
   MarketImpactSummary,
 } from "./market-impact";
+
+// DET-VOL-010: Unusual Volume Alert Generator
+export {
+  UnusualVolumeAlertType,
+  VolumeAlertSeverity,
+  VolumeAlertStatus,
+  DEFAULT_VOLUME_ALERT_CONDITIONS,
+  UnusualVolumeAlertGenerator,
+  createUnusualVolumeAlertGenerator,
+  getSharedUnusualVolumeAlertGenerator,
+  setSharedUnusualVolumeAlertGenerator,
+  resetSharedUnusualVolumeAlertGenerator,
+  generateVolumeAlertFromSpike,
+  generateVolumeAlertFromLargeTrade,
+  generateVolumeAlertFromHighImpact,
+  generateVolumeAlertFromBurst,
+  getUnusualVolumeAlerts,
+  getUnusualVolumeAlertSummary,
+} from "./unusual-volume-alert";
+
+export type {
+  VolumeComparisonData,
+  VolumeAlertContext,
+  UnusualVolumeAlert,
+  VolumeAlertCondition,
+  GenerateVolumeAlertOptions,
+  ProcessSpikeResult,
+  ProcessLargeTradeResult,
+  ProcessHighImpactResult,
+  ProcessBurstResult,
+  BatchVolumeAlertResult,
+  VolumeAlertSummary,
+  VolumeAlertListener,
+  UnusualVolumeAlertGeneratorConfig,
+} from "./unusual-volume-alert";
