@@ -1560,7 +1560,8 @@
       "priority": 79,
       "name": "Volume-to-liquidity ratio analyzer",
       "description": "Analyze trade volume relative to available liquidity",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T17:20:00Z",
       "steps": [
         "Get order book depth",
         "Calculate volume/liquidity ratio",

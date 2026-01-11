@@ -4810,3 +4810,104 @@ VOLUME/WHALE DETECTION PIPELINE PROGRESS:
 - DET-VOL-005: Whale Trade Threshold Calculator ✓
 
 Next: DET-VOL-006 (Volume-to-liquidity ratio analyzer)
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: DET-VOL-006 - Volume-to-Liquidity Ratio Analyzer
+- Created src/detection/volume-liquidity-ratio.ts with comprehensive implementation
+- Analyzes trade volume relative to available liquidity to detect market-moving trades
+
+IMPLEMENTATION:
+
+1. VolumeLiquidityRatioAnalyzer Class:
+   - Extends EventEmitter for high ratio alert events
+   - Caches order book snapshots with configurable TTL
+   - Tracks ratio history per market
+   - Maintains market statistics and wallet high ratios
+
+2. Ratio Severity Classification (RatioSeverity enum):
+   - NORMAL: < 5% of liquidity
+   - ELEVATED: >= 5% of liquidity
+   - HIGH: >= 10% of liquidity
+   - VERY_HIGH: >= 20% of liquidity
+   - CRITICAL: >= 50% of liquidity
+
+3. Liquidity Measurement Types (LiquidityMeasure enum):
+   - TOTAL: Total order book liquidity (bids + asks)
+   - BID_SIDE: Liquidity on bid side only
+   - ASK_SIDE: Liquidity on ask side only
+   - PRICE_RANGE: Liquidity within 2% price range (default)
+   - TOP_OF_BOOK: Liquidity at best bid/ask
+   - WEIGHTED_DEPTH: Volume-weighted average depth
+
+4. Trade Direction Support (TradeDirection enum):
+   - BUY: Uses ask liquidity
+   - SELL: Uses bid liquidity
+   - UNKNOWN: Uses minimum of bid/ask
+
+5. Key Features:
+   - analyzeRatio(): Analyze single trade ratio
+   - analyzeRatioBatch(): Batch analyze multiple trades
+   - isHighRatio(): Quick check for high ratio
+   - updateOrderBook(): Cache order book snapshot
+   - getMarketStats(): Get market ratio statistics
+   - getRatioPercentile(): Get percentile for a ratio
+   - getSummary(): Get comprehensive analyzer summary
+
+6. Additional Ratios Calculated:
+   - Total liquidity ratio
+   - Depth at 1% price impact ratio
+   - Depth at 2% price impact ratio
+   - Depth at 5% price impact ratio
+   - Top of book ratio
+
+7. Price Impact Estimation:
+   - Estimates price impact based on ratio
+   - Capped at 50% maximum
+
+8. Confidence Scoring (0-1):
+   - Based on order book data quality
+   - Higher with more liquidity levels
+   - Higher with depth data at multiple levels
+   - Higher with reasonable spread
+   - Higher with fresh snapshot
+
+9. Event Emission:
+   - 'highRatio': Emitted for flagged trades
+   - Includes context: ratio vs average, previous high ratio
+
+10. Singleton Management:
+    - createVolumeLiquidityRatioAnalyzer: Create new instance
+    - getSharedVolumeLiquidityRatioAnalyzer: Get/create shared instance
+    - setSharedVolumeLiquidityRatioAnalyzer: Set shared instance
+    - resetSharedVolumeLiquidityRatioAnalyzer: Reset shared instance
+
+11. Convenience Functions:
+    - analyzeVolumeLiquidityRatio: Analyze using shared instance
+    - batchAnalyzeVolumeLiquidityRatio: Batch analyze using shared instance
+    - isHighRatioTrade: Check high ratio using shared instance
+    - updateOrderBookCache: Update cache using shared instance
+    - getMarketRatioStats: Get stats using shared instance
+    - getRatioAnalyzerSummary: Get summary using shared instance
+
+TESTS:
+- 69 unit tests in tests/detection/volume-liquidity-ratio.test.ts
+- 36 E2E tests in tests/e2e/volume-liquidity-ratio.e2e.test.ts
+- All tests pass (4448 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/volume-liquidity-ratio.ts: Main implementation
+- src/detection/index.ts: Exports added
+- tests/detection/volume-liquidity-ratio.test.ts: Unit tests
+- tests/e2e/volume-liquidity-ratio.e2e.test.ts: E2E tests
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator ✓
+- DET-VOL-002: Rolling Volume Average Tracker ✓
+- DET-VOL-003: Volume Spike Detector ✓
+- DET-VOL-004: Individual Trade Size Analyzer ✓
+- DET-VOL-005: Whale Trade Threshold Calculator ✓
+- DET-VOL-006: Volume-to-Liquidity Ratio Analyzer ✓
+
+Next: DET-VOL-007 (Time-of-day volume normalizer)

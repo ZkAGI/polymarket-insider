@@ -454,3 +454,36 @@ export type {
   ThresholdCalculatorSummary,
   WhaleThresholdCalculatorConfig,
 } from "./whale-threshold";
+
+// DET-VOL-006: Volume-to-Liquidity Ratio Analyzer
+export {
+  RatioSeverity,
+  LiquidityMeasure,
+  TradeDirection,
+  DEFAULT_RATIO_THRESHOLDS,
+  VolumeLiquidityRatioAnalyzer,
+  createVolumeLiquidityRatioAnalyzer,
+  getSharedVolumeLiquidityRatioAnalyzer,
+  setSharedVolumeLiquidityRatioAnalyzer,
+  resetSharedVolumeLiquidityRatioAnalyzer,
+  analyzeVolumeLiquidityRatio,
+  batchAnalyzeVolumeLiquidityRatio,
+  isHighRatioTrade,
+  updateOrderBookCache,
+  getMarketRatioStats,
+  getRatioAnalyzerSummary,
+} from "./volume-liquidity-ratio";
+
+export type {
+  OrderBookSnapshot,
+  TradeForRatioAnalysis,
+  RatioAnalysisResult,
+  RatioHistoryEntry,
+  MarketRatioStats,
+  HighRatioAlertEvent,
+  RatioThresholdConfig,
+  VolumeLiquidityRatioAnalyzerConfig,
+  AnalyzeRatioOptions,
+  BatchRatioAnalysisResult,
+  RatioAnalyzerSummary,
+} from "./volume-liquidity-ratio";
