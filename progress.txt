@@ -5887,3 +5887,111 @@ NOTES FOR NEXT SESSION:
 - Fixed a pre-existing test failure in political-market-identifier.test.ts
   (was caused by test ID collision with shared classifier cache)
 
+================================================================================
+SESSION: 2026-01-11 - DET-NICHE-007 Implementation
+================================================================================
+
+FEATURE: DET-NICHE-007 - Niche market watchlist manager
+PRIORITY: 92
+STATUS: COMPLETED
+
+OVERVIEW:
+Implemented a comprehensive watchlist manager for tracking high-priority niche markets
+with potential insider information advantages. The module provides full CRUD operations,
+priority-based sorting, event emission, and detailed statistics.
+
+IMPLEMENTATION DETAILS:
+
+1. WatchlistPriority enum - Five priority levels:
+   - CRITICAL (score: 90)
+   - HIGH (score: 70)
+   - MEDIUM (score: 50)
+   - LOW (score: 30)
+   - MINIMAL (score: 10)
+
+2. WatchlistReason enum - Ten reason types:
+   - HIGH_INFORMATION_ADVANTAGE
+   - THIN_LIQUIDITY
+   - REGULATORY_DECISION
+   - POLITICAL_EVENT
+   - GEOPOLITICAL_EVENT
+   - UNUSUAL_ACTIVITY
+   - MANUAL_ADDITION
+   - APPROACHING_EXPIRY
+   - PRE_EVENT_MONITORING
+   - RELATED_MARKET
+
+3. WatchlistStatus enum - Entry status tracking:
+   - ACTIVE
+   - PAUSED
+   - ARCHIVED
+   - PENDING_REVIEW
+
+4. WatchlistEventType enum - Event types:
+   - MARKET_ADDED
+   - MARKET_REMOVED
+   - PRIORITY_CHANGED
+   - STATUS_CHANGED
+   - METADATA_UPDATED
+   - BULK_UPDATE
+   - WATCHLIST_CLEARED
+
+5. NicheMarketWatchlist class - Main implementation:
+   - EventEmitter-based for reactive updates
+   - Configurable priority weights for auto-calculation
+   - Market ID to entry ID mapping for fast lookups
+   - Event history tracking with configurable limit
+   - Full statistics and summary generation
+
+KEY FEATURES:
+- Auto-priority calculation based on:
+  - Information advantage score (40% weight)
+  - Liquidity risk / thin market status (25% weight)
+  - Market category importance (20% weight)
+  - Time sensitivity of reasons (15% weight)
+- Category importance weighting:
+  - Politics, Legal, Health: highest importance (1.0)
+  - Business, Crypto: high importance (0.8)
+  - Tech, Science: medium-high (0.7)
+  - Other categories: moderate to low (0.3-0.6)
+- Filtering and querying by:
+  - Priority, status, reasons, categories
+  - Date ranges (addedAfter, addedBefore)
+  - Text search, priority score threshold
+- Bulk operations: addMarkets, removeMarkets, reprioritizeAll
+- Alert recording and tracking per market
+
+API FUNCTIONS:
+- addMarket(), removeMarket(), updateEntry()
+- getEntry(), getEntryById(), hasMarket()
+- getEntries() - with full filter support
+- getEntriesByPriority(), getActiveEntries()
+- getTopPriorityEntries(), getEntriesByCategory()
+- getEntriesByReason(), getMarketIds()
+- archiveMarket(), pauseMarket(), resumeMarket()
+- recordAlert(), reprioritizeAll(), clear()
+- getStatistics(), getSummary()
+- getRecentEvents(), getMarketEvents()
+- Shared instance functions via module exports
+
+TESTS:
+- 116 unit tests in tests/detection/niche-market-watchlist.test.ts
+- All tests pass (5398 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/niche-market-watchlist.ts (new - ~1200 lines)
+- src/detection/index.ts (updated with exports)
+- tests/detection/niche-market-watchlist.test.ts (new - ~1440 lines)
+
+INTEGRATION:
+- Exports added to src/detection/index.ts
+- Works with MarketCategory from api/gamma/types
+- Integrates with InformationAdvantageTier and MarketLiquidityScore types
+- Uses LiquidityCategory from market-liquidity-scorer
+
+NOTES FOR NEXT SESSION:
+- DET-NICHE-008: Niche market vs mainstream comparator is next in priority
+- Could integrate watchlist with real-time monitoring system
+- Consider adding persistence layer for watchlist data
+- The watchlist provides excellent foundation for alert/monitoring features

@@ -891,3 +891,36 @@ export type {
   ScoreLiquidityOptions,
   MarketLiquidityScorerConfig,
 } from "./market-liquidity-scorer";
+
+// DET-NICHE-007: Niche Market Watchlist Manager
+export {
+  WatchlistPriority,
+  WatchlistReason,
+  WatchlistStatus,
+  WatchlistEventType,
+  NicheMarketWatchlist,
+  createNicheMarketWatchlist,
+  getSharedNicheMarketWatchlist,
+  setSharedNicheMarketWatchlist,
+  resetSharedNicheMarketWatchlist,
+  addToWatchlist,
+  removeFromWatchlist,
+  isOnWatchlist,
+  getWatchlistEntry,
+  getActiveWatchlistEntries,
+  getTopPriorityWatchlistEntries,
+  getWatchlistSummary,
+  getWatchlistStatistics,
+} from "./niche-market-watchlist";
+
+export type {
+  WatchlistMarketData,
+  WatchlistEntry,
+  WatchlistEvent,
+  AddToWatchlistOptions,
+  UpdateWatchlistOptions,
+  WatchlistFilterOptions,
+  WatchlistStatistics,
+  WatchlistSummary,
+  NicheMarketWatchlistConfig,
+} from "./niche-market-watchlist";
