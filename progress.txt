@@ -4911,3 +4911,89 @@ VOLUME/WHALE DETECTION PIPELINE PROGRESS:
 - DET-VOL-006: Volume-to-Liquidity Ratio Analyzer ✓
 
 Next: DET-VOL-007 (Time-of-day volume normalizer)
+
+=== Session 2026-01-11 (continued) ===
+
+COMPLETED: DET-VOL-007 - Time-of-Day Volume Normalizer
+- Created src/detection/time-of-day-normalizer.ts with full implementation
+
+IMPLEMENTATION DETAILS:
+1. Hour-of-Day Profiles:
+   - Builds statistical profiles for each hour (0-23)
+   - Tracks: average volume, median, std dev, percentiles
+   - Calculates per-hour coefficients of variation
+   - Tracks trade counts if available
+
+2. Day-of-Week Profiles:
+   - Builds separate profiles for each day of week
+   - Identifies peak and lowest activity hours per day
+   - Calculates average daily volume
+
+3. Volume Normalization:
+   - Normalizes volume based on expected hourly volume
+   - Factor > 1 for low-activity hours (scale up)
+   - Factor < 1 for high-activity hours (scale down)
+   - Enables fair comparison across different times
+
+4. Time Period Classification:
+   - PEAK: Configurable peak hours (default: 14-21 UTC, US market hours)
+   - OFF_HOURS: Configurable off-hours (default: 4-8 UTC)
+   - LOW: Early morning (0-6 UTC)
+   - STANDARD: All other hours
+
+5. Timezone Support:
+   - Configurable reference timezone (default: UTC)
+   - Per-operation timezone override
+   - Uses Intl.DateTimeFormat for reliable conversion
+   - Graceful fallback to UTC on invalid timezone
+
+6. Off-Hours Anomaly Detection:
+   - Z-score based detection during off-hours
+   - Severity levels: LOW, MEDIUM, HIGH, CRITICAL
+   - Configurable thresholds (default: 2.0, 2.5, 3.0, 4.0)
+   - Event emission for off-hours anomalies
+
+7. Profile Reliability:
+   - Configurable minimum data points per hour (default: 30)
+   - Profile marked reliable when 18+ hours have sufficient data
+   - Prevents normalization with insufficient historical data
+
+8. Event Emission:
+   - 'offHoursAnomaly': Emitted when off-hours anomaly detected
+   - 'profileUpdated': Emitted when profile is built/updated
+
+9. Singleton Management:
+   - createTimeOfDayNormalizer: Create new instance
+   - getSharedTimeOfDayNormalizer: Get/create shared instance
+   - setSharedTimeOfDayNormalizer: Set shared instance
+   - resetSharedTimeOfDayNormalizer: Reset shared instance
+
+10. Convenience Functions:
+    - addVolumeForTimeProfile: Add data to shared instance
+    - getTimeOfDayProfile: Get profile from shared instance
+    - normalizeVolumeForTimeOfDay: Normalize using shared instance
+    - checkOffHoursAnomaly: Check off-hours anomaly
+    - getExpectedVolumeForTime: Get expected volume for a time
+    - getCurrentTimePeriod: Get current time period classification
+    - getTimeOfDayNormalizerSummary: Get summary statistics
+
+TESTS:
+- 65 unit tests in tests/detection/time-of-day-normalizer.test.ts
+- All tests pass (4513 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/time-of-day-normalizer.ts: Main implementation
+- src/detection/index.ts: Exports added
+- tests/detection/time-of-day-normalizer.test.ts: Unit tests
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator ✓
+- DET-VOL-002: Rolling Volume Average Tracker ✓
+- DET-VOL-003: Volume Spike Detector ✓
+- DET-VOL-004: Individual Trade Size Analyzer ✓
+- DET-VOL-005: Whale Trade Threshold Calculator ✓
+- DET-VOL-006: Volume-to-Liquidity Ratio Analyzer ✓
+- DET-VOL-007: Time-of-Day Volume Normalizer ✓
+
+Next: DET-VOL-008 (Consecutive large trade detector)

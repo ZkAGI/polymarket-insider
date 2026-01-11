@@ -1580,7 +1580,8 @@
       "priority": 80,
       "name": "Time-of-day volume normalizer",
       "description": "Normalize volume analysis for time-of-day patterns",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T17:30:00Z",
       "steps": [
         "Build hour-of-day profiles",
         "Normalize by expected volume",

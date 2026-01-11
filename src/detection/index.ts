@@ -487,3 +487,36 @@ export type {
   BatchRatioAnalysisResult,
   RatioAnalyzerSummary,
 } from "./volume-liquidity-ratio";
+
+// DET-VOL-007: Time-of-Day Volume Normalizer
+export {
+  DayOfWeek,
+  TimePeriod,
+  OffHoursAnomalySeverity,
+  TimeOfDayNormalizer,
+  createTimeOfDayNormalizer,
+  getSharedTimeOfDayNormalizer,
+  setSharedTimeOfDayNormalizer,
+  resetSharedTimeOfDayNormalizer,
+  addVolumeForTimeProfile,
+  getTimeOfDayProfile,
+  normalizeVolumeForTimeOfDay,
+  checkOffHoursAnomaly,
+  getExpectedVolumeForTime,
+  getCurrentTimePeriod,
+  getTimeOfDayNormalizerSummary,
+} from "./time-of-day-normalizer";
+
+export type {
+  HourlyVolumeStats,
+  DayOfWeekProfile,
+  TimeOfDayProfile,
+  VolumeDataPoint as TimeOfDayVolumeDataPoint,
+  NormalizedVolumeResult,
+  OffHoursAnomalyEvent,
+  TimeOfDayNormalizerConfig,
+  NormalizeVolumeOptions,
+  BatchNormalizeOptions,
+  BatchNormalizeResult,
+  TimeOfDayNormalizerSummary,
+} from "./time-of-day-normalizer";
