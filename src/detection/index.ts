@@ -550,3 +550,39 @@ export type {
   BatchBurstDetectionResult,
   BurstDetectorSummary,
 } from "./consecutive-large-trades";
+
+// DET-VOL-009: Market Impact Calculator
+export {
+  ImpactSeverity,
+  ImpactAnomalyType,
+  TradeDirection as ImpactTradeDirection,
+  LiquidityLevel as ImpactLiquidityLevel,
+  DEFAULT_IMPACT_SEVERITY_THRESHOLDS,
+  DEFAULT_EXCESSIVE_THRESHOLDS,
+  DEFAULT_REVERSAL_CONFIG,
+  MarketImpactCalculator,
+  createMarketImpactCalculator,
+  getSharedMarketImpactCalculator,
+  setSharedMarketImpactCalculator,
+  resetSharedMarketImpactCalculator,
+  calculateMarketImpact,
+  batchCalculateMarketImpact,
+  hasExcessiveImpact,
+  getTradeImpactSeverity,
+  getRecentHighImpactEvents,
+  getMarketImpactSummary,
+} from "./market-impact";
+
+export type {
+  ImpactTradeData,
+  MarketLiquidityData,
+  MarketImpactResult,
+  HighImpactEvent,
+  ImpactSeverityThresholds,
+  ExcessiveImpactThresholds,
+  ReversalDetectionConfig,
+  MarketImpactCalculatorConfig,
+  CalculateImpactOptions,
+  BatchImpactResult,
+  MarketImpactSummary,
+} from "./market-impact";

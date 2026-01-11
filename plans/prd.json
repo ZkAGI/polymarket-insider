@@ -1620,7 +1620,8 @@
       "priority": 82,
       "name": "Market impact calculator",
       "description": "Calculate price impact of large trades",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T17:56:00Z",
       "steps": [
         "Track price before/after trade",
         "Calculate slippage",

@@ -5107,3 +5107,96 @@ VOLUME/WHALE DETECTION PIPELINE PROGRESS:
 
 Next: DET-VOL-009 (Market impact calculator)
 
+=== DET-VOL-009: Market Impact Calculator ===
+DATE: 2026-01-11
+STATUS: COMPLETED
+
+IMPLEMENTATION SUMMARY:
+MarketImpactCalculator - calculates price impact of large trades for detecting potential market manipulation.
+
+KEY FEATURES:
+1. Impact Calculation:
+   - Track price before/after trade execution
+   - Calculate actual impact (priceAfter - priceBefore) in decimal and basis points
+   - Calculate slippage when expected price is provided
+   - Support for buy and sell directions
+
+2. Expected Impact Modeling:
+   - Linear model based on trade size and liquidity: impact = coefficient * (tradeSize / depth)
+   - Configurable impact model coefficient (default: 10 bps per 1% of depth)
+   - Falls back to conservative estimate when liquidity data unavailable
+
+3. Impact Severity Classification:
+   - NEGLIGIBLE: < 50 bps
+   - LOW: 50-99 bps
+   - MEDIUM: 100-199 bps
+   - HIGH: 200-499 bps
+   - EXTREME: >= 500 bps
+   - All thresholds configurable
+
+4. Anomaly Detection:
+   - EXCESSIVE_IMPACT: Impact ratio >= 2x expected
+   - MUTED_IMPACT: Impact ratio <= 0.3x expected (possible hidden order flow)
+   - FRONT_RUNNING: Price moved in same direction before trade
+   - PRICE_REVERSAL: Price reverses after trade
+   - DELAYED_IMPACT: Price moves after trade
+
+5. Liquidity Context:
+   - LiquidityLevel classification: VERY_LOW, LOW, MEDIUM, HIGH, VERY_HIGH
+   - Trade size as % of daily volume
+   - Trade size as % of order book depth
+   - Liquidity data caching per market
+
+6. Event Emission:
+   - highImpact: Emitted for significant trades
+   - excessiveImpact: Emitted for trades with excessive impact
+   - anomalyDetected: Emitted when anomaly pattern detected
+
+7. Cooldown Management:
+   - Configurable cooldown between alerts (default: 60 seconds)
+   - Bypass option available
+   - Per-market tracking
+
+8. Batch Processing:
+   - batchCalculateImpact for multiple trades
+   - Aggregate statistics (by severity, by anomaly type)
+   - Average impact and slippage calculation
+
+9. Summary and Statistics:
+   - Total markets/wallets tracked
+   - High impact event counts
+   - Events by severity and anomaly type
+   - Top impact markets and wallets
+   - Recent high impact events
+
+10. API Functions:
+    - calculateMarketImpact: Single trade impact
+    - batchCalculateMarketImpact: Batch processing
+    - hasExcessiveImpact: Boolean check
+    - getTradeImpactSeverity: Get severity level
+    - getRecentHighImpactEvents: Recent events
+    - getMarketImpactSummary: Full summary
+
+TESTS:
+- 38 unit tests in tests/detection/market-impact.test.ts
+- All tests pass (4616 total tests in suite)
+- Typecheck passes with no errors
+
+FILES:
+- src/detection/market-impact.ts: Main implementation (~700 lines)
+- src/detection/index.ts: Exports added
+- tests/detection/market-impact.test.ts: Unit tests
+
+VOLUME/WHALE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator DONE
+- DET-VOL-002: Rolling Volume Average Tracker DONE
+- DET-VOL-003: Volume Spike Detector DONE
+- DET-VOL-004: Individual Trade Size Analyzer DONE
+- DET-VOL-005: Whale Trade Threshold Calculator DONE
+- DET-VOL-006: Volume-to-Liquidity Ratio Analyzer DONE
+- DET-VOL-007: Time-of-Day Volume Normalizer DONE
+- DET-VOL-008: Consecutive Large Trade Detector DONE
+- DET-VOL-009: Market Impact Calculator DONE
+
+Next: DET-VOL-010 (Unusual volume alert generator)
+
