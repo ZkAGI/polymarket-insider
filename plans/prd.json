@@ -1500,7 +1500,8 @@
       "priority": 76,
       "name": "Volume spike detector",
       "description": "Detect sudden spikes in trading volume above threshold",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T08:35:00Z",
       "steps": [
         "Compare current to baseline",
         "Define spike thresholds",

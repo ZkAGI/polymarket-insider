@@ -347,3 +347,33 @@ export type {
   BatchRollingAveragesResult,
   RollingAveragesSummary,
 } from "./rolling-volume";
+
+// DET-VOL-003: Volume Spike Detector
+export {
+  VolumeSpikeType,
+  SpikeSeverity,
+  SpikeDirection,
+  DEFAULT_SPIKE_THRESHOLDS,
+  DEFAULT_SUSTAINED_CONFIG,
+  VolumeSpikeDetector,
+  createVolumeSpikeDetector,
+  getSharedVolumeSpikeDetector,
+  setSharedVolumeSpikeDetector,
+  resetSharedVolumeSpikeDetector,
+  detectVolumeSpike,
+  batchDetectVolumeSpikes,
+  isMarketInSpike,
+  getSpikeDetectionSummary,
+  getRecentVolumeSpikes,
+} from "./volume-spike";
+
+export type {
+  SpikeThresholdConfig,
+  SustainedSpikeConfig,
+  VolumeSpikeEvent,
+  SpikeDetectionResult,
+  VolumeSpikeDetectorConfig,
+  DetectSpikeOptions,
+  BatchSpikeDetectionResult,
+  SpikeDetectionSummary,
+} from "./volume-spike";

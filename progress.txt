@@ -4486,3 +4486,124 @@ VOLUME SPIKE DETECTION PIPELINE PROGRESS:
 - DET-VOL-002: Rolling Volume Average Tracker ✓
 
 Next: DET-VOL-003 (Volume spike threshold configuration)
+
+================================================================================
+DET-VOL-003: VOLUME SPIKE DETECTOR - COMPLETED
+================================================================================
+
+PURPOSE: Detect sudden spikes in trading volume above threshold for market anomaly detection.
+
+CREATED FILES:
+- src/detection/volume-spike.ts
+- tests/detection/volume-spike.test.ts
+- tests/e2e/volume-spike.e2e.test.ts
+
+MODIFIED FILES:
+- src/detection/index.ts (added DET-VOL-003 exports)
+
+IMPLEMENTATION DETAILS:
+
+1. Enums:
+   - VolumeSpikeType: MOMENTARY, SUSTAINED, SUDDEN, GRADUAL
+   - SpikeSeverity: LOW, MEDIUM, HIGH, CRITICAL
+   - SpikeDirection: UP, DOWN
+
+2. VolumeSpikeDetector Class:
+   - Uses RollingVolumeTracker for baseline data
+   - Extends EventEmitter for spike events
+   - Tracks spike state per market
+   - Configurable z-score and percentage-based thresholds
+   - Cooldown period to prevent alert fatigue
+   - Sustained vs momentary spike classification
+
+3. Spike Detection Methods:
+   - detectSpike(): Detect spike for single market
+   - batchDetectSpikes(): Detect spikes for multiple markets
+   - isInSpikeState(): Check if market is in spike
+   - getSpikeState(): Get detailed spike state
+
+4. Threshold Configuration (SpikeThresholdConfig):
+   - lowZScoreThreshold: 2.0
+   - mediumZScoreThreshold: 2.5
+   - highZScoreThreshold: 3.0
+   - criticalZScoreThreshold: 4.0
+   - lowPercentageThreshold: 1.5 (150% of baseline)
+   - mediumPercentageThreshold: 2.0 (200% of baseline)
+   - highPercentageThreshold: 3.0 (300% of baseline)
+   - criticalPercentageThreshold: 5.0 (500% of baseline)
+
+5. Sustained Spike Configuration (SustainedSpikeConfig):
+   - minConsecutivePoints: 3 (minimum data points for sustained)
+   - minDurationMinutes: 1 (minimum duration)
+   - maxGapMinutes: 2 (max gap before reset)
+
+6. Event Emission:
+   - 'spikeDetected': Emitted on any spike detection
+   - 'sustainedSpike': Emitted when spike becomes sustained
+   - 'spikeEnded': Emitted when spike state is cleared
+
+7. Summary and Tracking:
+   - getSummary(): Get summary of all spikes
+   - getRecentSpikes(): Get recent spike events
+   - getMarketSpikes(): Get spikes for specific market
+   - clearMarket(): Clear spike state for market
+   - clearAll(): Clear all spike states
+
+TYPES EXPORTED:
+- SpikeThresholdConfig: Z-score and percentage thresholds
+- SustainedSpikeConfig: Sustained spike parameters
+- VolumeSpikeEvent: Spike event data
+- SpikeDetectionResult: Detection result
+- VolumeSpikeDetectorConfig: Detector configuration
+- DetectSpikeOptions: Options for detectSpike()
+- BatchSpikeDetectionResult: Batch detection results
+- SpikeDetectionSummary: Summary statistics
+
+CONSTANTS EXPORTED:
+- DEFAULT_SPIKE_THRESHOLDS: Default threshold configuration
+- DEFAULT_SUSTAINED_CONFIG: Default sustained spike config
+
+CONVENIENCE FUNCTIONS:
+- detectVolumeSpike: Detect spike using shared detector
+- batchDetectVolumeSpikes: Batch detect using shared detector
+- isMarketInSpike: Check spike state using shared detector
+- getSpikeDetectionSummary: Get summary using shared detector
+- getRecentVolumeSpikes: Get recent spikes using shared detector
+
+SINGLETON MANAGEMENT:
+- createVolumeSpikeDetector: Create new instance
+- getSharedVolumeSpikeDetector: Get/create shared instance
+- setSharedVolumeSpikeDetector: Set shared instance
+- resetSharedVolumeSpikeDetector: Reset shared instance
+
+TESTS:
+- 58 unit tests in tests/detection/volume-spike.test.ts
+- 32 E2E tests in tests/e2e/volume-spike.e2e.test.ts
+- Tests cover:
+  - Constructor and configuration validation
+  - Spike detection with z-score thresholds
+  - Spike detection with percentage thresholds
+  - Severity level classification
+  - Upward and downward spike detection
+  - Cooldown period enforcement
+  - Sustained vs momentary spike classification
+  - Consecutive points tracking
+  - Spike duration tracking
+  - Event emission
+  - Multi-market tracking
+  - Batch detection
+  - Summary generation
+  - Recent spikes retrieval
+  - Market clearing operations
+  - Singleton management
+  - Module export verification
+
+ALL TESTS PASS: 4145 tests total (58 unit + 32 E2E new for DET-VOL-003)
+TYPECHECK: Passes with no errors
+
+VOLUME SPIKE DETECTION PIPELINE PROGRESS:
+- DET-VOL-001: Market Baseline Volume Calculator ✓
+- DET-VOL-002: Rolling Volume Average Tracker ✓
+- DET-VOL-003: Volume Spike Detector ✓
+
+Next: DET-VOL-004 (Volume spike threshold configuration) or other priority features
