@@ -15,7 +15,6 @@ import {
   getGeopoliticalMarketsByRegion,
   getGeopoliticalMarketsByEventType,
   getGeopoliticalMarketsByActor,
-  getGeopoliticalMarketsBySituation,
   getRelatedGeopoliticalMarkets,
   linkRelatedGeopoliticalMarkets,
   getGeopoliticalTaggerSummary,

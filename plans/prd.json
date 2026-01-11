@@ -1761,7 +1761,8 @@
       "priority": 89,
       "name": "Political market identifier",
       "description": "Identify markets related to political decisions/events",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-11T16:50:00Z",
       "steps": [
         "Define political keywords",
         "Identify election/policy markets",

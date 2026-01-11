@@ -788,3 +788,40 @@ export type {
   TaggerSummary,
   GeopoliticalEventTaggerConfig,
 } from "./geopolitical-event-tagger";
+
+// DET-NICHE-004: Political Market Identifier
+export {
+  PoliticalEventCategory,
+  PoliticalJurisdiction,
+  PoliticalParty,
+  PoliticalOffice,
+  PoliticalConfidence,
+  DEFAULT_POLITICAL_KEYWORDS,
+  DEFAULT_POLITICAL_FIGURES,
+  PoliticalMarketIdentifier,
+  createPoliticalMarketIdentifier,
+  getSharedPoliticalMarketIdentifier,
+  setSharedPoliticalMarketIdentifier,
+  resetSharedPoliticalMarketIdentifier,
+  identifyPoliticalMarket,
+  identifyPoliticalMarkets,
+  isPoliticalMarket,
+  isElectionMarket,
+  isPolicyMarket,
+  getPoliticalMarkets,
+  getElectionMarkets,
+  getPolicyMarkets,
+  getPoliticalIdentifierSummary,
+} from "./political-market-identifier";
+
+export type {
+  PoliticalTag,
+  PoliticalMarketResult,
+  MarketForPoliticalIdentification,
+  PoliticalKeyword,
+  PoliticalFigure,
+  IdentifyPoliticalOptions,
+  BatchPoliticalIdentificationResult,
+  PoliticalIdentifierSummary,
+  PoliticalMarketIdentifierConfig,
+} from "./political-market-identifier";
