@@ -1463,3 +1463,46 @@ export type {
   CompositeScorerSummary,
   CompositeSuspicionScorerConfig,
 } from "./composite-suspicion-scorer";
+
+// DET-SCORE-002: Signal Weight Configurator
+export {
+  WeightValidationMode,
+  WeightPreset,
+  WeightChangeType,
+  CONFIG_VERSION,
+  SIGNAL_DESCRIPTIONS,
+  CATEGORY_DESCRIPTIONS,
+  WEIGHT_PRESETS,
+  DEFAULT_CONFIGURATOR_OPTIONS,
+  SignalWeightConfigurator,
+  createSignalWeightConfigurator,
+  createConfiguratorWithPreset,
+  getSharedSignalWeightConfigurator,
+  setSharedSignalWeightConfigurator,
+  resetSharedSignalWeightConfigurator,
+  getEffectiveWeights,
+  setSignalWeight,
+  setCategoryWeight,
+  applyWeightPreset,
+  validateWeights,
+  analyzeWeightImpact,
+  resetWeightsToDefaults,
+  exportWeightsConfig,
+  importWeightsConfig,
+  getConfiguratorSummary,
+  getPresetDescription,
+  getSignalDescription,
+  getCategoryDescription,
+  getValidationModeDescription,
+} from "./signal-weight-configurator";
+
+export type {
+  SignalWeight,
+  CategoryWeight,
+  WeightConfiguration,
+  WeightChangeRecord,
+  WeightValidationResult,
+  WeightImpactAnalysis,
+  SignalWeightConfiguratorOptions,
+  ConfiguratorSummary,
+} from "./signal-weight-configurator";

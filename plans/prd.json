@@ -2128,7 +2128,9 @@
       "priority": 107,
       "name": "Signal weight configurator",
       "description": "Configure weights for different detection signals",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T05:55:00.000Z",
+      "notes": "Implemented SignalWeightConfigurator class with comprehensive weight management: 8 presets (DEFAULT, NETWORK_FOCUSED, PERFORMANCE_FOCUSED, BEHAVIOR_FOCUSED, CONSERVATIVE, AGGRESSIVE, FRESH_WALLET_FOCUSED, INSIDER_DETECTION, CUSTOM), 3 validation modes (STRICT, NORMALIZE, NONE), per-signal and per-category weight configuration, weight sum validation, file persistence (save/load to JSON), change history tracking, event emission, weight impact analysis, import/export functionality, shared instance management. 120 unit tests and 36 E2E tests pass.",
       "steps": [
         "Define weight configuration",
         "Allow per-signal weights",
