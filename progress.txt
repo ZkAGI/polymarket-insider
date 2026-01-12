@@ -8411,3 +8411,114 @@ NOTES FOR NEXT SESSION:
 - Click on alert currently logs to console (modal implementation in UI-ALERT-002)
 - Mark as read updates local state immediately
 - Stats badges only show when counts > 0
+
+
+
+================================================================================
+FEATURE: UI-ALERT-002 - Alert detail modal
+DATE: 2026-01-12T15:45:00Z
+PRIORITY: 125
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Implemented comprehensive AlertDetailModal component that displays full alert
+details in a modal overlay when clicking on an alert in the alerts list.
+
+COMPONENTS CREATED:
+- AlertDetailModal: Main modal component with full alert details
+- DetailSection: Reusable section component for organizing content
+
+TYPES DEFINED:
+- AlertDetailModalProps: alert, isOpen, onClose, onAction, onNavigateToMarket, etc.
+- AlertAction: 'DISMISS' | 'MARK_READ' | 'MARK_UNREAD' | 'ACKNOWLEDGE' | 'INVESTIGATE'
+- ActionButtonConfig: label, icon, action, variant, disabled
+
+FEATURES IMPLEMENTED:
+- Modal overlay with backdrop blur and click-outside-to-close
+- Full alert information display:
+  - Alert title (h2 with modal-title id for aria-labelledby)
+  - Alert message (full text, whitespace preserved)
+  - Type icon with emoji and badge
+  - Severity badge with color coding
+  - Unread indicator (blue badge with pulsing dot)
+  - Acknowledged status badge (green)
+  - Created timestamp (relative: "5 minutes ago")
+  - Full timestamp (detailed: "Monday, January 12, 2026 at 3:45:00 PM")
+  - Alert ID (monospace code style)
+- Type and Severity sections:
+  - Type info box with icon, label, and detailed description
+  - Severity info box with color dot, label, and description
+- Related data section (when market/wallet exists):
+  - Market info with name and "View Market" button
+  - Wallet info with truncated address (0x1234...5678)
+  - Copy wallet address to clipboard button
+  - "View Wallet" navigation button
+- Tags section with hashtag-prefixed badges
+- Action buttons in footer:
+  - Mark as Read / Mark as Unread (toggles based on state)
+  - Acknowledge (only shown if not acknowledged)
+  - Dismiss (danger variant, closes modal)
+  - Investigate link (navigates to market or wallet page)
+- Modal UX features:
+  - Escape key closes modal
+  - Backdrop click closes modal
+  - Body scroll lock when modal is open
+  - Focus management (close button receives focus on open)
+  - Smooth enter animation (scale + fade)
+  - Max height with scrollable body
+  - Responsive design (full width on mobile, max-w-2xl on desktop)
+- Full dark mode support with dark: variant classes
+- Severity-based left border color on modal content
+
+ACCESSIBILITY FEATURES:
+- role="dialog" on modal container
+- aria-modal="true"
+- aria-labelledby="modal-title" pointing to alert title
+- aria-label="Close modal" on close button
+- Keyboard navigation support (Escape to close)
+- Focus trap (close button receives initial focus)
+- Semantic HTML structure
+
+DATA ATTRIBUTES:
+- data-testid on all components for E2E testing:
+  - alert-detail-modal, modal-content, modal-body, modal-footer
+  - modal-icon, modal-severity, modal-type, modal-title, modal-close
+  - modal-message, modal-message-section
+  - modal-type-section, modal-severity-section
+  - modal-timestamps-section, modal-created-at, modal-full-timestamp
+  - modal-related-section, modal-market-name, modal-wallet-address
+  - modal-view-market, modal-view-wallet, modal-copy-wallet
+  - modal-tags-section, modal-tags, modal-tag-{tag}
+  - modal-id-section, modal-alert-id
+  - modal-actions, modal-action-{action}
+  - modal-investigate, modal-unread, modal-acknowledged
+
+HELPER FUNCTIONS EXPORTED:
+- formatDetailDate(date) - full formatted date string
+- formatRelativeTime(date) - relative time ("5 minutes ago")
+- getSeverityDescription(severity) - human-readable severity description
+- getAlertTypeDescription(type) - human-readable type description
+- getActionButtons(alert) - generates action button configs based on alert state
+- truncateAddress(address, startChars, endChars) - truncates wallet address
+- copyToClipboard(text) - async clipboard copy utility
+
+FILES CREATED/MODIFIED:
+- app/alerts/components/AlertDetailModal.tsx (new - modal component)
+- app/alerts/components/index.ts (updated - added exports)
+- app/alerts/page.tsx (updated - integrated modal with state)
+- tests/ui/alert-detail-modal.test.ts (new - 70+ unit tests)
+- tests/e2e/alert-detail-modal.e2e.test.ts (new - 55 E2E tests)
+- plans/prd.json (updated passes: true for UI-ALERT-002)
+
+TESTS: 70+ unit tests + 55 E2E Puppeteer browser tests pass.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-ALERT-003 (Alert type filter) at priority 126
+- AlertDetailModal is integrated into /alerts page
+- Clicking any alert opens the modal with full details
+- Modal state is managed in alerts/page.tsx (selectedAlert, isModalOpen)
+- Actions update local state (mark read/unread, acknowledge)
+- Navigate to market/wallet pages via onNavigateToMarket/onNavigateToWallet
+- Copy wallet button uses navigator.clipboard API
+- Animation uses @keyframes modal-enter with CSS class
+- Body scroll is locked via document.body.style.overflow = 'hidden'

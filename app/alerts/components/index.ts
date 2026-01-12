@@ -21,3 +21,16 @@ export {
   getPageNumbers,
   generateMockPaginatedAlerts,
 } from './AlertsListView';
+
+// Alert Detail Modal exports
+export { default as AlertDetailModal, DetailSection } from './AlertDetailModal';
+export type { AlertDetailModalProps, AlertAction } from './AlertDetailModal';
+export {
+  formatDetailDate,
+  formatRelativeTime,
+  getSeverityDescription,
+  getAlertTypeDescription,
+  getActionButtons,
+  truncateAddress,
+  copyToClipboard,
+} from './AlertDetailModal';

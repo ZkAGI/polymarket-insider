@@ -2498,7 +2498,9 @@
       "priority": 125,
       "name": "Alert detail modal",
       "description": "Detailed view of individual alert with all context",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T15:45:00Z",
+      "notes": "Implemented comprehensive AlertDetailModal component with: modal component at app/alerts/components/AlertDetailModal.tsx; full alert details display (title, message, type icon, severity badge, timestamps with relative and full format); related data section showing market name, wallet address (truncated with copy button), and navigation buttons to market/wallet pages; action buttons (dismiss, mark read/unread, acknowledge) with state updates; investigate link for navigation; body scroll lock when modal open; escape key and backdrop click to close; focus management (close button receives focus on open); smooth enter animation; responsive design for mobile/tablet/desktop; full dark mode support; WCAG accessibility (role=dialog, aria-modal, aria-labelledby, accessible labels). Helper functions exported: formatDetailDate, formatRelativeTime, getSeverityDescription, getAlertTypeDescription, getActionButtons, truncateAddress, copyToClipboard. Integrated into /alerts page with state management for selected alert and modal visibility. 55 E2E Puppeteer browser tests and 70+ unit tests pass. TypeScript types verified clean.",
       "steps": [
         "Create modal component",
         "Show full alert details",
