@@ -1338,3 +1338,43 @@ export type {
   AnalyzeCoordinationOptions,
   CoordinatedTradingSummary,
 } from "./coordinated-trading-detector";
+
+// DET-PAT-009: Sybil Attack Detector
+export {
+  SybilIndicatorType,
+  SybilConfidence,
+  SybilRiskLevel,
+  SybilFlag,
+  DEFAULT_SYBIL_THRESHOLDS,
+  SybilAttackDetector,
+  createSybilAttackDetector,
+  getSharedSybilAttackDetector,
+  setSharedSybilAttackDetector,
+  resetSharedSybilAttackDetector,
+  addWalletsForSybilAnalysis,
+  addTradesForSybilAnalysis,
+  analyzeWalletForSybil,
+  batchAnalyzeForSybil,
+  isWalletSybil,
+  getDetectedSybilClusters,
+  getHighRiskSybilClusters,
+  getSybilDetectorSummary,
+  getSybilIndicatorDescription,
+  getSybilConfidenceDescription,
+  getSybilRiskDescription,
+  getSybilFlagDescription,
+} from "./sybil-attack-detector";
+
+export type {
+  SybilWallet,
+  SybilTrade,
+  FundingTransaction,
+  WalletSybilSimilarity,
+  SybilCluster,
+  SybilAnalysisResult,
+  BatchSybilAnalysisResult,
+  SybilThresholdConfig,
+  SybilAttackDetectorConfig,
+  AnalyzeSybilOptions,
+  SybilDetectorSummary,
+} from "./sybil-attack-detector";
