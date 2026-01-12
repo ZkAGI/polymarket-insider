@@ -2043,7 +2043,9 @@
       "priority": 103,
       "name": "Coordinated trading detector",
       "description": "Detect multiple wallets trading in coordination",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T03:45:00Z",
+      "notes": "Implemented CoordinatedTradingDetector with: 9 coordination pattern types (SIMULTANEOUS, MIRROR_TRADING, COUNTER_PARTY, ORDER_SPLITTING, COPY_TRADING, RELAY_TRADING, FUNDING_LINKED, PROFIT_EXTRACTION, MULTI_PATTERN), 12 coordination flags, pair-wise similarity analysis (timing correlation, market overlap, size similarity, direction alignment, win rate correlation), group detection with union-find clustering, risk level assessment (NONE/LOW/MEDIUM/HIGH/CRITICAL), confidence scoring, batch analysis with caching, event emission for detection alerts. ~85 unit tests and ~20 E2E tests covering: mirror trading rings, wash trading, copy trading, order splitting, fresh wallet swarms, insider-like coordination, multi-pattern detection, and legitimate independent traders (negative case).",
       "steps": [
         "Identify simultaneous trades",
         "Analyze trade similarity",

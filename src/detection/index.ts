@@ -1301,3 +1301,40 @@ export type {
   MarketSelectionAnalyzerConfig,
   AnalyzeSelectionOptions,
 } from "./market-selection-analyzer";
+
+// DET-PAT-008: Coordinated Trading Detector
+export {
+  CoordinationPatternType,
+  CoordinationConfidence,
+  CoordinationRiskLevel,
+  CoordinationFlag,
+  DEFAULT_COORDINATION_THRESHOLDS,
+  CoordinatedTradingDetector,
+  createCoordinatedTradingDetector,
+  getSharedCoordinatedTradingDetector,
+  setSharedCoordinatedTradingDetector,
+  resetSharedCoordinatedTradingDetector,
+  addTradesForCoordination,
+  analyzeWalletCoordination,
+  batchAnalyzeCoordination,
+  isWalletCoordinated,
+  getDetectedCoordinatedGroups,
+  getHighRiskCoordinatedGroups,
+  getCoordinatedTradingSummary,
+  getCoordinationPatternDescription,
+  getCoordinationRiskDescription,
+  getCoordinationConfidenceDescription,
+  getCoordinationFlagDescription,
+} from "./coordinated-trading-detector";
+
+export type {
+  CoordinatedTrade,
+  WalletPairSimilarity,
+  CoordinatedGroup,
+  CoordinationAnalysisResult,
+  BatchCoordinationResult,
+  CoordinationThresholdConfig,
+  CoordinatedTradingDetectorConfig,
+  AnalyzeCoordinationOptions,
+  CoordinatedTradingSummary,
+} from "./coordinated-trading-detector";

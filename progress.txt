@@ -6588,3 +6588,88 @@ FILES:
 NOTES FOR NEXT SESSION:
 - Next feature: DET-PAT-008 (Coordinated trading detector) at priority 103
 
+=== Session 2026-01-12 (continued) ===
+
+COMPLETED: DET-PAT-008 - Coordinated trading detector
+Detect multiple wallets trading in coordination
+
+IMPLEMENTATION:
+1. Core types and enums:
+   - CoordinationPatternType: UNKNOWN, SIMULTANEOUS, MIRROR_TRADING, COUNTER_PARTY,
+     ORDER_SPLITTING, COPY_TRADING, RELAY_TRADING, FUNDING_LINKED, PROFIT_EXTRACTION, MULTI_PATTERN
+   - CoordinationConfidence: VERY_LOW, LOW, MEDIUM, HIGH, VERY_HIGH
+   - CoordinationRiskLevel: NONE, LOW, MEDIUM, HIGH, CRITICAL
+   - CoordinationFlag: TIMING_CORRELATION, SIZE_SIMILARITY, MARKET_OVERLAP, DIRECTION_ALIGNMENT,
+     OPPOSITE_DIRECTIONS, SHARED_FUNDING, WIN_RATE_SIMILARITY, AGE_CORRELATION, SEQUENTIAL_TIMING,
+     FRESH_WALLET_GROUP, BOT_INDICATORS, OFF_HOURS_TRADING
+
+2. Key interfaces:
+   - CoordinatedTrade: Trade entry with wallet, market, timing, size, outcome
+   - WalletPairSimilarity: Detailed similarity metrics between two wallets
+   - CoordinatedGroup: Detected group with pattern, confidence, risk, members
+   - CoordinationAnalysisResult: Full analysis for a wallet with groups, connected wallets
+   - BatchCoordinationResult: Results for multiple wallets with aggregated stats
+
+3. CoordinatedTradingDetector class features:
+   - Trade management: addTrades(), getTrades(), clearTrades(), clearAllTrades()
+   - Pair analysis: analyzePair() with timing/market/size/direction/winRate correlation
+   - Wallet analysis: analyze() with group detection and risk assessment
+   - Batch analysis: batchAnalyze() for multiple wallets with caching
+   - Detection methods: isCoordinated(), getGroupsForWallet(), getHighRiskGroups()
+   - Pattern-specific getters: getGroupsByPattern(), getGroupsByRiskLevel()
+   - Cache management: clearCache(), pruneCache()
+   - Configuration: updateThresholds(), getThresholds()
+   - Summary: getSummary() with stats, cache info, most connected wallets
+
+4. Key algorithms:
+   - Timing correlation: Measures simultaneous trade frequency within window
+   - Market overlap: Jaccard-like similarity of traded markets
+   - Size similarity: Ratio of average trade sizes
+   - Direction alignment: Same-side vs opposite-side trading in overlapping markets
+   - Win rate correlation: Similarity of win rates
+   - Weighted similarity score combining all factors
+   - Group building using connected pairs
+
+5. Factory and convenience functions:
+   - createCoordinatedTradingDetector()
+   - getSharedCoordinatedTradingDetector() / setSharedCoordinatedTradingDetector()
+   - addTradesForCoordination(), analyzeWalletCoordination(), batchAnalyzeCoordination()
+   - isWalletCoordinated(), getDetectedCoordinatedGroups(), getHighRiskCoordinatedGroups()
+   - Description functions for patterns, risk levels, confidence, flags
+
+6. Events emitted:
+   - tradesAdded: When new trades are recorded
+   - tradesCleared: When wallet trades are cleared
+   - allTradesCleared: When all trades are cleared
+   - analysisComplete: When analysis finishes
+   - highRiskGroupDetected: When high/critical risk group detected
+   - batchAnalysisComplete: When batch analysis finishes
+   - cacheCleared: When cache is invalidated
+   - configUpdated: When config changes
+
+TESTS: ~85 unit tests + ~20 E2E tests covering all functionality
+- Constructor and configuration
+- Trade management (add, get, clear, dedupe)
+- Pair analysis (timing, market, size, direction, win rate)
+- Coordination detection (simultaneous, mirror, counter-party, split)
+- Group management (detection, query, filtering)
+- Batch analysis with aggregation
+- Cache management (populate, hit, prune)
+- Event emission
+- Edge cases (empty data, insufficient trades, invalid addresses)
+- E2E scenarios: mirror trading ring, wash trading, copy trading, order splitting,
+  fresh wallet swarm, legitimate independent traders (negative case),
+  insider-like coordination, multi-pattern coordination
+
+TYPECHECK: Passes with no errors
+NOTE: Node.js version (15.2.1) too old to run vitest (requires 18+) but TypeScript verification complete
+
+FILES:
+- src/detection/coordinated-trading-detector.ts (new - ~1400 lines)
+- tests/detection/coordinated-trading-detector.test.ts (new - ~85 tests)
+- tests/e2e/coordinated-trading-detector.e2e.test.ts (new - ~20 tests)
+- src/detection/index.ts (updated with exports)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-PAT-009 (Sybil attack detector) at priority 104
+
