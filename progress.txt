@@ -6757,3 +6757,116 @@ FILES:
 
 NOTES FOR NEXT SESSION:
 - Next feature: DET-PAT-010 (Wallet linking analyzer) at priority 105
+
+=== Session 2026-01-12 (continued) ===
+
+COMPLETED: DET-PAT-010 - Historical Accuracy Scorer
+
+Implementation of comprehensive historical accuracy scoring for identifying wallets
+with consistently accurate predictions that may indicate informational advantages.
+
+1. Core types and enums:
+   - PredictionOutcome: 4 states (CORRECT, INCORRECT, CANCELLED, PENDING)
+   - ConvictionLevel: 5 levels (VERY_LOW, LOW, MEDIUM, HIGH, VERY_HIGH)
+   - AccuracyTier: 9 tiers (UNKNOWN, VERY_POOR, POOR, AVERAGE, ABOVE_AVERAGE, GOOD,
+     VERY_GOOD, EXCELLENT, EXCEPTIONAL)
+   - AccuracySuspicionLevel: 5 levels (NONE, LOW, MEDIUM, HIGH, CRITICAL)
+   - AccuracyWindow: 6 windows (ALL_TIME, DAY, WEEK, MONTH, QUARTER, YEAR)
+
+2. Data structures:
+   - TrackedPrediction: Prediction data with market info, conviction, entry probability,
+     resolution timestamp, P&L, ROI
+   - WindowAccuracyStats: Stats per time window (raw/weighted accuracy, high conviction
+     accuracy, Brier score, P&L)
+   - CategoryAccuracyStats: Per-category breakdown
+   - AccuracyDataPoint: Historical cumulative accuracy tracking
+   - AccuracyTrend: Direction (improving/declining/stable), magnitude, significance
+   - AccuracyAnomaly: Detected patterns with severity (0-100)
+   - AccuracyResult: Complete analysis output
+
+3. HistoricalAccuracyScorer class:
+   - Prediction management: addPrediction, addPredictions, updatePredictionOutcome
+   - Query methods: getPredictions, getResolvedPredictions, clearPredictions
+   - Analysis: analyze() with window stats, category breakdown, trend, anomalies
+   - Batch analysis: batchAnalyze() with rank calculation
+   - Queries: hasExceptionalAccuracy, getHighAccuracyWallets, getPotentialInsiders
+   - Rankings: getAccuracyRankings with percentile calculation
+   - Summary: getSummary with tier distribution and cache stats
+   - Caching with TTL and invalidation on new predictions
+   - Event emission (prediction-added, prediction-resolved, analysis-complete, potential-insider)
+
+4. Accuracy calculation algorithms:
+   - Raw accuracy: correct / total resolved
+   - Conviction-weighted accuracy: weighted by CONVICTION_WEIGHTS
+   - High conviction accuracy: separate tracking for HIGH/VERY_HIGH
+   - Brier score: Mean squared error of predictions vs outcomes
+   - Time-window filtering with configurable durations
+
+5. Anomaly detection (6 types):
+   - exceptional_accuracy: Overall accuracy above threshold
+   - sudden_improvement: Significant recent improvement
+   - perfect_high_conviction: Very high win rate on high conviction trades
+   - category_expertise: Exceptional performance in specific categories
+   - timing_advantage: High accuracy on trades made close to resolution
+   - contrarian_success: High success rate on low-probability bets
+
+6. Suspicion scoring:
+   - Weighted components: accuracy (30%), high conviction (25%), category expertise (15%),
+     trend (10%), contrarian (10%), anomaly count (10%)
+   - Level thresholds: CRITICAL (80+), HIGH (60+), MEDIUM (40+), LOW (20+)
+   - Potential insider flagging based on accuracy + prediction count
+
+7. Factory and convenience functions:
+   - createHistoricalAccuracyScorer()
+   - getSharedHistoricalAccuracyScorer() / setSharedHistoricalAccuracyScorer()
+   - addPredictionForAccuracy(), addPredictionsForAccuracy()
+   - updatePredictionOutcomeForAccuracy()
+   - analyzeAccuracy(), batchAnalyzeAccuracy()
+   - hasExceptionalAccuracy(), getHighAccuracyWallets(), getPotentialInsidersByAccuracy()
+   - getAccuracyRankings(), getAccuracyScorerSummary()
+   - Description functions for tier, suspicion level, conviction level
+
+TESTS: ~70 unit tests + ~25 E2E test scenarios covering all functionality
+- Constructor and configuration
+- Prediction management (add, update, get, clear)
+- Analysis with all options (history, categories, trends)
+- Tier determination across all accuracy levels
+- Category specialization detection
+- Trend analysis (improving, declining, stable)
+- Anomaly detection (exceptional accuracy, high conviction, timing, contrarian, sudden improvement)
+- Suspicion scoring and insider flagging
+- History calculation
+- Rankings and percentiles
+- Batch analysis
+- Caching behavior
+- Event emission
+- Edge cases (only wins, only losses, cancelled predictions, pending predictions)
+
+E2E scenarios:
+- Realistic trading scenarios (retail trader, skilled trader, insider suspect, whale)
+- Multi-wallet analysis and ranking
+- Category specialization detection
+- Time window analysis
+- Conviction weighting
+- Trend detection (improving, declining)
+- Anomaly detection patterns
+- Brier score calculation
+- Historical data tracking
+- Rankings and leaderboard
+- Shared instance integration
+- Data quality scoring
+- Summary statistics
+- Caching behavior
+
+TYPECHECK: Passes with no errors
+
+FILES:
+- src/detection/historical-accuracy-scorer.ts (new - ~1975 lines)
+- tests/detection/historical-accuracy-scorer.test.ts (updated with TS fixes - ~70 tests)
+- tests/e2e/historical-accuracy-scorer.e2e.test.ts (new - ~25 E2E scenarios)
+- src/detection/index.ts (already had exports from previous session)
+- plans/prd.json (updated passes: true for DET-PAT-010)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-SCORE-001 (Composite suspicion score calculator) at priority 106
+

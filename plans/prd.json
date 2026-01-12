@@ -2085,7 +2085,7 @@
       "priority": 105,
       "name": "Historical accuracy scorer",
       "description": "Score wallets based on historical prediction accuracy",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Track prediction outcomes",
         "Calculate accuracy rate",
@@ -2097,8 +2097,164 @@
         "typecheck": "Verify types",
         "e2e": "Score live wallets",
         "manual_verification": "Verify accuracy scores"
+      },
+      "completedAt": "2026-01-12T08:15:00.000Z",
+      "notes": "Implemented HistoricalAccuracyScorer with prediction tracking, conviction-weighted accuracy, Brier score calculation, anomaly detection (timing advantage, contrarian success, category expertise, sudden improvement), time-window analysis, trend detection, ~70 unit tests, ~25 E2E test scenarios"
+    },
+
+    {
+      "id": "DET-SCORE-001",
+      "priority": 106,
+      "name": "Composite suspicion score calculator",
+      "description": "Calculate overall suspicion score from multiple signals",
+      "passes": false,
+      "steps": [
+        "Collect all signal scores",
+        "Apply signal weights",
+        "Combine into composite score",
+        "Normalize to 0-100"
+      ],
+      "test_instructions": {
+        "unit": "Test score calculation",
+        "typecheck": "Verify types",
+        "e2e": "Calculate live scores",
+        "manual_verification": "Verify score reasonableness"
       }
     },
+    {
+      "id": "DET-SCORE-002",
+      "priority": 107,
+      "name": "Signal weight configurator",
+      "description": "Configure weights for different detection signals",
+      "passes": false,
+      "steps": [
+        "Define weight configuration",
+        "Allow per-signal weights",
+        "Validate weight sum",
+        "Store in settings"
+      ],
+      "test_instructions": {
+        "unit": "Test weight configuration",
+        "typecheck": "Verify config types",
+        "e2e": "Apply custom weights",
+        "manual_verification": "Verify weight effects"
+      }
+    },
+    {
+      "id": "DET-SCORE-003",
+      "priority": 108,
+      "name": "Dynamic threshold adjuster",
+      "description": "Automatically adjust thresholds based on market conditions",
+      "passes": false,
+      "steps": [
+        "Monitor market conditions",
+        "Detect regime changes",
+        "Adjust thresholds automatically",
+        "Log threshold changes"
+      ],
+      "test_instructions": {
+        "unit": "Test adjustment logic",
+        "typecheck": "Verify types",
+        "e2e": "Test with varying conditions",
+        "manual_verification": "Verify adjustment behavior"
+      }
+    },
+    {
+      "id": "DET-SCORE-004",
+      "priority": 109,
+      "name": "False positive reducer",
+      "description": "Apply filters to reduce false positive alerts",
+      "passes": false,
+      "steps": [
+        "Define false positive patterns",
+        "Apply filtering rules",
+        "Track filter effectiveness",
+        "Tune filters over time"
+      ],
+      "test_instructions": {
+        "unit": "Test filter logic",
+        "typecheck": "Verify types",
+        "e2e": "Apply filters to alerts",
+        "manual_verification": "Verify FP reduction"
+      }
+    },
+    {
+      "id": "DET-SCORE-005",
+      "priority": 110,
+      "name": "Alert priority ranker",
+      "description": "Rank alerts by priority/urgency for user attention",
+      "passes": false,
+      "steps": [
+        "Define priority factors",
+        "Calculate priority score",
+        "Sort alerts by priority",
+        "Highlight urgent alerts"
+      ],
+      "test_instructions": {
+        "unit": "Test ranking logic",
+        "typecheck": "Verify types",
+        "e2e": "Rank live alerts",
+        "manual_verification": "Verify ranking reasonableness"
+      }
+    },
+    {
+      "id": "DET-SCORE-006",
+      "priority": 111,
+      "name": "Confidence level calculator",
+      "description": "Calculate confidence level for each detection",
+      "passes": false,
+      "steps": [
+        "Assess signal strength",
+        "Consider data quality",
+        "Calculate confidence 0-100",
+        "Include in alert metadata"
+      ],
+      "test_instructions": {
+        "unit": "Test confidence calculation",
+        "typecheck": "Verify types",
+        "e2e": "Calculate live confidence",
+        "manual_verification": "Verify confidence levels"
+      }
+    },
+    {
+      "id": "DET-SCORE-007",
+      "priority": 112,
+      "name": "Historical score calibrator",
+      "description": "Calibrate scoring based on historical outcomes",
+      "passes": false,
+      "steps": [
+        "Track score vs outcome",
+        "Calculate calibration metrics",
+        "Adjust scoring parameters",
+        "Improve over time"
+      ],
+      "test_instructions": {
+        "unit": "Test calibration logic",
+        "typecheck": "Verify types",
+        "e2e": "Calibrate with history",
+        "manual_verification": "Verify calibration improvement"
+      }
+    },
+    {
+      "id": "DET-SCORE-008",
+      "priority": 113,
+      "name": "Multi-signal correlation scorer",
+      "description": "Boost score when multiple signals correlate",
+      "passes": false,
+      "steps": [
+        "Detect signal correlations",
+        "Calculate correlation boost",
+        "Apply boost to composite",
+        "Track boost effectiveness"
+      ],
+      "test_instructions": {
+        "unit": "Test correlation scoring",
+        "typecheck": "Verify types",
+        "e2e": "Apply correlation boosts",
+        "manual_verification": "Verify boost behavior"
+      }
+    },
+
     {
       "id": "TEST-PERF-001",
       "priority": 200,
