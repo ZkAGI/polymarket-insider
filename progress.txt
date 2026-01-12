@@ -7128,3 +7128,84 @@ NOTES FOR NEXT SESSION:
 - Market conditions should be updated periodically via updateMarketConditions()
 - Rules can be customized per deployment using addRule() method
 - Use getEffectiveThresholds() for current adjusted values
+
+================================================================================
+COMPLETED: DET-SCORE-004 - False Positive Reducer
+================================================================================
+
+FEATURE: False positive reducer
+PRIORITY: 109
+STATUS: Completed
+DATE: 2026-01-12
+
+IMPLEMENTATION:
+Implemented a comprehensive false positive filtering system that analyzes
+composite score results and applies pattern-based filtering to identify
+likely false positives, reducing alert fatigue.
+
+KEY FEATURES:
+- 12 false positive patterns (market maker, whale, retail, DCA, etc.)
+- 5 filter actions (PASS, REDUCE_SCORE, MARK_FALSE_POSITIVE, SUPPRESS, DEFER)
+- 5 confidence levels for filter decisions
+- 11 default filter rules with customizable conditions
+- Batch processing support
+- Feedback loop for filter tuning
+- Auto-tuning based on feedback
+- Cache with TTL for performance
+- Event emission for filtered alerts
+- Statistics and effectiveness tracking
+- Export/import configuration support
+
+TESTS:
+UNIT TESTS (76 tests):
+- Constants and enums
+- Constructor with default and custom config
+- Filter logic with rule matching
+- Score reduction calculations
+- Rule management (add/remove/enable/disable)
+- Batch filtering
+- Feedback collection and tracking
+- Statistics and effectiveness metrics
+- Cache management
+- Configuration updates
+- Export/import
+- History tracking
+- Singleton management
+- Event emission
+- Edge cases
+
+E2E TESTS (25 tests):
+- Market maker detection
+- Established whale detection
+- Low data quality handling
+- Insufficient signals deferral
+- Isolated signal spike detection
+- Batch processing
+- Feedback loop integration
+- Custom rules
+- Dynamic rule enabling/disabling
+- Retail trader patterns
+- Configuration persistence
+- DCA trader detection
+- Summary and statistics
+- Convenience functions
+- High volume processing
+- Cache behavior
+- Arbitrage bot detection
+
+TYPECHECK: Passes with no errors
+
+FILES:
+- src/detection/false-positive-reducer.ts (new - ~1900 lines)
+- src/detection/index.ts (updated exports with aliases)
+- tests/detection/false-positive-reducer.test.ts (new - 76 tests)
+- tests/e2e/false-positive-reducer.e2e.test.ts (new - 25 tests)
+- plans/prd.json (updated passes: true for DET-SCORE-004)
+
+NOTES FOR NEXT SESSION:
+- Find next passes:false feature in prd.json
+- The FalsePositiveReducer integrates with CompositeSuspicionScorer
+- Use provideFeedback() to tune filters over time
+- Custom rules can be added via addRule() method
+- Confidence threshold can be configured via minConfidenceForAction
+- Low data quality results in low confidence, which may prevent actions

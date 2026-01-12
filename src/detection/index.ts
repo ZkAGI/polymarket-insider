@@ -1552,3 +1552,45 @@ export type {
   DynamicThresholdAdjusterConfig,
   AdjusterSummary,
 } from "./dynamic-threshold-adjuster";
+
+// DET-SCORE-004: False Positive Reducer
+export {
+  FalsePositivePattern,
+  FilterAction,
+  FilterConfidence,
+  FilterPriority,
+  FilterOutcome,
+  PATTERN_DESCRIPTIONS,
+  CONFIDENCE_SCORES,
+  CONFIDENCE_THRESHOLDS,
+  DEFAULT_FILTER_RULES,
+  DEFAULT_REDUCER_CONFIG,
+  FalsePositiveReducer,
+  createFalsePositiveReducer,
+  getSharedFalsePositiveReducer,
+  setSharedFalsePositiveReducer,
+  resetSharedFalsePositiveReducer,
+  filterFalsePositives,
+  batchFilterFalsePositives,
+  addFilterRule,
+  removeFilterRule,
+  getFilterRules,
+  getReducerEffectiveness,
+  getReducerSummary,
+  provideFeedbackForTuning,
+  getPatternDescription as getFalsePositivePatternDescription,
+  getConfidenceScore as getFilterConfidenceScore,
+} from "./false-positive-reducer";
+
+export type {
+  FilterRule,
+  FilterMatch,
+  FilterResult,
+  FilterEffectiveness,
+  PatternStatistics,
+  RuleStatistics,
+  BatchFilterResult,
+  ReducerSummary,
+  OutcomeFeedback,
+  FalsePositiveReducerConfig,
+} from "./false-positive-reducer";

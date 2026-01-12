@@ -2101,7 +2101,6 @@
       "completedAt": "2026-01-12T08:15:00.000Z",
       "notes": "Implemented HistoricalAccuracyScorer with prediction tracking, conviction-weighted accuracy, Brier score calculation, anomaly detection (timing advantage, contrarian success, category expertise, sudden improvement), time-window analysis, trend detection, ~70 unit tests, ~25 E2E test scenarios"
     },
-
     {
       "id": "DET-SCORE-001",
       "priority": 106,
@@ -2170,7 +2169,7 @@
       "priority": 109,
       "name": "False positive reducer",
       "description": "Apply filters to reduce false positive alerts",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Define false positive patterns",
         "Apply filtering rules",
@@ -2182,7 +2181,8 @@
         "typecheck": "Verify types",
         "e2e": "Apply filters to alerts",
         "manual_verification": "Verify FP reduction"
-      }
+      },
+      "completed_at": "2026-01-12T06:09:30.771Z"
     },
     {
       "id": "DET-SCORE-005",
@@ -2260,7 +2260,6 @@
         "manual_verification": "Verify boost behavior"
       }
     },
-
     {
       "id": "TEST-PERF-001",
       "priority": 200,
