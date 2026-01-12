@@ -2540,7 +2540,9 @@
       "priority": 127,
       "name": "Alert severity filter",
       "description": "Filter alerts by severity/priority level",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T23:50:00Z",
+      "notes": "Implemented comprehensive AlertSeverityFilter component with: 5 severity levels (CRITICAL, HIGH, MEDIUM, LOW, INFO) ordered by rank; severity icons, labels, and descriptions; filter dropdown with Select All/Clear buttons; quick presets for 'Critical & High' and 'Medium & Above'; checkbox selection for individual severities; ActiveSeverityChips component for displaying selected severities as removable chips; CombinedFilterSummary component for showing filter results; full integration with AlertsListView supporting combined type+severity filtering; purple color scheme to distinguish from type filter; full accessibility (aria-expanded, aria-haspopup, role=listbox/option, keyboard navigation, Escape to close); dark mode support with dark: variant classes; click-outside-to-close and Escape key handlers. Helper functions exported: areAllSeveritiesSelected, areNoSeveritiesSelected, areCriticalHighSelected, getSelectedSeveritiesLabel, getSeverityRank, sortSeverities. 92 unit tests and 37 E2E Puppeteer browser tests pass. TypeScript types verified clean.",
       "steps": [
         "Create severity filter",
         "Define severity levels",

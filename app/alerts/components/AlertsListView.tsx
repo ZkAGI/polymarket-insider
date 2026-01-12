@@ -18,6 +18,13 @@ import AlertTypeFilter, {
   areAllTypesSelected,
   areNoTypesSelected,
 } from './AlertTypeFilter';
+import AlertSeverityFilter, {
+  ActiveSeverityChips,
+  ALL_SEVERITY_LEVELS,
+  areAllSeveritiesSelected,
+  areNoSeveritiesSelected,
+} from './AlertSeverityFilter';
+import type { AlertSeverity } from '../../dashboard/components/AlertFeed';
 
 // Re-export types for external use
 export type { AlertType, AlertSeverity, FeedAlert } from '../../dashboard/components/AlertFeed';
@@ -46,11 +53,14 @@ export interface AlertsListViewProps {
   onMarkRead?: (alertId: string) => void;
   onPageChange?: (page: number) => void;
   onTypeFilterChange?: (types: AlertType[]) => void;
+  onSeverityFilterChange?: (severities: AlertSeverity[]) => void;
   initialTypeFilters?: AlertType[];
+  initialSeverityFilters?: AlertSeverity[];
   emptyMessage?: string;
   emptyIcon?: string;
   showBackLink?: boolean;
   showTypeFilter?: boolean;
+  showSeverityFilter?: boolean;
   testId?: string;
 }
 
@@ -579,11 +589,14 @@ export default function AlertsListView({
   onMarkRead,
   onPageChange,
   onTypeFilterChange,
+  onSeverityFilterChange,
   initialTypeFilters,
+  initialSeverityFilters,
   emptyMessage = 'No alerts have been generated yet. The system is actively monitoring for suspicious activity.',
   emptyIcon = '🔔',
   showBackLink = true,
   showTypeFilter = true,
+  showSeverityFilter = true,
   testId = 'alerts-list-view',
 }: AlertsListViewProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -591,6 +604,9 @@ export default function AlertsListView({
   const [isLoading, setIsLoading] = useState(!externalAlerts);
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<AlertType[]>(
     initialTypeFilters || [...ALL_ALERT_TYPES]
+  );
+  const [selectedSeverityFilters, setSelectedSeverityFilters] = useState<AlertSeverity[]>(
+    initialSeverityFilters || [...ALL_SEVERITY_LEVELS]
   );
 
   // Update alerts when external alerts change
@@ -617,14 +633,24 @@ export default function AlertsListView({
     return () => clearTimeout(timer);
   }, [externalAlerts]);
 
-  // Filter alerts by type
+  // Filter alerts by type and severity
   const filteredAlerts = useMemo(() => {
-    // If all types selected or none selected, show all alerts
-    if (areAllTypesSelected(selectedTypeFilters) || areNoTypesSelected(selectedTypeFilters)) {
-      return alerts;
+    let result = alerts;
+
+    // Filter by type
+    const typeFilterActive = !areAllTypesSelected(selectedTypeFilters) && !areNoTypesSelected(selectedTypeFilters);
+    if (typeFilterActive) {
+      result = result.filter((alert) => selectedTypeFilters.includes(alert.type));
     }
-    return alerts.filter((alert) => selectedTypeFilters.includes(alert.type));
-  }, [alerts, selectedTypeFilters]);
+
+    // Filter by severity
+    const severityFilterActive = !areAllSeveritiesSelected(selectedSeverityFilters) && !areNoSeveritiesSelected(selectedSeverityFilters);
+    if (severityFilterActive) {
+      result = result.filter((alert) => selectedSeverityFilters.includes(alert.severity));
+    }
+
+    return result;
+  }, [alerts, selectedTypeFilters, selectedSeverityFilters]);
 
   // Calculate pagination based on filtered alerts
   const pagination = useMemo(
@@ -687,10 +713,41 @@ export default function AlertsListView({
     [selectedTypeFilters, handleTypeFilterChange]
   );
 
-  // Handle clearing all filters
-  const handleClearAllFilters = useCallback(() => {
+  // Handle clearing all type filters
+  const handleClearAllTypeFilters = useCallback(() => {
     handleTypeFilterChange([...ALL_ALERT_TYPES]);
   }, [handleTypeFilterChange]);
+
+  // Handle severity filter change
+  const handleSeverityFilterChange = useCallback(
+    (severities: AlertSeverity[]) => {
+      setSelectedSeverityFilters(severities);
+      // Reset to page 1 when filters change
+      setCurrentPage(1);
+      onSeverityFilterChange?.(severities);
+    },
+    [onSeverityFilterChange]
+  );
+
+  // Handle removing a single severity filter
+  const handleRemoveSeverityFilter = useCallback(
+    (severity: AlertSeverity) => {
+      const newSeverities = selectedSeverityFilters.filter((s) => s !== severity);
+      handleSeverityFilterChange(newSeverities.length > 0 ? newSeverities : [...ALL_SEVERITY_LEVELS]);
+    },
+    [selectedSeverityFilters, handleSeverityFilterChange]
+  );
+
+  // Handle clearing all severity filters
+  const handleClearAllSeverityFilters = useCallback(() => {
+    handleSeverityFilterChange([...ALL_SEVERITY_LEVELS]);
+  }, [handleSeverityFilterChange]);
+
+  // Handle clearing all filters (both type and severity)
+  const handleClearAllFilters = useCallback(() => {
+    handleTypeFilterChange([...ALL_ALERT_TYPES]);
+    handleSeverityFilterChange([...ALL_SEVERITY_LEVELS]);
+  }, [handleTypeFilterChange, handleSeverityFilterChange]);
 
   // Calculate stats from all alerts (for header display)
   const stats = useMemo(() => {
@@ -702,6 +759,12 @@ export default function AlertsListView({
 
   // Check if type filter is active (not showing all)
   const isTypeFilterActive = !areAllTypesSelected(selectedTypeFilters) && !areNoTypesSelected(selectedTypeFilters);
+
+  // Check if severity filter is active (not showing all)
+  const isSeverityFilterActive = !areAllSeveritiesSelected(selectedSeverityFilters) && !areNoSeveritiesSelected(selectedSeverityFilters);
+
+  // Check if any filters are active
+  const hasActiveFilters = isTypeFilterActive || isSeverityFilterActive;
 
   return (
     <div className="w-full" data-testid={testId}>
@@ -752,31 +815,69 @@ export default function AlertsListView({
           )}
         </div>
 
-        {/* Type filter */}
-        {showTypeFilter && !isLoading && alerts.length > 0 && (
+        {/* Filters section */}
+        {(showTypeFilter || showSeverityFilter) && !isLoading && alerts.length > 0 && (
           <div className="mt-4" data-testid="alerts-filter-section">
-            <div className="flex items-center gap-3">
-              <AlertTypeFilter
-                selectedTypes={selectedTypeFilters}
-                onChange={handleTypeFilterChange}
-                testId="alerts-type-filter"
-              />
+            {/* Filter controls row */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Type filter */}
+              {showTypeFilter && (
+                <AlertTypeFilter
+                  selectedTypes={selectedTypeFilters}
+                  onChange={handleTypeFilterChange}
+                  testId="alerts-type-filter"
+                />
+              )}
+
+              {/* Severity filter */}
+              {showSeverityFilter && (
+                <AlertSeverityFilter
+                  selectedSeverities={selectedSeverityFilters}
+                  onChange={handleSeverityFilterChange}
+                  testId="alerts-severity-filter"
+                />
+              )}
 
               {/* Filter results summary */}
-              {isTypeFilterActive && (
-                <span className="text-sm text-gray-500 dark:text-gray-400" data-testid="alerts-filter-summary">
-                  Showing {filteredAlerts.length} of {alerts.length} alerts
-                </span>
+              {hasActiveFilters && (
+                <div className="flex items-center gap-2" data-testid="alerts-filter-summary">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Showing {filteredAlerts.length} of {alerts.length} alerts
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearAllFilters}
+                    className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                    data-testid="alerts-clear-all-filters"
+                  >
+                    Clear all
+                  </button>
+                </div>
               )}
             </div>
 
             {/* Active filter chips */}
-            <ActiveFilterChips
-              selectedTypes={selectedTypeFilters}
-              onRemove={handleRemoveTypeFilter}
-              onClearAll={handleClearAllFilters}
-              testId="alerts-active-filters"
-            />
+            <div className="mt-3 space-y-2" data-testid="alerts-active-filter-chips">
+              {/* Type filter chips */}
+              {showTypeFilter && (
+                <ActiveFilterChips
+                  selectedTypes={selectedTypeFilters}
+                  onRemove={handleRemoveTypeFilter}
+                  onClearAll={handleClearAllTypeFilters}
+                  testId="alerts-active-type-filters"
+                />
+              )}
+
+              {/* Severity filter chips */}
+              {showSeverityFilter && (
+                <ActiveSeverityChips
+                  selectedSeverities={selectedSeverityFilters}
+                  onRemove={handleRemoveSeverityFilter}
+                  onClearAll={handleClearAllSeverityFilters}
+                  testId="alerts-active-severity-filters"
+                />
+              )}
+            </div>
           </div>
         )}
       </div>

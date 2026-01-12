@@ -50,3 +50,19 @@ export {
   truncateAddress,
   copyToClipboard,
 } from './AlertDetailModal';
+
+// Alert Severity Filter exports
+export { default as AlertSeverityFilter, ActiveSeverityChips, CombinedFilterSummary } from './AlertSeverityFilter';
+export type { AlertSeverityFilterProps, ActiveSeverityChipsProps, CombinedFilterSummaryProps } from './AlertSeverityFilter';
+export {
+  ALL_SEVERITY_LEVELS,
+  SEVERITY_ICONS,
+  SEVERITY_LABELS,
+  SEVERITY_DESCRIPTIONS,
+  areAllSeveritiesSelected,
+  areNoSeveritiesSelected,
+  areCriticalHighSelected,
+  getSelectedSeveritiesLabel,
+  getSeverityRank,
+  sortSeverities,
+} from './AlertSeverityFilter';

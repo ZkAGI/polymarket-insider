@@ -8522,3 +8522,99 @@ NOTES FOR NEXT SESSION:
 - Copy wallet button uses navigator.clipboard API
 - Animation uses @keyframes modal-enter with CSS class
 - Body scroll is locked via document.body.style.overflow = 'hidden'
+
+====================
+Session: 2026-01-12 (UI-ALERT-004)
+====================
+
+FEATURE COMPLETED: UI-ALERT-004 - Alert severity filter
+
+DESCRIPTION:
+Implemented alert severity filter to filter alerts by severity/priority level (CRITICAL, HIGH, MEDIUM, LOW, INFO).
+
+COMPONENTS CREATED:
+- AlertSeverityFilter: Main filter component with dropdown selector
+- ActiveSeverityChips: Removable chips showing selected severity levels
+- CombinedFilterSummary: Summary component for combined type+severity filtering
+
+CONSTANTS DEFINED:
+- ALL_SEVERITY_LEVELS: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO']
+- SEVERITY_ICONS: emoji icons for each severity (red, orange, yellow, green, blue circles)
+- SEVERITY_LABELS: human-readable labels
+- SEVERITY_DESCRIPTIONS: detailed descriptions for accessibility/tooltips
+
+FEATURES IMPLEMENTED:
+- Filter dropdown with 5 severity levels in order from most to least severe
+- Checkbox selection for individual severity levels
+- Select All / Clear buttons in dropdown header
+- Quick presets section:
+  - 'Critical & High' - filters to only CRITICAL and HIGH
+  - 'Medium & Above' - filters to CRITICAL, HIGH, and MEDIUM
+- Badge count on filter button when active filters are applied
+- Purple color scheme to distinguish from blue type filter
+- Filter results summary showing 'X of Y alerts'
+- Global 'Clear all' button to clear both type and severity filters
+- ActiveSeverityChips showing selected levels as removable chips
+- Chips sorted by severity rank (CRITICAL first)
+- Click-outside-to-close dropdown behavior
+- Escape key closes dropdown and returns focus to button
+- Full dark mode support with dark: Tailwind classes
+
+INTEGRATION WITH AlertsListView:
+- New props: onSeverityFilterChange, initialSeverityFilters, showSeverityFilter
+- Combined type+severity filtering in filteredAlerts useMemo
+- Severity filter handlers parallel to type filter handlers
+- Filter chips displayed in separate rows for type and severity
+- Global 'Clear all' clears both filters simultaneously
+
+ACCESSIBILITY:
+- aria-expanded on button
+- aria-haspopup='listbox' on button
+- role='listbox' on dropdown container
+- role='option' on each severity item
+- aria-selected on options
+- Keyboard navigation (Escape to close)
+- Focus management (button receives focus on close)
+
+DATA ATTRIBUTES:
+- data-testid on all components:
+  - alert-severity-filter, alert-severity-filter-button
+  - alert-severity-filter-dropdown, alert-severity-filter-label
+  - alert-severity-filter-badge, alert-severity-filter-list
+  - alert-severity-filter-select-all, alert-severity-filter-clear-all
+  - alert-severity-filter-apply
+  - alert-severity-filter-preset-critical-high
+  - alert-severity-filter-preset-medium-above
+  - alert-severity-filter-option-{SEVERITY}
+  - alert-severity-filter-checkbox-{SEVERITY}
+  - alert-severity-filter-icon-{SEVERITY}
+  - severity-chip-{SEVERITY}, severity-chip-remove-{SEVERITY}
+  - clear-severity-filters
+  - alerts-severity-filter, alerts-active-severity-filters
+  - alerts-clear-all-filters
+
+HELPER FUNCTIONS EXPORTED:
+- areAllSeveritiesSelected(severities) - check if all 5 levels selected
+- areNoSeveritiesSelected(severities) - check if array is empty
+- areCriticalHighSelected(severities) - check if both CRITICAL and HIGH are present
+- getSelectedSeveritiesLabel(severities) - get display label for selection
+- getSeverityRank(severity) - get numerical rank (5 for CRITICAL, 1 for INFO)
+- sortSeverities(severities) - sort array by rank descending
+
+FILES CREATED/MODIFIED:
+- app/alerts/components/AlertSeverityFilter.tsx (new - 450+ lines)
+- app/alerts/components/index.ts (updated - added exports)
+- app/alerts/components/AlertsListView.tsx (updated - integrated severity filter)
+- tests/ui/alert-severity-filter.test.ts (new - 92 unit tests)
+- tests/e2e/alert-severity-filter.e2e.test.ts (new - 37 E2E tests)
+- plans/prd.json (updated passes: true for UI-ALERT-004)
+
+TESTS: 92 unit tests + 37 E2E Puppeteer browser tests pass.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-ALERT-005 (Alert date range filter) at priority 128
+- AlertSeverityFilter uses purple color scheme to distinguish from blue type filter
+- Both filters work together in AlertsListView with combined filtering logic
+- Filter summary and 'Clear all' button appear when any filter is active
+- Quick presets are commonly used severity combinations
+- Severity chips are sorted by rank (CRITICAL first) for consistent display
