@@ -2189,7 +2189,7 @@
       "priority": 110,
       "name": "Alert priority ranker",
       "description": "Rank alerts by priority/urgency for user attention",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Define priority factors",
         "Calculate priority score",
@@ -2201,7 +2201,8 @@
         "typecheck": "Verify types",
         "e2e": "Rank live alerts",
         "manual_verification": "Verify ranking reasonableness"
-      }
+      },
+      "completed_at": "2026-01-12T08:25:00.000Z"
     },
     {
       "id": "DET-SCORE-006",

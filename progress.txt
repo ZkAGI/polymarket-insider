@@ -7209,3 +7209,147 @@ NOTES FOR NEXT SESSION:
 - Custom rules can be added via addRule() method
 - Confidence threshold can be configured via minConfidenceForAction
 - Low data quality results in low confidence, which may prevent actions
+
+================================================================================
+COMPLETED: DET-SCORE-005 - Alert Priority Ranker
+================================================================================
+
+FEATURE: Alert priority ranker
+PRIORITY: 110
+STATUS: Completed
+DATE: 2026-01-12
+
+IMPLEMENTATION:
+Implemented a comprehensive alert priority ranking system that evaluates and
+ranks alerts by urgency for user attention. The ranker considers multiple
+factors including severity, confidence, recency, impact, signal convergence,
+market sensitivity, network risk, pattern matching, anomaly intensity, and
+novelty to produce a weighted priority score.
+
+KEY FEATURES:
+- 5 priority levels (CRITICAL, HIGH, MEDIUM, LOW, MINIMAL)
+- 10 priority factors with configurable weights
+- 10 urgency reasons for immediate attention triggers
+- Time decay for aging alerts
+- Score escalation detection over time
+- Alert history tracking per wallet
+- Batch ranking with sorting
+- Filter integration for adjusted scores
+- Event emission for urgent and highlighted alerts
+- Cache with TTL for performance
+- Comprehensive statistics and summaries
+
+PRIORITY LEVELS:
+- CRITICAL: Requires immediate investigation
+- HIGH: Should be reviewed soon
+- MEDIUM: Standard review priority
+- LOW: Can be reviewed when time permits
+- MINIMAL: May not require review
+
+PRIORITY FACTORS:
+- SEVERITY: Composite suspicion score
+- CONFIDENCE: Data quality and signal reliability
+- RECENCY: How recent the activity is
+- IMPACT: Financial impact (P&L magnitude)
+- CONVERGENCE: Multiple signals agreeing
+- MARKET_SENSITIVITY: Market timing concerns
+- NETWORK_RISK: Coordination/sybil indicators
+- PATTERN_MATCH: Trading pattern classification
+- ANOMALY_INTENSITY: Strength of anomalous behavior
+- NOVELTY: First-time vs repeat detection
+
+URGENCY REASONS:
+- CRITICAL_SCORE: Composite score above critical threshold
+- MULTI_SIGNAL_CONVERGENCE: 3+ high signals agreeing
+- RECENT_ACTIVITY: Activity within last 2 hours
+- HIGH_IMPACT: P&L exceeding $50,000
+- NETWORK_DETECTION: Part of coordinated group
+- SYBIL_CLUSTER: Likely sybil wallet
+- INSIDER_INDICATOR: Potential insider flag
+- TIME_SENSITIVE_MARKET: Market approaching resolution
+- NEW_DETECTION: First time seeing this wallet
+- SCORE_ESCALATION: Score increased 20+ points
+
+EXPORTS:
+- PriorityLevel, PriorityFactor, UrgencyReason (enums)
+- DEFAULT_PRIORITY_WEIGHTS, DEFAULT_LEVEL_THRESHOLDS (configs)
+- DEFAULT_TIME_DECAY, DEFAULT_RANKER_CONFIG (configs)
+- Description constants for all enums
+- AlertPriorityRanker class
+- Factory: createAlertPriorityRanker
+- Singleton: getShared/setShared/resetShared
+- Convenience: rankAlert, rankAlerts
+- Retrieval: getUrgentAlerts, getHighlightedAlerts, getTopPriorityAlerts
+- Utilities: hasUrgentAlert, getWalletPriorityRanking
+- Descriptions: getPriorityLevel/Factor/UrgencyReason Description
+- Types: FactorContribution, AlertRanking, BatchRankingResult, etc.
+
+UNIT TESTS (83 tests):
+- Constants and enums validation
+- Default weights sum to 1.0
+- Constructor with default and custom config
+- rankAlert basic functionality
+- Priority level classification
+- Factor contributions
+- Top factors identification
+- Time decay application
+- Cache behavior
+- Summary and recommended action
+- Batch ranking (rankAlerts)
+- Sorting and rank assignment
+- Level counts
+- Filter results handling
+- Urgency detection (all 10 reasons)
+- Cache management
+- Retrieval methods
+- Alert history tracking
+- Score escalation detection
+- Configuration updates
+- Statistics and summaries
+- Event emission
+- Factory functions
+- Shared instance management
+- Convenience functions
+- Edge cases (empty signals, zero score, max score, old alerts)
+- Cache size limits
+
+E2E TESTS (39 tests):
+- High-risk wallet detection
+- Multiple urgency reasons
+- Recommended action generation
+- Batch ranking with mixed priorities
+- Level count accuracy
+- Score escalation over time
+- Alert history tracking
+- Filter integration
+- Time decay behavior
+- Minimum decay multiplier
+- Retrieval methods (urgent, highlighted, top, by level)
+- Summary statistics
+- Common urgency reasons tracking
+- Impactful factors tracking
+- Configuration updates (weights, thresholds)
+- Time decay disabling
+- Event emission
+- Convenience functions
+- Multi-signal convergence detection
+- Impact factor calculation
+- Network risk factor (coordination, sybil)
+- Caching behavior
+
+TYPECHECK: Passes with no errors
+
+FILES:
+- src/detection/alert-priority-ranker.ts (pre-existing, fixed TypeScript errors)
+- src/detection/index.ts (updated exports for DET-SCORE-005)
+- tests/detection/alert-priority-ranker.test.ts (new - 83 tests)
+- tests/e2e/alert-priority-ranker.e2e.test.ts (new - 39 tests)
+- plans/prd.json (updated passes: true for DET-SCORE-005)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-SCORE-006 (Confidence level calculator) at priority 111
+- The AlertPriorityRanker integrates with CompositeSuspicionScorer and FalsePositiveReducer
+- Priority weights can be customized via updateConfig()
+- Time decay can be disabled if not desired
+- Use getUrgentAlerts() for immediate attention items
+- Listen to 'urgent-alert' and 'alert-highlighted' events for real-time notifications

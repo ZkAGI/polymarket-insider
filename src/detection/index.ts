@@ -1594,3 +1594,45 @@ export type {
   OutcomeFeedback,
   FalsePositiveReducerConfig,
 } from "./false-positive-reducer";
+
+// DET-SCORE-005: Alert Priority Ranker
+export {
+  PriorityLevel,
+  PriorityFactor,
+  UrgencyReason,
+  DEFAULT_PRIORITY_WEIGHTS,
+  DEFAULT_LEVEL_THRESHOLDS,
+  DEFAULT_TIME_DECAY,
+  DEFAULT_RANKER_CONFIG,
+  PRIORITY_LEVEL_DESCRIPTIONS,
+  PRIORITY_FACTOR_DESCRIPTIONS,
+  URGENCY_REASON_DESCRIPTIONS,
+  AlertPriorityRanker,
+  createAlertPriorityRanker,
+  getSharedAlertPriorityRanker,
+  setSharedAlertPriorityRanker,
+  resetSharedAlertPriorityRanker,
+  rankAlert,
+  rankAlerts,
+  getUrgentAlerts,
+  getHighlightedAlerts,
+  getTopPriorityAlerts,
+  getAlertsByPriorityLevel,
+  getAlertPriorityRankerSummary,
+  getPriorityLevelDescription,
+  getPriorityFactorDescription,
+  getUrgencyReasonDescription,
+  hasUrgentAlert,
+  getWalletPriorityRanking,
+} from "./alert-priority-ranker";
+
+export type {
+  FactorContribution,
+  AlertRanking,
+  PriorityWeights,
+  BatchRankingResult,
+  RankerSummary,
+  AlertHistoryEntry,
+  AlertPriorityRankerConfig,
+  RankAlertOptions,
+} from "./alert-priority-ranker";
