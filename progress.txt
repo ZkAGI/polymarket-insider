@@ -7990,3 +7990,75 @@ NOTES FOR NEXT SESSION:
 - Component supports click handlers for trades and wallet addresses
 - Transaction links open in new tab with noopener/noreferrer
 
+================================================================================
+FEATURE: UI-DASH-007 - System status indicator
+DATE: 2026-01-12T13:55:00Z
+PRIORITY: 120
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Implemented SystemStatusIndicator component to display connection status for all data sources.
+
+TYPES DEFINED:
+- DataSourceType: GAMMA_API, CLOB_API, WEBSOCKET, POLYGON_RPC, DATABASE
+- ConnectionStatus: CONNECTED, DISCONNECTED, CONNECTING, DEGRADED, UNKNOWN
+- SystemHealth: HEALTHY, DEGRADED, CRITICAL, OFFLINE
+- DataSourceStatus interface with type, status, latency, lastChecked, lastConnected, errorMessage, retryCount
+
+FEATURES IMPLEMENTED:
+- Compact view with connection count (e.g., "4/5") and health icon
+- Expandable detailed view with all data sources
+- Source items with:
+  - Status indicator dot (color-coded by connection status)
+  - Source icon (emoji)
+  - Source label and description
+  - Status label (Connected, Disconnected, etc.)
+  - Latency display (when connected, formatted as ms or s)
+- Health summary section showing:
+  - Overall health status with icon
+  - Connected/degraded/disconnected counts
+- Critical alert displayed when health is CRITICAL
+- Offline alert displayed when health is OFFLINE
+- Sources sorted by status (disconnected first, then degraded, connected last)
+- Last refresh timestamp
+- Expand/collapse toggle with aria-expanded
+- Click handlers for sources and compact indicator
+- onHealthChange callback when system health changes
+- Keyboard navigation (tabIndex, Enter/Space)
+- Full accessibility support (ARIA labels, roles)
+
+CONFIGURATION:
+- dataSourceConfig: label, icon, description for each source type
+- statusConfig: label, color, bgColor, dotColor, animate for each status
+- healthConfig: label, color, bgColor, icon for each health level
+
+HELPER FUNCTIONS EXPORTED:
+- getDataSourceConfig(type) - get config for source type
+- getStatusConfig(status) - get config for connection status
+- getHealthConfig(health) - get config for system health
+- calculateSystemHealth(sources) - compute system health from sources
+- formatLatency(latency) - format latency for display
+- getLatencyColor(latency) - get Tailwind color class for latency
+- formatTimeSince(date) - format time as "Xs ago", "Xm ago", etc.
+- generateMockSources() - generate mock data source statuses
+
+FILES CREATED/MODIFIED:
+- app/dashboard/components/SystemStatusIndicator.tsx (new - main component)
+- app/dashboard/components/index.ts (updated - added exports)
+- app/dashboard/page.tsx (updated - integrated component with state management)
+- tests/ui/system-status-indicator.test.ts (new - 112 unit tests)
+- tests/e2e/system-status-indicator.e2e.test.ts (new - 49 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-007)
+
+TESTS: 112 unit tests + 49 E2E browser tests pass. TypeCheck passes.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-DASH-008 (Quick stats summary bar) at priority 121
+- The SystemStatusIndicator shows compact view by default, click to expand
+- System health is calculated automatically from source statuses
+- Critical sources are GAMMA_API, CLOB_API, WEBSOCKET - if any disconnected, health is CRITICAL
+- If all sources disconnected, health is OFFLINE
+- Component spans full width on large screens (lg:col-span-3)
+- Mock source generation available via generateMockSources()
+- Sources are sorted with problematic sources first for visibility
+

@@ -101,3 +101,25 @@ export {
   truncateMarketTitle,
   generateMockTrades,
 } from './RecentLargeTradesWidget';
+
+export { default as SystemStatusIndicator } from './SystemStatusIndicator';
+export type {
+  SystemStatusIndicatorProps,
+  DataSourceStatus,
+  DataSourceType,
+  ConnectionStatus,
+  SystemHealth,
+} from './SystemStatusIndicator';
+export {
+  dataSourceConfig,
+  statusConfig,
+  healthConfig,
+  getDataSourceConfig,
+  getStatusConfig,
+  getHealthConfig,
+  calculateSystemHealth,
+  formatLatency,
+  getLatencyColor,
+  formatTimeSince,
+  generateMockSources,
+} from './SystemStatusIndicator';

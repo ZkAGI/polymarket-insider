@@ -2393,7 +2393,9 @@
       "priority": 120,
       "name": "System status indicator",
       "description": "Show connection status for all data sources",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T13:55:00Z",
+      "notes": "Implemented SystemStatusIndicator component with: 5 data source types (GAMMA_API, CLOB_API, WEBSOCKET, POLYGON_RPC, DATABASE); 5 connection statuses (CONNECTED, DISCONNECTED, CONNECTING, DEGRADED, UNKNOWN); 4 system health levels (HEALTHY, DEGRADED, CRITICAL, OFFLINE); compact view with connection count and health icon; expandable detailed view with all sources; source items with status indicator, icon, label, description, status label, and latency; health summary with connected/degraded/disconnected counts; critical and offline alert messages; sort sources by status (disconnected first); last refresh timestamp; keyboard navigation support; full accessibility support. 112 unit tests and 49 E2E Puppeteer browser tests pass. TypeScript types verified clean.",
       "steps": [
         "Create status component",
         "Monitor all connections",

@@ -22,6 +22,11 @@ import RecentLargeTradesWidget, {
   LargeTrade,
   generateMockTrades,
 } from './components/RecentLargeTradesWidget';
+import SystemStatusIndicator, {
+  DataSourceStatus,
+  SystemHealth,
+  generateMockSources,
+} from './components/SystemStatusIndicator';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -52,6 +57,8 @@ export default function DashboardPage() {
   const [isMarketsLoading, setIsMarketsLoading] = useState(true);
   const [largeTrades, setLargeTrades] = useState<LargeTrade[]>([]);
   const [isTradesLoading, setIsTradesLoading] = useState(true);
+  const [dataSources, setDataSources] = useState<DataSourceStatus[]>([]);
+  const [isStatusExpanded, setIsStatusExpanded] = useState(false);
 
   // Load initial dashboard data
   useEffect(() => {
@@ -79,6 +86,10 @@ export default function DashboardPage() {
         // Generate initial mock large trades
         const mockTrades = generateMockTrades(5);
         setLargeTrades(mockTrades);
+
+        // Generate initial mock data sources
+        const mockSources = generateMockSources();
+        setDataSources(mockSources);
 
         // Set mock initial data - count unread alerts
         const unreadCount = mockAlerts.filter((a) => !a.read).length;
@@ -274,6 +285,23 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Handle data source click
+  const handleSourceClick = useCallback((source: DataSourceStatus) => {
+    console.log('Data source clicked:', source);
+    // In a real app, this would show detailed connection info or reconnect
+  }, []);
+
+  // Handle system health change
+  const handleHealthChange = useCallback((health: SystemHealth) => {
+    console.log('System health changed:', health);
+    // In a real app, this could trigger notifications or alerts
+  }, []);
+
+  // Handle status expanded toggle
+  const handleToggleStatusExpanded = useCallback(() => {
+    setIsStatusExpanded((prev) => !prev);
+  }, []);
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -372,6 +400,25 @@ export default function DashboardPage() {
             onWalletClick={handleTradeWalletClick}
             showMarketInfo={true}
             testId="recent-large-trades-content"
+          />
+        </WidgetContainer>
+      </div>
+
+      {/* Row 3: System Status */}
+      <div className="lg:col-span-3">
+        <WidgetContainer
+          title="System Status"
+          testId="system-status-widget"
+          className="h-full min-h-[150px]"
+        >
+          <SystemStatusIndicator
+            sources={dataSources}
+            onSourceClick={handleSourceClick}
+            onHealthChange={handleHealthChange}
+            expanded={isStatusExpanded}
+            onToggleExpanded={handleToggleStatusExpanded}
+            showLatency={true}
+            testId="system-status-content"
           />
         </WidgetContainer>
       </div>
