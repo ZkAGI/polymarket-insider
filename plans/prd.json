@@ -2264,7 +2264,6 @@
         "manual_verification": "Verify boost behavior"
       }
     },
-
     {
       "id": "UI-DASH-001",
       "priority": 114,
@@ -2291,7 +2290,7 @@
       "priority": 115,
       "name": "Real-time alert feed widget",
       "description": "Live-updating feed of latest alerts",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Create alert feed component",
         "Subscribe to alert stream",
@@ -2303,14 +2302,17 @@
         "typecheck": "Verify types",
         "e2e": "Verify live updates",
         "manual_verification": "Watch alert feed"
-      }
+      },
+      "completed_at": "2026-01-12T11:00:52.531Z"
     },
     {
       "id": "UI-DASH-003",
       "priority": 116,
       "name": "Active signals counter",
       "description": "Display count of current active signals by type",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T11:35:00Z",
+      "notes": "Implemented ActiveSignalsCounter component with: 8 signal types (FRESH_WALLET, WHALE_ACTIVITY, COORDINATED_TRADING, UNUSUAL_VOLUME, PRICE_ANOMALY, INSIDER_PATTERN, SYBIL_DETECTION, NICHE_MARKET); signal counts grouped by type with status indicators (ACTIVE/MONITORING/RESOLVED); real-time updates via props; visual indicators including emoji icons, color-coded badges, status dots, trend arrows; summary section with total/types/critical badges; sortable by count (active first); keyboard accessible with tabIndex and Enter/Space support; full dark mode support. 77 unit tests and 44 E2E Puppeteer browser tests pass. TypeScript types verified clean.",
       "steps": [
         "Create counter component",
         "Group counts by signal type",
@@ -2780,7 +2782,6 @@
         "manual_verification": "Verify range updates chart"
       }
     },
-
     {
       "id": "TEST-PERF-001",
       "priority": 200,

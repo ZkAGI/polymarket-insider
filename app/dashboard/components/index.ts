@@ -5,3 +5,34 @@ export { default as WidgetContainer } from './WidgetContainer';
 export type { WidgetContainerProps } from './WidgetContainer';
 
 export { DashboardSkeleton } from './DashboardSkeleton';
+
+export { default as AlertFeed } from './AlertFeed';
+export type {
+  AlertFeedProps,
+  FeedAlert,
+  AlertType,
+  AlertSeverity,
+} from './AlertFeed';
+export {
+  getAlertTypeIcon,
+  getAlertTypeLabel,
+  getSeverityColor,
+  getSeverityBorderColor,
+  formatTimeAgo,
+  generateMockAlerts,
+} from './AlertFeed';
+
+export { default as ActiveSignalsCounter } from './ActiveSignalsCounter';
+export type {
+  ActiveSignalsCounterProps,
+  SignalCount,
+  SignalType,
+  SignalStatus,
+} from './ActiveSignalsCounter';
+export {
+  signalConfig,
+  getSignalConfig,
+  getStatusColor,
+  getTrendIndicator,
+  generateMockSignals,
+} from './ActiveSignalsCounter';

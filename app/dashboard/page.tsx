@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from './components/DashboardLayout';
 import WidgetContainer from './components/WidgetContainer';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
+import AlertFeed, { FeedAlert, generateMockAlerts } from './components/AlertFeed';
+import ActiveSignalsCounter, {
+  SignalCount,
+  SignalType,
+  generateMockSignals,
+} from './components/ActiveSignalsCounter';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -24,17 +30,30 @@ const initialStats: DashboardStats = {
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>(initialStats);
+  const [alerts, setAlerts] = useState<FeedAlert[]>([]);
+  const [isAlertFeedLoading, setIsAlertFeedLoading] = useState(true);
+  const [signals, setSignals] = useState<SignalCount[]>([]);
+  const [isSignalsLoading, setIsSignalsLoading] = useState(true);
 
+  // Load initial dashboard data
   useEffect(() => {
-    // Simulate initial data load
     const loadDashboard = async () => {
       try {
         // Simulate API call delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Set mock initial data
+        // Generate initial mock alerts
+        const mockAlerts = generateMockAlerts(8);
+        setAlerts(mockAlerts);
+
+        // Generate initial mock signals
+        const mockSignals = generateMockSignals();
+        setSignals(mockSignals);
+
+        // Set mock initial data - count unread alerts
+        const unreadCount = mockAlerts.filter((a) => !a.read).length;
         setStats({
-          activeAlerts: 12,
+          activeAlerts: unreadCount,
           suspiciousWallets: 5,
           hotMarkets: 8,
           recentTrades: 156,
@@ -42,10 +61,100 @@ export default function DashboardPage() {
         });
       } finally {
         setIsLoading(false);
+        setIsAlertFeedLoading(false);
+        setIsSignalsLoading(false);
       }
     };
 
     loadDashboard();
+  }, []);
+
+  // Simulate real-time alert updates
+  useEffect(() => {
+    if (isLoading) return;
+
+    const addNewAlert = () => {
+      const mockAlerts = generateMockAlerts(1);
+      const baseAlert = mockAlerts[0];
+      if (!baseAlert) return;
+
+      const newAlert: FeedAlert = {
+        ...baseAlert,
+        id: `alert-${Date.now()}`,
+        createdAt: new Date(),
+        read: false,
+        isNew: true,
+      };
+
+      setAlerts((prev) => {
+        const updated = [newAlert, ...prev].slice(0, 20);
+        // Update stats with new alert count
+        const unreadCount = updated.filter((a) => !a.read).length;
+        setStats((s) => ({ ...s, activeAlerts: unreadCount }));
+        return updated;
+      });
+    };
+
+    // Add a new alert every 15-30 seconds for demo
+    const interval = setInterval(
+      addNewAlert,
+      15000 + Math.random() * 15000
+    );
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  // Handle alert click
+  const handleAlertClick = useCallback((alert: FeedAlert) => {
+    console.log('Alert clicked:', alert);
+    // In a real app, this would open a detail modal or navigate to alert details
+  }, []);
+
+  // Handle mark as read
+  const handleMarkRead = useCallback((alertId: string) => {
+    setAlerts((prev) => {
+      const updated = prev.map((a) =>
+        a.id === alertId ? { ...a, read: true } : a
+      );
+      // Update stats with new unread count
+      const unreadCount = updated.filter((a) => !a.read).length;
+      setStats((s) => ({ ...s, activeAlerts: unreadCount }));
+      return updated;
+    });
+  }, []);
+
+  // Handle refresh alerts
+  const handleRefreshAlerts = useCallback(async () => {
+    setIsAlertFeedLoading(true);
+    try {
+      // Simulate API fetch
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const newAlerts = generateMockAlerts(8);
+      setAlerts(newAlerts);
+      const unreadCount = newAlerts.filter((a) => !a.read).length;
+      setStats((s) => ({ ...s, activeAlerts: unreadCount }));
+    } finally {
+      setIsAlertFeedLoading(false);
+    }
+  }, []);
+
+  // Handle signal click
+  const handleSignalClick = useCallback((signalType: SignalType) => {
+    console.log('Signal clicked:', signalType);
+    // In a real app, this would filter alerts or navigate to signal details
+  }, []);
+
+  // Handle refresh signals
+  const handleRefreshSignals = useCallback(async () => {
+    setIsSignalsLoading(true);
+    try {
+      // Simulate API fetch
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const newSignals = generateMockSignals();
+      setSignals(newSignals);
+    } finally {
+      setIsSignalsLoading(false);
+    }
   }, []);
 
   if (isLoading) {
@@ -60,10 +169,17 @@ export default function DashboardPage() {
           title="Real-time Alert Feed"
           testId="alert-feed-widget"
           className="h-full min-h-[300px]"
+          onRefresh={handleRefreshAlerts}
+          isLoading={isAlertFeedLoading}
         >
-          <div className="text-gray-500 dark:text-gray-400 text-sm">
-            Alert feed will display real-time alerts here
-          </div>
+          <AlertFeed
+            alerts={alerts}
+            maxAlerts={20}
+            onAlertClick={handleAlertClick}
+            onMarkRead={handleMarkRead}
+            emptyMessage="No alerts detected. The system is monitoring for suspicious activity."
+            testId="alert-feed-content"
+          />
         </WidgetContainer>
       </div>
 
@@ -72,10 +188,15 @@ export default function DashboardPage() {
           title="Active Signals"
           testId="active-signals-widget"
           className="h-full min-h-[300px]"
+          onRefresh={handleRefreshSignals}
+          isLoading={isSignalsLoading}
         >
-          <div className="text-gray-500 dark:text-gray-400 text-sm">
-            Signal counters will be displayed here
-          </div>
+          <ActiveSignalsCounter
+            signals={signals}
+            onSignalClick={handleSignalClick}
+            showTrends={true}
+            testId="active-signals-content"
+          />
         </WidgetContainer>
       </div>
 

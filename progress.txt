@@ -7644,3 +7644,123 @@ NOTES FOR NEXT SESSION:
 - The DashboardLayout supports dark mode via Tailwind dark: variants
 - Stats bar values will be replaced with real API data in future features
 - Loading states use consistent skeleton animations
+
+================================================================================
+FEATURE: UI-DASH-003 - Active signals counter
+DATE: 2026-01-12
+STATUS: COMPLETED
+
+DESCRIPTION:
+Implemented the Active Signals Counter widget that displays current signal counts
+grouped by detection type with real-time updates and visual indicators.
+
+IMPLEMENTATION DETAILS:
+
+ActiveSignalsCounter Component (app/dashboard/components/ActiveSignalsCounter.tsx):
+- 8 signal types covering all detection categories:
+  1. FRESH_WALLET - New wallet detection
+  2. WHALE_ACTIVITY - Large trade detection
+  3. COORDINATED_TRADING - Multi-wallet coordination
+  4. UNUSUAL_VOLUME - Volume spike detection
+  5. PRICE_ANOMALY - Price movement anomalies
+  6. INSIDER_PATTERN - Potential insider activity
+  7. SYBIL_DETECTION - Multi-wallet sybil attacks
+  8. NICHE_MARKET - Niche market targeting
+
+- Signal statuses: ACTIVE, MONITORING, RESOLVED
+- Status indicator dots with green/yellow/gray colors
+- Emoji icons for quick visual identification
+- Color-coded labels (each type has unique color)
+- Count badges showing current active count
+- Trend indicators (up/down arrows with change amount)
+- Summary section with total, types, and critical counts
+- Sortable by count (active signals first, then by count descending)
+- Loading skeleton state
+- Empty state when no active signals
+
+SignalSummary Component:
+- Total signals count badge
+- Active types count badge
+- Critical signals badge (pulses when present) for INSIDER_PATTERN and SYBIL_DETECTION
+
+SignalItem Component:
+- Clickable with hover effects and scale animation
+- Keyboard accessible (tabIndex=0, Enter/Space support)
+- Full accessibility with aria-labels
+- Data attributes for testing (data-signal-type, data-signal-count)
+
+Dashboard Integration (app/dashboard/page.tsx):
+- Added signals state management
+- Generates mock signals on load
+- Refresh handler for signals widget
+- Signal click handler for future functionality
+- Integrated ActiveSignalsCounter into Active Signals widget
+
+DATA TEST IDs:
+- active-signals-counter, active-signals-content
+- signals-summary, signals-list, signals-empty
+- total-signals, active-types, critical-signals
+- signal-item-{type}, signal-status-indicator, signal-icon, signal-label, signal-count
+- signal-trend with data-trend-direction and data-trend-change attributes
+
+UNIT TESTS (77 tests - tests/ui/active-signals-counter.test.ts):
+- SignalType enum validation (8 types)
+- SignalStatus enum validation (3 statuses)
+- SignalCount interface validation
+- Signal configuration mapping tests
+- getSignalConfig function behavior
+- getStatusColor helper function
+- getTrendIndicator helper function
+- Signal count aggregation (total, active types, critical)
+- Signal sorting (active first, then by count)
+- Props validation tests
+- Animation tracking tests
+- Loading state tests
+- Empty state tests
+- Accessibility tests (ARIA, semantic HTML, keyboard)
+- Data test ID tests
+- Mock signal generation tests
+- Signal click handler tests
+- Auto refresh behavior tests
+- Trend display tests
+
+E2E BROWSER TESTS (44 tests - tests/e2e/active-signals-counter.e2e.test.ts):
+Using Puppeteer for real browser testing:
+- Widget loading and display
+- Active Signals widget title verification
+- Loading state transition
+- Signals list container display
+- Summary section display with badges
+- Signal item structure (status, icon, label, count)
+- Data attributes on signal items
+- All 8 signal types displayed
+- Click interaction (cursor pointer, no console errors)
+- Role="button" and tabIndex accessibility
+- Refresh button functionality
+- Visual styling (spacing, background, border-radius)
+- Status indicator colors
+- Trend indicators when present
+- Responsive layout (mobile, tablet, desktop)
+- ARIA attributes and accessibility
+- Console error verification
+- Critical signals badge display
+- Insider and Sybil type highlighting
+
+TYPECHECK: Passes with no errors
+
+FILES CREATED/MODIFIED:
+- app/dashboard/components/ActiveSignalsCounter.tsx (new - main component)
+- app/dashboard/components/index.ts (updated - added exports)
+- app/dashboard/page.tsx (updated - integrated component with state management)
+- tests/ui/active-signals-counter.test.ts (new - 77 unit tests)
+- tests/e2e/active-signals-counter.e2e.test.ts (new - 44 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-003)
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-DASH-004 (Top suspicious wallets widget) at priority 117
+- The ActiveSignalsCounter accepts signals via props for real-time updates
+- signalConfig exported for consistent styling across the app
+- Mock signal generation available via generateMockSignals()
+- Critical signals (INSIDER_PATTERN, SYBIL_DETECTION) get special highlighting
+- Trend arrows show red for increases (more alerts = bad) and green for decreases
+- Component is fully keyboard accessible and screen reader friendly
