@@ -2149,7 +2149,9 @@
       "priority": 108,
       "name": "Dynamic threshold adjuster",
       "description": "Automatically adjust thresholds based on market conditions",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T11:10:00.000Z",
+      "notes": "Implemented DynamicThresholdAdjuster class with: 8 market regimes (NORMAL, HIGH_VOLATILITY, LOW_VOLATILITY, HIGH_ACTIVITY, LOW_ACTIVITY, BULL_MARKET, BEAR_MARKET, EXTREME), 8 condition metrics (VOLUME, VOLATILITY, ACTIVE_TRADERS, ACTIVE_MARKETS, TRADE_SIZE, SENTIMENT, LIQUIDITY, FRESH_WALLET_ACTIVITY), automatic regime detection using z-scores, 6 default adjustment rules, configurable thresholds for suspicion levels/flag/insider, manual threshold override support, rule management (add/remove/enable/disable), comprehensive history tracking, file persistence (save/load), import/export functionality, event emission for all changes. 95 unit tests and 37 E2E tests pass.",
       "steps": [
         "Monitor market conditions",
         "Detect regime changes",

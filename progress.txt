@@ -6943,3 +6943,188 @@ FILES:
 NOTES FOR NEXT SESSION:
 - Next feature: DET-SCORE-002 (Signal weight configurator) at priority 107
 
+=== Session 2026-01-12 (continued) ===
+
+COMPLETED: DET-SCORE-002 - Signal weight configurator
+- Created src/detection/signal-weight-configurator.ts (~1600 lines)
+
+FEATURES:
+- SignalWeightConfigurator class with comprehensive weight management
+- 8 presets:
+  * DEFAULT - Balanced default weights
+  * NETWORK_FOCUSED - Emphasis on coordination and sybil detection
+  * PERFORMANCE_FOCUSED - Emphasis on win rate, P&L, accuracy
+  * BEHAVIOR_FOCUSED - Emphasis on timing, sizing, selection patterns
+  * CONSERVATIVE - Equal weights for all signals
+  * AGGRESSIVE - Higher weights on strongest indicators
+  * FRESH_WALLET_FOCUSED - Focus on fresh wallet detection
+  * INSIDER_DETECTION - Optimized for insider trading detection
+  * CUSTOM - User-defined weights
+- 3 validation modes:
+  * STRICT - Weights must sum exactly to 1.0
+  * NORMALIZE - Weights auto-normalized to sum to 1.0
+  * NONE - No validation, weights used as-is
+- Per-signal weight configuration with enable/disable
+- Per-category weight configuration with enable/disable
+- Weight sum validation with configurable tolerance
+- File persistence (save/load JSON configurations)
+- Change history tracking with audit trail (changedBy support)
+- Event emission for all configuration changes
+- Weight impact analysis (most impactful signals, category breakdown)
+- Import/export functionality for sharing configs
+- Shared instance management with factory functions
+- Convenience functions for common operations
+- Description helper functions for all enums
+
+UNIT TESTS (~120 tests):
+- Constants and enums validation
+- Constructor and configuration
+- Get configuration methods
+- Effective weights calculation
+- Set signal weight (with validation)
+- Set category weight (with validation)
+- Bulk weight updates
+- Enable/disable signals and categories
+- Apply preset tests for all 8 presets
+- Threshold configuration
+- Reset functionality
+- Validation modes (strict, normalize, none)
+- Weight impact analysis
+- Change history tracking
+- Export/import configuration
+- Summary and metadata
+- Config by category
+- Available presets
+- Shared instance management
+- Factory functions
+- Convenience functions
+- Description helper functions
+- Edge cases
+- Preset weight sum verification
+
+E2E TESTS (~36 tests):
+- Integration with composite suspicion scorer
+- File persistence (save/load)
+- Auto-save functionality
+- Real-world usage scenarios
+- Validation modes in action
+- Event handling
+- Error recovery
+- Configuration migration
+- Summary and analytics
+- Threshold configuration
+- Concurrent operations
+- Preset coverage
+- History persistence
+
+TYPECHECK: Passes with no errors
+
+FILES:
+- src/detection/signal-weight-configurator.ts (new - ~1600 lines)
+- src/detection/index.ts (updated exports)
+- tests/detection/signal-weight-configurator.test.ts (new - ~120 tests)
+- tests/e2e/signal-weight-configurator.e2e.test.ts (new - ~36 tests)
+- plans/prd.json (updated passes: true for DET-SCORE-002)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-SCORE-003 (Dynamic threshold adjuster) at priority 108
+- The signal weight configurator integrates with CompositeSuspicionScorer
+- Weights can be applied using getEffectiveWeights() method
+- Presets are validated to have weights summing to 1.0
+
+=== Session 2026-01-12 (continued) ===
+
+COMPLETED: DET-SCORE-003 - Dynamic threshold adjuster
+- Created src/detection/dynamic-threshold-adjuster.ts (~1700 lines)
+
+FEATURES:
+- DynamicThresholdAdjuster class with EventEmitter pattern
+- 8 market regimes:
+  * NORMAL - Standard market conditions
+  * HIGH_VOLATILITY - Elevated price swings
+  * LOW_VOLATILITY - Reduced price movement
+  * HIGH_VOLUME - Above-average trading volume
+  * LOW_VOLUME - Below-average trading volume
+  * TRENDING_UP - Sustained upward movement
+  * TRENDING_DOWN - Sustained downward movement
+  * UNCERTAIN - Unclear or transitioning conditions
+- 8 condition metrics tracked:
+  * VOLATILITY - Price volatility index
+  * VOLUME - Trading volume level
+  * SPREAD - Bid-ask spread
+  * PARTICIPATION - Unique trader count
+  * PRICE_MOMENTUM - Price direction strength
+  * ORDER_IMBALANCE - Buy/sell order ratio
+  * LIQUIDITY - Market liquidity depth
+  * SENTIMENT - Market sentiment score
+- Z-score based regime detection with configurable sensitivity
+- Automatic threshold adjustment based on market conditions
+- 6 default adjustment rules for different regimes
+- Custom rule creation with flexible conditions
+- Historical metric tracking with sliding windows (configurable size)
+- Manual threshold overrides with expiration
+- Threshold change history with audit trail
+- File persistence (save/load JSON configurations)
+- Import/export functionality for configuration sharing
+- Event emission for all changes:
+  * regime-change
+  * threshold-adjusted
+  * manual-override
+  * override-expired
+  * rules-updated
+- Shared instance management with factory functions
+- Summary statistics and deviation analysis
+- Minimum adjustment interval to prevent thrashing
+
+UNIT TESTS (95 tests):
+- Constants and enums validation
+- Constructor and configuration
+- Market conditions update
+- Market regime detection (all 8 regimes)
+- Threshold management (get/set)
+- Automatic threshold adjustment
+- Default adjustment rules
+- Custom adjustment rules
+- Rule management (add/remove/enable/disable)
+- Manual threshold overrides with expiration
+- Threshold history tracking
+- Export/import configuration
+- Summary and statistics
+- File persistence (save/load)
+- Event emission verification
+- Shared instance management
+- Factory functions
+- Deviation from defaults calculation
+- Edge cases and error handling
+
+E2E TESTS (37 tests):
+- Real-world market scenarios
+- Regime transitions (normal -> high volatility -> normal)
+- Threshold adjustment accuracy
+- Rule-based adjustments in action
+- Manual override behavior
+- Override expiration
+- File persistence (save/load)
+- Configuration sharing (export/import)
+- Event handling verification
+- Summary and analytics
+- Multiple regime detection
+- Concurrent operations
+- Error recovery
+- Integration scenarios
+
+TYPECHECK: Passes with no errors
+
+FILES:
+- src/detection/dynamic-threshold-adjuster.ts (new - ~1700 lines)
+- src/detection/index.ts (updated exports, aliased ThresholdConfig as DynamicThresholdConfig)
+- tests/detection/dynamic-threshold-adjuster.test.ts (new - 95 tests)
+- tests/e2e/dynamic-threshold-adjuster.e2e.test.ts (new - 37 tests)
+- plans/prd.json (updated passes: true for DET-SCORE-003)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-SCORE-004 (False positive reducer) at priority 109
+- The DynamicThresholdAdjuster integrates with detection systems
+- Market conditions should be updated periodically via updateMarketConditions()
+- Rules can be customized per deployment using addRule() method
+- Use getEffectiveThresholds() for current adjusted values
