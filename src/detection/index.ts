@@ -1424,3 +1424,42 @@ export type {
   AccuracyScorerSummary,
   HistoricalAccuracyScorerConfig,
 } from "./historical-accuracy-scorer";
+
+// DET-SCORE-001: Composite Suspicion Score Calculator
+export {
+  SignalSource,
+  CompositeSignalCategory,
+  CompositeSuspicionLevel,
+  SignalConfidence,
+  COMPOSITE_DEFAULT_SIGNAL_WEIGHTS,
+  DEFAULT_CATEGORY_WEIGHTS,
+  SIGNAL_CATEGORY_MAP,
+  SUSPICION_THRESHOLDS,
+  DEFAULT_COMPOSITE_CONFIG,
+  CompositeSuspicionScorer,
+  createCompositeSuspicionScorer,
+  getSharedCompositeSuspicionScorer,
+  setSharedCompositeSuspicionScorer,
+  resetSharedCompositeSuspicionScorer,
+  calculateCompositeSuspicionScore,
+  batchCalculateCompositeSuspicionScores,
+  hasHighSuspicion,
+  getHighSuspicionWallets,
+  getPotentialInsiders,
+  getCompositeScorerSummary,
+  getCompositeSuspicionLevelDescription,
+  getSignalCategoryDescription,
+  getSignalSourceDescription,
+} from "./composite-suspicion-scorer";
+
+export type {
+  CompositeSignalContribution,
+  CategoryBreakdown,
+  RiskFlagSummary,
+  CompositeScoreResult,
+  SignalWeightConfig,
+  CompositeScoreOptions,
+  BatchCompositeScoreResult,
+  CompositeScorerSummary,
+  CompositeSuspicionScorerConfig,
+} from "./composite-suspicion-scorer";

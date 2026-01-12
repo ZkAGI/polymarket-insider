@@ -2107,7 +2107,7 @@
       "priority": 106,
       "name": "Composite suspicion score calculator",
       "description": "Calculate overall suspicion score from multiple signals",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Collect all signal scores",
         "Apply signal weights",
@@ -2119,7 +2119,9 @@
         "typecheck": "Verify types",
         "e2e": "Calculate live scores",
         "manual_verification": "Verify score reasonableness"
-      }
+      },
+      "completedAt": "2026-01-12T05:10:00.000Z",
+      "notes": "Implemented CompositeSuspicionScorer integrating all 10 signal sources (fresh wallet, win rate, P&L, timing patterns, position sizing, market selection, coordination, sybil, accuracy, trading patterns). Features: configurable signal/category weights, suspicion level thresholds (NONE/LOW/MEDIUM/HIGH/CRITICAL), caching with TTL, batch processing, event emission, detailed signal contributions, category breakdown, risk flag aggregation, potential insider detection. ~65 unit tests, ~30 E2E test scenarios."
     },
     {
       "id": "DET-SCORE-002",

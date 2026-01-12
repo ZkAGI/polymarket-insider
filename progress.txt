@@ -6867,6 +6867,79 @@ FILES:
 - src/detection/index.ts (already had exports from previous session)
 - plans/prd.json (updated passes: true for DET-PAT-010)
 
+=== Session 2026-01-12 (continued) ===
+
+COMPLETED: DET-SCORE-001 - Composite suspicion score calculator
+- Created src/detection/composite-suspicion-scorer.ts (~1900 lines)
+- Integrates all 10 detection signal sources:
+  * FRESH_WALLET - Fresh wallet confidence scoring
+  * WIN_RATE - Win rate tracking and analysis
+  * PROFIT_LOSS - P&L calculation
+  * TIMING_PATTERN - Timing pattern analysis
+  * POSITION_SIZING - Position sizing analysis
+  * MARKET_SELECTION - Market selection analysis
+  * COORDINATION - Coordinated trading detection
+  * SYBIL - Sybil attack detection
+  * ACCURACY - Historical accuracy scoring
+  * TRADING_PATTERN - Trading pattern classification
+
+FEATURES:
+- Signal categories: WALLET_PROFILE, PERFORMANCE, BEHAVIOR, NETWORK
+- Configurable signal weights (default sum to 1.0)
+- Configurable category weights
+- Suspicion level thresholds: NONE (0), LOW (20), MEDIUM (40), HIGH (60), CRITICAL (80)
+- Composite score calculation (0-100 scale)
+- Detailed signal contributions with raw/weighted scores
+- Category breakdown with aggregated scores
+- Risk flag aggregation from all detectors
+- Potential insider detection
+- Caching with configurable TTL
+- Batch processing support
+- Event emission for score calculations
+- Data quality scoring
+- Summary statistics
+- Shared instance management
+
+UNIT TESTS (~65 tests):
+- Constants and enums validation
+- Constructor and configuration
+- Score calculation with validation
+- Batch processing
+- High suspicion detection
+- Potential insider detection
+- Summary and statistics
+- Cache management
+- Event emission
+- Factory functions
+- Shared instance
+- Convenience functions
+- Description functions
+- Edge cases
+
+E2E TESTS (~30 scenarios):
+- Basic integration with all detectors
+- Batch processing
+- Caching behavior
+- Summary and statistics
+- High suspicion detection
+- Convenience functions
+- Description functions
+- Signal contribution analysis
+- Risk flag analysis
+- Event emission
+- Custom configuration
+- Edge cases and error handling
+- Data quality analysis
+
+TYPECHECK: Passes with no errors
+
+FILES:
+- src/detection/composite-suspicion-scorer.ts (new - ~1900 lines)
+- src/detection/index.ts (updated exports)
+- tests/detection/composite-suspicion-scorer.test.ts (new - ~65 tests)
+- tests/e2e/composite-suspicion-scorer.e2e.test.ts (new - ~30 scenarios)
+- plans/prd.json (updated passes: true for DET-SCORE-001)
+
 NOTES FOR NEXT SESSION:
-- Next feature: DET-SCORE-001 (Composite suspicion score calculator) at priority 106
+- Next feature: DET-SCORE-002 (Signal weight configurator) at priority 107
 
