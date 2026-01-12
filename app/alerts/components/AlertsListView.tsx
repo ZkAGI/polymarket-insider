@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   FeedAlert,
+  AlertType,
   getAlertTypeIcon,
   getAlertTypeLabel,
   getSeverityColor,
@@ -11,6 +12,12 @@ import {
   formatTimeAgo,
   generateMockAlerts,
 } from '../../dashboard/components/AlertFeed';
+import AlertTypeFilter, {
+  ActiveFilterChips,
+  ALL_ALERT_TYPES,
+  areAllTypesSelected,
+  areNoTypesSelected,
+} from './AlertTypeFilter';
 
 // Re-export types for external use
 export type { AlertType, AlertSeverity, FeedAlert } from '../../dashboard/components/AlertFeed';
@@ -38,9 +45,12 @@ export interface AlertsListViewProps {
   onAlertClick?: (alert: FeedAlert) => void;
   onMarkRead?: (alertId: string) => void;
   onPageChange?: (page: number) => void;
+  onTypeFilterChange?: (types: AlertType[]) => void;
+  initialTypeFilters?: AlertType[];
   emptyMessage?: string;
   emptyIcon?: string;
   showBackLink?: boolean;
+  showTypeFilter?: boolean;
   testId?: string;
 }
 
@@ -568,14 +578,20 @@ export default function AlertsListView({
   onAlertClick,
   onMarkRead,
   onPageChange,
+  onTypeFilterChange,
+  initialTypeFilters,
   emptyMessage = 'No alerts have been generated yet. The system is actively monitoring for suspicious activity.',
   emptyIcon = '🔔',
   showBackLink = true,
+  showTypeFilter = true,
   testId = 'alerts-list-view',
 }: AlertsListViewProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [alerts, setAlerts] = useState<FeedAlert[]>(externalAlerts || []);
   const [isLoading, setIsLoading] = useState(!externalAlerts);
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState<AlertType[]>(
+    initialTypeFilters || [...ALL_ALERT_TYPES]
+  );
 
   // Update alerts when external alerts change
   useEffect(() => {
@@ -601,18 +617,27 @@ export default function AlertsListView({
     return () => clearTimeout(timer);
   }, [externalAlerts]);
 
-  // Calculate pagination
+  // Filter alerts by type
+  const filteredAlerts = useMemo(() => {
+    // If all types selected or none selected, show all alerts
+    if (areAllTypesSelected(selectedTypeFilters) || areNoTypesSelected(selectedTypeFilters)) {
+      return alerts;
+    }
+    return alerts.filter((alert) => selectedTypeFilters.includes(alert.type));
+  }, [alerts, selectedTypeFilters]);
+
+  // Calculate pagination based on filtered alerts
   const pagination = useMemo(
-    () => calculatePagination(alerts.length, currentPage, pageSize),
-    [alerts.length, currentPage, pageSize]
+    () => calculatePagination(filteredAlerts.length, currentPage, pageSize),
+    [filteredAlerts.length, currentPage, pageSize]
   );
 
-  // Get current page alerts
+  // Get current page alerts from filtered list
   const paginatedAlerts = useMemo(() => {
     const startIndex = (pagination.currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    return alerts.slice(startIndex, endIndex);
-  }, [alerts, pagination.currentPage, pageSize]);
+    return filteredAlerts.slice(startIndex, endIndex);
+  }, [filteredAlerts, pagination.currentPage, pageSize]);
 
   // Handle page change
   const handlePageChange = useCallback(
@@ -642,13 +667,41 @@ export default function AlertsListView({
     [onMarkRead]
   );
 
-  // Calculate stats
+  // Handle type filter change
+  const handleTypeFilterChange = useCallback(
+    (types: AlertType[]) => {
+      setSelectedTypeFilters(types);
+      // Reset to page 1 when filters change
+      setCurrentPage(1);
+      onTypeFilterChange?.(types);
+    },
+    [onTypeFilterChange]
+  );
+
+  // Handle removing a single type filter
+  const handleRemoveTypeFilter = useCallback(
+    (type: AlertType) => {
+      const newTypes = selectedTypeFilters.filter((t) => t !== type);
+      handleTypeFilterChange(newTypes.length > 0 ? newTypes : [...ALL_ALERT_TYPES]);
+    },
+    [selectedTypeFilters, handleTypeFilterChange]
+  );
+
+  // Handle clearing all filters
+  const handleClearAllFilters = useCallback(() => {
+    handleTypeFilterChange([...ALL_ALERT_TYPES]);
+  }, [handleTypeFilterChange]);
+
+  // Calculate stats from all alerts (for header display)
   const stats = useMemo(() => {
     const unreadCount = alerts.filter((a) => !a.read).length;
     const criticalCount = alerts.filter((a) => a.severity === 'CRITICAL').length;
     const highCount = alerts.filter((a) => a.severity === 'HIGH').length;
     return { unreadCount, criticalCount, highCount };
   }, [alerts]);
+
+  // Check if type filter is active (not showing all)
+  const isTypeFilterActive = !areAllTypesSelected(selectedTypeFilters) && !areNoTypesSelected(selectedTypeFilters);
 
   return (
     <div className="w-full" data-testid={testId}>
@@ -698,6 +751,34 @@ export default function AlertsListView({
             </div>
           )}
         </div>
+
+        {/* Type filter */}
+        {showTypeFilter && !isLoading && alerts.length > 0 && (
+          <div className="mt-4" data-testid="alerts-filter-section">
+            <div className="flex items-center gap-3">
+              <AlertTypeFilter
+                selectedTypes={selectedTypeFilters}
+                onChange={handleTypeFilterChange}
+                testId="alerts-type-filter"
+              />
+
+              {/* Filter results summary */}
+              {isTypeFilterActive && (
+                <span className="text-sm text-gray-500 dark:text-gray-400" data-testid="alerts-filter-summary">
+                  Showing {filteredAlerts.length} of {alerts.length} alerts
+                </span>
+              )}
+            </div>
+
+            {/* Active filter chips */}
+            <ActiveFilterChips
+              selectedTypes={selectedTypeFilters}
+              onRemove={handleRemoveTypeFilter}
+              onClearAll={handleClearAllFilters}
+              testId="alerts-active-filters"
+            />
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -705,6 +786,12 @@ export default function AlertsListView({
         <AlertsListSkeleton count={pageSize} />
       ) : alerts.length === 0 ? (
         <EmptyState message={emptyMessage} icon={emptyIcon} />
+      ) : filteredAlerts.length === 0 ? (
+        <EmptyState
+          message="No alerts match your current filters. Try adjusting or clearing your filters."
+          icon="🔍"
+          testId="alerts-no-filter-results"
+        />
       ) : (
         <>
           {/* Alert list */}

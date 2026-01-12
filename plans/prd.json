@@ -2519,7 +2519,9 @@
       "priority": 126,
       "name": "Alert type filter",
       "description": "Filter alerts by type (fresh wallet, volume, etc.)",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T16:30:00Z",
+      "notes": "Implemented comprehensive AlertTypeFilter component with: filter dropdown with all 12 alert types (WHALE_TRADE, PRICE_MOVEMENT, INSIDER_ACTIVITY, FRESH_WALLET, WALLET_REACTIVATION, COORDINATED_ACTIVITY, UNUSUAL_PATTERN, MARKET_RESOLVED, NEW_MARKET, SUSPICIOUS_FUNDING, SANCTIONED_ACTIVITY, SYSTEM); 4 type categories (TRADING, WALLET, MARKET, SYSTEM) with category-level toggle; individual type checkboxes with icons and labels; Select All / Clear buttons; active filter count badge on button; ActiveFilterChips component showing selected types as removable chips with Clear All link; filter results summary showing filtered/total counts; empty state for no matching alerts; global Escape key handler to close dropdown; click-outside-to-close; full accessibility (aria-expanded, aria-haspopup, role=listbox, aria-label, aria-selected); full dark mode support with dark: classes; responsive design for mobile/tablet/desktop. Integrated into AlertsListView with props: showTypeFilter, onTypeFilterChange, initialTypeFilters. Filter state resets pagination to page 1. Helper functions exported: getTypeCategory, areAllTypesSelected, areNoTypesSelected, areCategoryTypesSelected, areSomeCategoryTypesSelected, getSelectedTypesLabel. 99 unit tests and 34 E2E Puppeteer browser tests pass. TypeScript types verified clean.",
       "steps": [
         "Create filter dropdown",
         "Apply type filtering",
