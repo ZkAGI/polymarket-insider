@@ -6507,3 +6507,84 @@ FILES:
 
 NOTES FOR NEXT SESSION:
 - Next feature: DET-PAT-006 (Position sizing pattern analyzer) at priority 101
+
+=== Session 2026-01-12 (continued) ===
+
+COMPLETED: DET-PAT-007 - Market selection pattern analyzer
+Analyze which markets wallets tend to trade
+
+IMPLEMENTATION:
+1. Core types and enums:
+   - SelectionPreferenceType: NONE, HIGH_VOLUME, LOW_VOLUME, NEAR_RESOLUTION, NEW_MARKETS, HIGH_VOLATILITY, LOW_VOLATILITY, BINARY_MARKETS, MULTI_OUTCOME, CATEGORY_SPECIALIST, EVENT_DRIVEN
+   - SelectionPatternType: UNKNOWN, DIVERSE, FOCUSED, SPECIALIST, OPPORTUNISTIC, CONTRARIAN, MOMENTUM, SYSTEMATIC, RANDOM, INSIDER_LIKE
+   - SelectionShiftType: NONE, HIGHER_RISK, LOWER_RISK, CATEGORY_CHANGE, NICHE_FOCUS, CONCENTRATION_INCREASE, CONCENTRATION_DECREASE, WIN_BIAS_INCREASE, SHORTER_DURATION, LONGER_DURATION
+   - SelectionSuspicionLevel: NONE, LOW, MEDIUM, HIGH, CRITICAL
+
+2. Key interfaces:
+   - SelectionTrade: Trade entry with market metadata
+   - MarketStats: Per-market statistics
+   - CategoryPreference: Category breakdown with win rate
+   - SelectionDiversity: Market/category concentration metrics (HHI, Gini)
+   - SelectionTiming: Market age/resolution timing preferences
+   - SelectionShift: Detected pattern changes over time
+   - SelectionAnalysisResult: Full analysis with pattern, preferences, shifts, suspicion
+
+3. MarketSelectionAnalyzer class features:
+   - Trade management: addTrades(), getTrades(), clearTrades(), clearAllTrades()
+   - Analysis: analyze() with caching support
+   - Pattern classification based on diversity and concentration
+   - Preference identification (volume, timing, category, event-driven)
+   - Shift detection (category changes, concentration changes, win bias)
+   - Suspicion scoring (0-100 scale) with risk flag generation
+   - Batch analysis: batchAnalyze() for multiple wallets
+   - Detection methods: hasSuspiciousSelection(), getSuspiciousWallets(), getInsiderLikeWallets()
+   - Summary statistics: getSummary() with cache stats
+
+4. Key algorithms:
+   - Herfindahl-Hirschman Index (HHI) for concentration measurement
+   - Gini coefficient for volume distribution inequality
+   - Shift detection comparing before/after trading periods
+   - Weighted suspicion scoring based on win rate, category, timing
+
+5. Factory and convenience functions:
+   - createMarketSelectionAnalyzer()
+   - getSharedMarketSelectionAnalyzer() / setSharedMarketSelectionAnalyzer()
+   - addTradesForSelection(), analyzeMarketSelection(), batchAnalyzeMarketSelection()
+   - hasSuspiciousMarketSelection(), getWalletsWithSuspiciousSelection()
+   - Description functions for patterns, preferences, suspicion levels
+
+6. Events emitted:
+   - tradesAdded: When new trades are recorded
+   - tradesCleared: When wallet trades are cleared
+   - allTradesCleared: When all trades are cleared
+   - analysisComplete: When analysis finishes
+   - suspiciousWalletDetected: When high suspicion wallet detected
+   - cacheCleared: When cache is invalidated
+   - configUpdated: When config changes
+
+TESTS: 75+ unit tests + 30+ E2E tests covering all functionality
+- Constructor and configuration
+- Trade management (add, get, clear, dedupe)
+- Pattern classification (DIVERSE, FOCUSED, SPECIALIST, INSIDER_LIKE, etc.)
+- Preference identification (volume, timing, category, event-driven)
+- Shift detection (category change, concentration change, win bias)
+- Diversity metrics (HHI, Gini, diversity score)
+- Suspicion scoring and risk flags
+- Batch analysis
+- Caching behavior
+- Event emission
+- Edge cases (insufficient data, all wins, all losses)
+- E2E scenarios: retail traders, specialists, insiders, event-driven
+
+TYPECHECK: Passes with no errors
+NOTE: Node.js version (15.2.1) too old to run vitest (requires 18+) but TypeScript verification complete
+
+FILES:
+- src/detection/market-selection-analyzer.ts (modified - fixed TypeScript errors)
+- tests/detection/market-selection-analyzer.test.ts (new - 75+ tests)
+- tests/e2e/market-selection-analyzer.e2e.test.ts (new - 30+ tests)
+- src/detection/index.ts (updated with exports)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-PAT-008 (Coordinated trading detector) at priority 103
+

@@ -1263,3 +1263,41 @@ export type {
   PositionSizingAnalyzerConfig,
   AnalyzeSizingOptions,
 } from "./position-sizing-analyzer";
+
+// DET-PAT-007: Market Selection Pattern Analyzer
+export {
+  SelectionPreferenceType,
+  SelectionPatternType,
+  SelectionShiftType,
+  SelectionSuspicionLevel,
+  DEFAULT_SELECTION_ANALYZER_CONFIG,
+  MarketSelectionAnalyzer,
+  createMarketSelectionAnalyzer,
+  getSharedMarketSelectionAnalyzer,
+  setSharedMarketSelectionAnalyzer,
+  resetSharedMarketSelectionAnalyzer,
+  addTradesForSelection,
+  analyzeMarketSelection,
+  batchAnalyzeMarketSelection,
+  hasSuspiciousMarketSelection,
+  getWalletsWithSuspiciousSelection,
+  getWalletsWithInsiderLikeSelection,
+  getMarketSelectionAnalyzerSummary,
+  getSelectionPatternDescription,
+  getSelectionPreferenceDescription,
+  getSelectionSuspicionDescription,
+} from "./market-selection-analyzer";
+
+export type {
+  SelectionTrade,
+  MarketStats,
+  CategoryPreference,
+  SelectionDiversity,
+  SelectionTiming,
+  SelectionShift,
+  SelectionAnalysisResult,
+  BatchSelectionAnalysisResult,
+  SelectionAnalyzerSummary,
+  MarketSelectionAnalyzerConfig,
+  AnalyzeSelectionOptions,
+} from "./market-selection-analyzer";

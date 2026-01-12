@@ -2022,7 +2022,9 @@
       "priority": 102,
       "name": "Market selection pattern analyzer",
       "description": "Analyze which markets wallets tend to trade",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T03:45:00Z",
+      "notes": "Implemented MarketSelectionAnalyzer with: track market selection, identify preferences (HIGH_VOLUME, LOW_VOLUME, NEAR_RESOLUTION, NEW_MARKETS, CATEGORY_SPECIALIST, EVENT_DRIVEN, etc.), detect selection shifts (CATEGORY_CHANGE, CONCENTRATION_INCREASE/DECREASE, WIN_BIAS_INCREASE), score selection patterns (UNKNOWN, DIVERSE, FOCUSED, SPECIALIST, OPPORTUNISTIC, CONTRARIAN, MOMENTUM, SYSTEMATIC, RANDOM, INSIDER_LIKE), suspicion scoring (0-100), batch analysis with caching, and comprehensive factory/convenience functions. TypeScript types verified clean, 75+ unit tests and 30+ E2E tests written.",
       "steps": [
         "Track market selection",
         "Identify market preferences",
