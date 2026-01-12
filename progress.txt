@@ -8313,3 +8313,101 @@ NOTES FOR NEXT SESSION:
 - ThemeProvider wraps entire app in root layout
 - Inline script prevents flash of wrong theme before React hydrates
 - Dark mode uses Tailwind dark: variant classes throughout the app
+
+
+
+================================================================================
+FEATURE: UI-ALERT-001 - Alerts list view
+DATE: 2026-01-12T20:53:00Z
+PRIORITY: 124
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Implemented comprehensive paginated alerts list view at /alerts route.
+
+COMPONENTS CREATED:
+- AlertsListView: Main component with pagination, sorting, stats
+- AlertListItem: Individual alert display with all metadata
+- PaginationControls: Prev/next, page numbers, ellipsis, items info
+- EmptyState: Customizable empty state with icon and message
+- AlertsListSkeleton: Loading state with skeleton items
+
+TYPES DEFINED:
+- PaginationConfig: currentPage, pageSize, totalItems, totalPages
+- AlertListItemProps: alert, onClick, onMarkRead, testId
+- AlertsListViewProps: alerts, pageSize, callbacks, emptyMessage, etc.
+- AlertsListState: alerts, pagination, isLoading
+- PageSizeOption: 10 | 20 | 50 | 100
+
+FEATURES IMPLEMENTED:
+- /alerts page route with AlertsListView
+- Full pagination:
+  - Previous/next navigation buttons
+  - Page number buttons with current page highlight
+  - Ellipsis for many pages (5+ pages)
+  - Items showing info ("Showing 1-20 of 100 alerts")
+  - Disabled states for first/last page buttons
+- Alert list items:
+  - Severity badge (color-coded: INFO/LOW/MEDIUM/HIGH/CRITICAL)
+  - Type badge with human-readable labels
+  - Left border color matching severity
+  - Unread indicator (blue dot + "New" text)
+  - Title with bold for unread
+  - Message preview (2-line clamp)
+  - Timestamp with relative formatting
+  - Market name context (when available)
+  - Wallet address context (truncated)
+  - Tags display (up to 2 tags)
+  - Arrow indicator for clickability
+- Stats badges in header:
+  - Unread count badge
+  - Critical count badge
+  - High severity count badge
+- Empty state:
+  - Customizable icon (default: bell emoji)
+  - Customizable message
+  - Back to dashboard link
+- Loading skeleton matching item layout
+- Back to dashboard navigation link
+- Dark mode full support
+- Responsive design (mobile/tablet/desktop)
+- Scroll to top on page change
+
+ACCESSIBILITY FEATURES:
+- role="article" on alert items
+- aria-label with alert title and unread status
+- tabIndex=0 for keyboard focus
+- Enter/Space key activation
+- aria-current="page" on active page
+- aria-label on navigation buttons
+
+DATA ATTRIBUTES:
+- data-alert-id, data-alert-type, data-alert-severity, data-alert-read
+- data-testid on all components for E2E testing
+
+HELPER FUNCTIONS EXPORTED:
+- formatAlertDate(date) - relative time or formatted date
+- formatFullDate(date) - full date/time for tooltip
+- calculatePagination(total, current, pageSize) - calculate pagination config
+- getPageNumbers(current, total, maxVisible) - generate page number array
+- generateMockPaginatedAlerts(page, pageSize, total) - mock data generator
+
+FILES CREATED/MODIFIED:
+- app/alerts/page.tsx (new - alerts page)
+- app/alerts/components/AlertsListView.tsx (new - main component)
+- app/alerts/components/index.ts (new - exports)
+- tests/ui/alerts-list-view.test.ts (new - 125 unit tests)
+- tests/e2e/alerts-list-view.e2e.test.ts (new - 47 E2E tests)
+- plans/prd.json (updated passes: true for UI-ALERT-001)
+
+TESTS: 125 unit tests + 47 E2E browser tests pass.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-ALERT-002 (Alert detail modal) at priority 125
+- The AlertsListView is at /alerts route
+- Back link returns to /dashboard
+- Mock data generates 50 alerts for demo
+- Pagination defaults to 20 items per page
+- Click on alert currently logs to console (modal implementation in UI-ALERT-002)
+- Mark as read updates local state immediately
+- Stats badges only show when counts > 0
