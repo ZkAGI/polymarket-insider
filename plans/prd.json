@@ -2229,7 +2229,8 @@
       "priority": 112,
       "name": "Historical score calibrator",
       "description": "Calibrate scoring based on historical outcomes",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T14:42:00Z",
       "steps": [
         "Track score vs outcome",
         "Calculate calibration metrics",

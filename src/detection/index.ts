@@ -1665,3 +1665,43 @@ export type {
   BatchConfidenceResult as DetectionBatchConfidenceResult,
   ConfidenceCalculatorConfig,
 } from "./confidence-level-calculator";
+
+// DET-SCORE-007: Historical Score Calibrator
+export {
+  OutcomeType,
+  CalibrationQuality,
+  ScoreBucket,
+  AdjustmentType,
+  OUTCOME_DESCRIPTIONS,
+  CALIBRATION_QUALITY_DESCRIPTIONS,
+  ADJUSTMENT_DESCRIPTIONS,
+  BUCKET_RANGES,
+  ALL_BUCKETS,
+  DEFAULT_CALIBRATOR_CONFIG,
+  getBucketForScore,
+  scoreToProbability,
+  probabilityToScore,
+  HistoricalScoreCalibrator,
+  createHistoricalScoreCalibrator,
+  getSharedHistoricalScoreCalibrator,
+  setSharedHistoricalScoreCalibrator,
+  resetSharedHistoricalScoreCalibrator,
+  recordHistoricalOutcome,
+  updateHistoricalOutcome,
+  calculateHistoricalCalibration,
+  calibrateHistoricalScore,
+  getHistoricalCalibrationSummary,
+  getOutcomeDescription,
+  getCalibrationQualityDescription,
+  getAdjustmentDescription,
+} from "./historical-score-calibrator";
+
+export type {
+  OutcomeRecord,
+  BucketStats,
+  CalibrationMetrics,
+  AdjustmentRecommendation,
+  CalibrationResult,
+  CalibrationSummary,
+  HistoricalScoreCalibratorConfig,
+} from "./historical-score-calibrator";

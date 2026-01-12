@@ -7353,3 +7353,187 @@ NOTES FOR NEXT SESSION:
 - Time decay can be disabled if not desired
 - Use getUrgentAlerts() for immediate attention items
 - Listen to 'urgent-alert' and 'alert-highlighted' events for real-time notifications
+
+================================================================================
+DET-SCORE-007: Historical Score Calibrator
+================================================================================
+Implemented: 2026-01-12
+
+FEATURE SUMMARY:
+This module tracks the relationship between detection scores and actual outcomes
+(confirmed insiders, false alarms, etc.) to calibrate and improve scoring over time.
+It calculates calibration metrics like Brier score, precision, recall, F1, and AUC-ROC,
+and provides recommendations for threshold adjustments based on historical data.
+
+KEY COMPONENTS:
+1. OutcomeType enum - TRUE_POSITIVE, FALSE_POSITIVE, TRUE_NEGATIVE, FALSE_NEGATIVE, UNKNOWN
+2. CalibrationQuality enum - EXCELLENT, GOOD, FAIR, POOR, INSUFFICIENT_DATA
+3. ScoreBucket enum - 10 buckets (0-10, 10-20, ..., 90-100)
+4. AdjustmentType enum - INCREASE_THRESHOLD, DECREASE_THRESHOLD, RECALIBRATE_BUCKETS, GATHER_MORE_DATA
+5. HistoricalScoreCalibrator class - Main calibrator with full functionality
+6. Factory functions (create, getShared, setShared, reset)
+7. Convenience functions for common operations
+
+METRICS CALCULATED:
+- Brier Score: Measures calibration accuracy (lower is better)
+- Precision: TP / (TP + FP)
+- Recall (TPR): TP / (TP + FN)
+- F1 Score: Harmonic mean of precision and recall
+- AUC-ROC: Discriminative ability (approximated via thresholds)
+- Expected Calibration Error (ECE): Average miscalibration across buckets
+- Max Calibration Error (MCE): Maximum miscalibration in any bucket
+- Log Loss: Cross-entropy loss for probability predictions
+- Reliability Curve: Per-bucket predicted vs actual positive rates
+
+CALIBRATION THRESHOLDS:
+- EXCELLENT: Brier < 0.1, ECE < 0.05
+- GOOD: Brier < 0.2, ECE < 0.1
+- FAIR: Brier < 0.3, ECE < 0.2
+- POOR: Brier >= 0.3 or ECE >= 0.2
+- INSUFFICIENT_DATA: < 50 samples (configurable)
+
+KEY METHODS:
+- recordOutcome(wallet, score, outcome, date?, metadata?) - Record a score-to-outcome mapping
+- updateOutcome(wallet, newOutcome) - Update the outcome for a wallet's most recent record
+- updateOutcomeById(id, newOutcome) - Update outcome by record ID
+- calculateCalibration() - Calculate all calibration metrics and generate recommendations
+- calibrateScore(score) - Adjust a score based on historical calibration data
+- getSummary() - Get summary statistics including outcome distribution
+- getWalletOutcomes(wallet) - Get all outcomes for a specific wallet
+- getAllOutcomes() - Get all recorded outcomes
+- exportData() / importData() - Persistence support
+- clearOutcomes() - Reset all data
+
+EVENTS EMITTED:
+- outcome-recorded: When a new outcome is recorded
+- outcome-updated: When an outcome is updated
+- calibration-completed: When calibration calculation finishes
+- config-updated: When configuration changes
+- outcomes-cleared: When data is cleared
+- data-imported: When data is imported
+- recalibration-recommended: When calibration quality degrades
+
+CONFIGURATION OPTIONS:
+- currentThreshold: Default 50 (score threshold for positive classification)
+- minSamplesForCalibration: Default 50 (minimum samples for valid calibration)
+- maxOutcomesToStore: Default 10000 (maximum stored records)
+- maxBrierScoreHistory: Default 100 (max Brier score history entries)
+- maxOutcomeAgeHours: Default 2160 (90 days - records older than this ignored)
+
+CONVENIENCE FUNCTIONS:
+- recordHistoricalOutcome() - Record via shared instance
+- updateHistoricalOutcome() - Update via shared instance
+- calculateHistoricalCalibration() - Calculate via shared instance
+- calibrateHistoricalScore() - Calibrate a score via shared instance
+- getHistoricalCalibrationSummary() - Get summary via shared instance
+- getOutcomeDescription() - Get human-readable outcome description
+- getCalibrationQualityDescription() - Get quality level description
+- getAdjustmentDescription() - Get adjustment type description
+
+RELIABILITY CURVE:
+For each of the 10 score buckets, the reliability curve provides:
+- bucket: The bucket identifier
+- avgPredictedProbability: Mean predicted probability in this bucket
+- actualPositiveRate: Actual positive rate in this bucket
+- sampleCount: Number of samples in this bucket
+- confidenceInterval: 95% confidence interval for actual rate
+
+RECOMMENDATIONS:
+Based on calibration quality and metrics, the system generates recommendations like:
+- GATHER_MORE_DATA: When insufficient samples for reliable calibration
+- INCREASE_THRESHOLD: When false positive rate is too high
+- DECREASE_THRESHOLD: When recall is too low
+- RECALIBRATE_BUCKETS: When specific buckets have high miscalibration
+
+EXPORTS:
+- Enums: OutcomeType, CalibrationQuality, ScoreBucket, AdjustmentType
+- Constants: OUTCOME_DESCRIPTIONS, CALIBRATION_QUALITY_DESCRIPTIONS, ADJUSTMENT_DESCRIPTIONS
+- Constants: BUCKET_RANGES, ALL_BUCKETS, DEFAULT_CALIBRATOR_CONFIG
+- Helpers: getBucketForScore, scoreToProbability, probabilityToScore
+- Class: HistoricalScoreCalibrator
+- Factory: createHistoricalScoreCalibrator
+- Singleton: getSharedHistoricalScoreCalibrator, setSharedHistoricalScoreCalibrator, resetSharedHistoricalScoreCalibrator
+- Convenience: recordHistoricalOutcome, updateHistoricalOutcome, calculateHistoricalCalibration
+- Convenience: calibrateHistoricalScore, getHistoricalCalibrationSummary
+- Convenience: getOutcomeDescription, getCalibrationQualityDescription, getAdjustmentDescription
+- Types: OutcomeRecord, BucketRange, ReliabilityCurvePoint, CalibrationMetrics
+- Types: AdjustmentRecommendation, CalibrationResult, CalibratorSummary
+- Types: CalibratorConfig, CalibratorExportData, CalibratorEvents
+
+UNIT TESTS (88 tests):
+- Enum and constant validation
+- Bucket range validation (contiguous, valid ranges)
+- Helper functions (getBucketForScore, scoreToProbability, probabilityToScore)
+- Constructor with default and custom config
+- recordOutcome (normal, address normalization, invalid address, clamping, dates, metadata)
+- updateOutcome (by wallet, by ID, unknown wallet/ID)
+- getWalletOutcomes (sorting, empty cases)
+- getAllOutcomes
+- calculateCalibration (sufficient/insufficient data, metrics calculation)
+- Brier score, precision, recall, F1 score, AUC-ROC calculation
+- Reliability curve building
+- Quality classification
+- Recommendations generation
+- calibrateScore (before/after calibration, ordering preservation)
+- getSummary (statistics, quality, Brier history, timing)
+- Event emission (all events)
+- Configuration updates
+- clearOutcomes
+- Export/import data
+- Factory and singleton management
+- Convenience functions
+- Edge cases (all unknown, all positive, all negative, max limit, age limits)
+- Calibration quality classification
+- Threshold recommendations (low recall, high FPR)
+- Brier score history tracking and limits
+
+E2E TESTS (53 tests):
+- Well-calibrated data recognition
+- Low ECE for well-calibrated data
+- Reliability curve matching predicted probabilities
+- Poorly-calibrated data recognition
+- Recommendation generation for poor calibration
+- Threshold adjustment recommendations
+- Insider detection scenario metrics
+- Threshold changes for low recall
+- Optimal F1 threshold calculation
+- Score calibration behavior (before/after calibration)
+- Score ordering preservation
+- Overconfident prediction adjustment
+- Reliability curve across all buckets
+- Sample counts per bucket
+- Confidence interval calculation
+- AUC-ROC for discriminative vs random data
+- Multiple outcomes per wallet
+- Outcome sorting by date
+- Outcome updates
+- Outcome distribution tracking
+- Brier score history tracking
+- Calibration timing tracking
+- Event emission (all events)
+- Configuration (minSamples, maxOutcomes, updates)
+- Export/import data
+- Calibration state preservation
+- Convenience functions via shared instance
+- Description helper functions
+- Edge cases (empty, all unknown, all positive, all negative, extreme scores, clamping)
+- Helper functions validation
+- Actionable recommendations
+- Calibration improvement tracking
+
+TYPECHECK: Passes with no errors
+
+FILES:
+- src/detection/historical-score-calibrator.ts (new - full implementation)
+- src/detection/index.ts (updated exports for DET-SCORE-007)
+- tests/detection/historical-score-calibrator.test.ts (new - 88 tests)
+- tests/e2e/historical-score-calibrator.e2e.test.ts (new - 53 tests)
+- plans/prd.json (updated passes: true for DET-SCORE-007)
+
+NOTES FOR NEXT SESSION:
+- Next feature: DET-SCORE-008 (Cross-market correlation detector) at priority 113
+- The HistoricalScoreCalibrator works with any scoring system
+- Use exportData/importData for persistence across sessions
+- Brier score history tracks calibration improvement over time
+- Listen to 'recalibration-recommended' event for proactive adjustments
+- calibrateScore() adjusts raw scores based on historical bucket performance
