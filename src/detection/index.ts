@@ -1636,3 +1636,32 @@ export type {
   AlertPriorityRankerConfig,
   RankAlertOptions,
 } from "./alert-priority-ranker";
+
+// DET-SCORE-006: Confidence Level Calculator
+export {
+  ConfidenceLevel as DetectionConfidenceLevel,
+  ConfidenceFactor,
+  CONFIDENCE_FACTOR_DESCRIPTIONS,
+  CONFIDENCE_LEVEL_DESCRIPTIONS,
+  DEFAULT_FACTOR_WEIGHTS as DETECTION_CONFIDENCE_FACTOR_WEIGHTS,
+  DEFAULT_LEVEL_THRESHOLDS as DETECTION_CONFIDENCE_LEVEL_THRESHOLDS,
+  DEFAULT_CONFIDENCE_CONFIG,
+  ConfidenceLevelCalculator,
+  createConfidenceLevelCalculator,
+  getSharedConfidenceLevelCalculator,
+  setSharedConfidenceLevelCalculator,
+  resetSharedConfidenceLevelCalculator,
+  calculateConfidence as calculateDetectionConfidence,
+  batchCalculateConfidence as batchCalculateDetectionConfidence,
+  getConfidenceLevelDescription as getDetectionConfidenceLevelDescription,
+  getConfidenceFactorDescription,
+} from "./confidence-level-calculator";
+
+export type {
+  ConfidenceFactorContribution,
+  SignalInput as ConfidenceSignalInput,
+  AlertConfidenceMetadata,
+  ConfidenceResult as DetectionConfidenceResult,
+  BatchConfidenceResult as DetectionBatchConfidenceResult,
+  ConfidenceCalculatorConfig,
+} from "./confidence-level-calculator";

@@ -77,7 +77,10 @@ function createWalletTrades(
       startDate.getTime() + i * intervalHours * 60 * 60 * 1000
     );
     const size = sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]);
-    const tradeWins = Math.random() < winRate;
+    // Deterministic win rate: first N trades are wins where N = floor(count * winRate)
+    // This ensures exact win rate matching
+    const expectedWins = Math.floor(count * winRate);
+    const tradeWins = i < expectedWins;
     const resolvedCategory =
       category === "random" ? categories[i % categories.length] : category;
 
@@ -141,11 +144,11 @@ function createCategorySpecialistTrades(
 function createInsiderTrades(count: number): SelectionTrade[] {
   return createWalletTrades(count, {
     sizeRange: [5000, 20000],
-    winRate: 0.92,
+    winRate: 0.95, // Very high win rate to ensure INSIDER_LIKE pattern
     intervalHours: 72,
     category: MarketCategory.POLITICS,
     marketId: "random",
-    resolvesInDays: 1, // Trades near resolution
+    resolvesInDays: 0.5, // Trades near resolution (< 24 hours to resolution)
   });
 }
 

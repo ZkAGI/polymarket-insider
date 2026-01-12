@@ -1020,7 +1020,8 @@ export class HistoricalAccuracyScorer extends EventEmitter {
     } = options;
 
     // Calculate window stats for each time window
-    const windowStats = this.calculateWindowStats(resolvedPredictions);
+    // Use allPredictions to include cancelled predictions in the count
+    const windowStats = this.calculateWindowStats(allPredictions);
 
     // Calculate category breakdown
     const categoryStats = includeCategoryBreakdown
@@ -1131,10 +1132,15 @@ export class HistoricalAccuracyScorer extends EventEmitter {
       const rawAccuracy =
         totalDecisive > 0 ? (correct.length / totalDecisive) * 100 : 0;
 
-      // Calculate weighted accuracy
+      // Calculate weighted accuracy (only from decisive predictions - exclude CANCELLED and PENDING)
       let weightedCorrect = 0;
       let weightedTotal = 0;
-      for (const p of windowPredictions) {
+      const decisivePredictions = windowPredictions.filter(
+        (p) =>
+          p.outcome === PredictionOutcome.CORRECT ||
+          p.outcome === PredictionOutcome.INCORRECT
+      );
+      for (const p of decisivePredictions) {
         const weight = CONVICTION_WEIGHTS[p.conviction] || 1;
         weightedTotal += weight;
         if (p.outcome === PredictionOutcome.CORRECT) {

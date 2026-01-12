@@ -331,7 +331,7 @@ describe("SybilAttackDetector", () => {
       );
 
       const similarity = detector.analyzeWalletPair(WALLET_A, WALLET_B);
-      expect(similarity.activityTimingCorrelation).toBe(1);
+      expect(similarity.activityTimingCorrelation).toBeCloseTo(1, 10);
       expect(similarity.flags).toContain(SybilFlag.TIMING_FINGERPRINT);
     });
 

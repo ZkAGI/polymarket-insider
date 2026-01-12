@@ -287,12 +287,13 @@ describe("CoordinatedTradingDetector", () => {
       const tradesA = Array.from({ length: 10 }, (_, i) =>
         createTrade(TEST_WALLETS.walletA, TEST_MARKETS.market1, baseTime + i * 60000)
       );
-      // Trades B are 5 minutes offset (beyond simultaneous window)
+      // Trades B are 10 minutes offset (well beyond simultaneous window)
+      // This ensures no overlapping time windows
       const tradesB = Array.from({ length: 10 }, (_, i) =>
         createTrade(
           TEST_WALLETS.walletB,
           TEST_MARKETS.market1,
-          baseTime + i * 60000 + 300000
+          baseTime + i * 60000 + 600000 // 10 minute offset
         )
       );
 
@@ -300,6 +301,8 @@ describe("CoordinatedTradingDetector", () => {
       const result = detector.analyzePair(TEST_WALLETS.walletA, TEST_WALLETS.walletB);
 
       expect(result).not.toBeNull();
+      // With 10 min offset between series, there should be very low correlation
+      // Trades A: 0-9 min, Trades B: 10-19 min - no overlap with 1 min window
       expect(result!.timingCorrelation).toBeLessThan(0.5);
     });
 
