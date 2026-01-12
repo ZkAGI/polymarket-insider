@@ -10,6 +10,10 @@ import ActiveSignalsCounter, {
   SignalType,
   generateMockSignals,
 } from './components/ActiveSignalsCounter';
+import SuspiciousWalletsWidget, {
+  SuspiciousWallet,
+  generateMockWallets,
+} from './components/SuspiciousWalletsWidget';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -34,6 +38,8 @@ export default function DashboardPage() {
   const [isAlertFeedLoading, setIsAlertFeedLoading] = useState(true);
   const [signals, setSignals] = useState<SignalCount[]>([]);
   const [isSignalsLoading, setIsSignalsLoading] = useState(true);
+  const [suspiciousWallets, setSuspiciousWallets] = useState<SuspiciousWallet[]>([]);
+  const [isWalletsLoading, setIsWalletsLoading] = useState(true);
 
   // Load initial dashboard data
   useEffect(() => {
@@ -50,11 +56,15 @@ export default function DashboardPage() {
         const mockSignals = generateMockSignals();
         setSignals(mockSignals);
 
+        // Generate initial mock suspicious wallets
+        const mockWallets = generateMockWallets(5);
+        setSuspiciousWallets(mockWallets);
+
         // Set mock initial data - count unread alerts
         const unreadCount = mockAlerts.filter((a) => !a.read).length;
         setStats({
           activeAlerts: unreadCount,
-          suspiciousWallets: 5,
+          suspiciousWallets: mockWallets.length,
           hotMarkets: 8,
           recentTrades: 156,
           systemStatus: 'connected',
@@ -63,6 +73,7 @@ export default function DashboardPage() {
         setIsLoading(false);
         setIsAlertFeedLoading(false);
         setIsSignalsLoading(false);
+        setIsWalletsLoading(false);
       }
     };
 
@@ -157,6 +168,35 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Handle wallet click
+  const handleWalletClick = useCallback((wallet: SuspiciousWallet) => {
+    console.log('Wallet clicked:', wallet);
+    // In a real app, this would navigate to wallet details
+  }, []);
+
+  // Handle wallet watch toggle
+  const handleWatchToggle = useCallback((walletId: string) => {
+    setSuspiciousWallets((prev) =>
+      prev.map((w) =>
+        w.id === walletId ? { ...w, isWatched: !w.isWatched } : w
+      )
+    );
+  }, []);
+
+  // Handle refresh wallets
+  const handleRefreshWallets = useCallback(async () => {
+    setIsWalletsLoading(true);
+    try {
+      // Simulate API fetch
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const newWallets = generateMockWallets(5);
+      setSuspiciousWallets(newWallets);
+      setStats((s) => ({ ...s, suspiciousWallets: newWallets.length }));
+    } finally {
+      setIsWalletsLoading(false);
+    }
+  }, []);
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -206,10 +246,17 @@ export default function DashboardPage() {
           title="Top Suspicious Wallets"
           testId="suspicious-wallets-widget"
           className="h-full min-h-[250px]"
+          onRefresh={handleRefreshWallets}
+          isLoading={isWalletsLoading}
         >
-          <div className="text-gray-500 dark:text-gray-400 text-sm">
-            Wallet rankings will be displayed here
-          </div>
+          <SuspiciousWalletsWidget
+            wallets={suspiciousWallets}
+            maxWallets={5}
+            onWalletClick={handleWalletClick}
+            onWatchToggle={handleWatchToggle}
+            showRiskFlags={true}
+            testId="suspicious-wallets-content"
+          />
         </WidgetContainer>
       </div>
 

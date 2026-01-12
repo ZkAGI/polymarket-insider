@@ -2331,7 +2331,8 @@
       "priority": 117,
       "name": "Top suspicious wallets widget",
       "description": "Show top wallets by suspicion score",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T18:38:00Z",
       "steps": [
         "Create wallet list component",
         "Sort by suspicion score",

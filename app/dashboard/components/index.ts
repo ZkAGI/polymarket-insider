@@ -36,3 +36,22 @@ export {
   getTrendIndicator,
   generateMockSignals,
 } from './ActiveSignalsCounter';
+
+export { default as SuspiciousWalletsWidget } from './SuspiciousWalletsWidget';
+export type {
+  SuspiciousWalletsWidgetProps,
+  SuspiciousWallet,
+  SuspicionLevel,
+  RiskFlag,
+} from './SuspiciousWalletsWidget';
+export {
+  suspicionLevelConfig,
+  riskFlagConfig,
+  getSuspicionLevelConfig,
+  getRiskFlagConfig,
+  formatWalletAddress,
+  formatVolume,
+  formatTimeAgo as formatWalletTimeAgo,
+  getSuspicionLevelFromScore,
+  generateMockWallets,
+} from './SuspiciousWalletsWidget';

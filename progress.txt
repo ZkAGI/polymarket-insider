@@ -7764,3 +7764,121 @@ NOTES FOR NEXT SESSION:
 - Critical signals (INSIDER_PATTERN, SYBIL_DETECTION) get special highlighting
 - Trend arrows show red for increases (more alerts = bad) and green for decreases
 - Component is fully keyboard accessible and screen reader friendly
+
+================================================================================
+COMPLETED: UI-DASH-004 - Top Suspicious Wallets Widget
+Date: 2026-01-12
+================================================================================
+
+FEATURE: Top suspicious wallets widget
+ID: UI-DASH-004
+Priority: 117
+
+DESCRIPTION:
+Implemented the Top Suspicious Wallets widget that shows wallets ranked by their
+suspicion score. The widget displays wallet addresses, suspicion levels, scores,
+risk flags, and key statistics like volume, win rate, and trade count.
+
+KEY COMPONENTS:
+- SuspiciousWalletsWidget: Main widget component
+- SuspiciousWallet interface: Defines wallet data structure
+- SuspicionLevel type: CRITICAL, HIGH, MEDIUM, LOW, NONE
+- RiskFlag type: FRESH_WALLET, HIGH_WIN_RATE, UNUSUAL_TIMING, LARGE_POSITIONS, etc.
+- ScoreBar component: Visual score indicator
+- RiskFlagsDisplay component: Shows risk flag icons
+- WalletItem component: Individual wallet card
+- WalletsSummary component: Summary stats (critical, high, total, watched counts)
+
+FEATURES IMPLEMENTED:
+- Wallet list sorted by suspicion score (highest first)
+- Rank badges showing position (1, 2, 3, etc.)
+- Color-coded suspicion levels (red=critical, orange=high, yellow=medium, etc.)
+- Score bar with fill percentage
+- Risk flags with emoji icons (max 3 shown, +N for overflow)
+- Watch/unwatch functionality with star toggle
+- Key stats: Total volume, win rate, trade count, last activity
+- Loading skeleton state
+- Empty state when no wallets
+- Summary section with critical/high/watched counts
+- Full accessibility (ARIA labels, keyboard navigation, role="button")
+
+HELPER FUNCTIONS EXPORTED:
+- getSuspicionLevelConfig: Get color/style config for level
+- getRiskFlagConfig: Get icon/color config for flag
+- formatWalletAddress: Shorten address with ellipsis
+- formatVolume: Format as $10K, $1.2M, etc.
+- formatTimeAgo: Format as "5m ago", "2h ago", "3d ago"
+- getSuspicionLevelFromScore: Convert 0-100 score to level
+- generateMockWallets: Create test data
+
+DASHBOARD INTEGRATION:
+- Added to row 2 of dashboard layout
+- State management for wallets in page.tsx
+- Refresh handler that generates new mock wallets
+- Click handlers for wallet selection and watch toggle
+- Loading state during refresh
+
+UNIT TESTS (103 tests - tests/ui/suspicious-wallets-widget.test.ts):
+- SuspicionLevel enum validation (5 levels)
+- RiskFlag enum validation (7 flags)
+- SuspiciousWallet interface validation
+- suspicionLevelConfig tests (colors, labels, styles)
+- riskFlagConfig tests (icons, labels, colors)
+- getSuspicionLevelConfig/getRiskFlagConfig tests
+- formatWalletAddress tests (short, long, boundary cases)
+- formatVolume tests (M, K, small amounts)
+- formatTimeAgo tests (minutes, hours, days)
+- getSuspicionLevelFromScore tests (all boundaries)
+- generateMockWallets tests (count, validation, sorting)
+- Wallet aggregation tests (critical/high/watched counts)
+- Wallet sorting tests
+- Props validation tests
+- Data attributes tests
+- Accessibility tests
+- Edge cases tests
+
+E2E BROWSER TESTS (50 tests - tests/e2e/suspicious-wallets-widget.e2e.test.ts):
+Using Puppeteer for real browser testing:
+- Widget loading and display
+- Widget title verification
+- Loading state transition
+- Wallet list container display
+- Summary section display with badges
+- Wallet item structure (rank, address, level, score, stats)
+- Data attributes on wallet items
+- Risk flags display
+- Click interactions (wallet click, watch toggle)
+- Refresh button functionality
+- Visual styling (spacing, colors, borders, rounded corners)
+- Score bar fill width
+- Summary badges (total, critical, high, watched)
+- Responsive layout (mobile, tablet, desktop)
+- Accessibility (ARIA labels, roles, tabIndex)
+- Console error verification
+- Wallet ranking order verification
+- Suspicion level styling
+
+TYPECHECK: Passes with no errors
+
+TYPESCRIPT FIXES APPLIED:
+- tests/e2e/suspicious-wallets-widget.e2e.test.ts:400 - Cast el to HTMLElement
+- tests/e2e/suspicious-wallets-widget.e2e.test.ts:588 - Handle undefined in array comparison
+- tests/ui/suspicious-wallets-widget.test.ts:626 - Use optional chaining for array access
+- tests/ui/suspicious-wallets-widget.test.ts:695-709 - Use optional chaining for sorted array
+
+FILES CREATED/MODIFIED:
+- app/dashboard/components/SuspiciousWalletsWidget.tsx (new - main component)
+- app/dashboard/components/index.ts (updated - added exports)
+- app/dashboard/page.tsx (updated - integrated component with state management)
+- tests/ui/suspicious-wallets-widget.test.ts (new - 103 unit tests)
+- tests/e2e/suspicious-wallets-widget.e2e.test.ts (new - 50 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-004)
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-DASH-005 (Hot markets widget) at priority 118
+- The SuspiciousWalletsWidget accepts wallets via props for real-time updates
+- suspicionLevelConfig and riskFlagConfig exported for consistent styling
+- Mock wallet generation available via generateMockWallets()
+- Critical wallets get pulsing animation in summary badge
+- Component supports watch/unwatch functionality with local state fallback
+- formatTimeAgo from this component is exported as formatWalletTimeAgo to avoid collision
