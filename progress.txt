@@ -7925,3 +7925,68 @@ TESTS: 114 unit tests + 53 E2E browser tests pass. TypeCheck passes.
 NOTES FOR NEXT SESSION:
 - Next feature: UI-DASH-006 (Recent large trades widget) at priority 119
 
+================================================================================
+FEATURE: UI-DASH-006 - Recent large trades widget
+DATE: 2026-01-12T13:55:00Z
+PRIORITY: 119
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Implemented RecentLargeTradesWidget component to display recent trades above whale threshold.
+
+TYPES DEFINED:
+- LargeTrade interface with id, marketId, marketTitle, marketSlug, walletAddress, direction, size, price, usdValue, sizeCategory, timestamp, txHash, isMaker, isWhale, isSuspicious
+- TradeDirection type: BUY, SELL
+- TradeSizeCategory type: WHALE (>=$100K), VERY_LARGE (>=$25K), LARGE (>=$10K)
+
+FEATURES IMPLEMENTED:
+- Trade list sorted by timestamp (most recent first)
+- Index badges showing position
+- Color-coded direction badges (green BUY, red SELL)
+- Color-coded size category badges (WHALE/VERY_LARGE/LARGE)
+- USD value display with formatting ($K, $M)
+- Price/probability display
+- Market title (truncated if long)
+- Wallet address display (shortened with copy support)
+- Transaction hash links to Polygonscan
+- Special indicators: whale badge, maker badge, suspicious indicator
+- Summary section with total volume, whale count, suspicious count, buy/sell counts
+- Loading skeleton and empty states
+- Real-time updates via props
+- Watch/click handlers
+- Keyboard navigation (tabIndex, Enter/Space)
+- Accessibility (ARIA labels, roles)
+
+HELPER FUNCTIONS EXPORTED:
+- sizeCategoryConfig - styling for each size category
+- directionConfig - styling for buy/sell directions
+- getSizeCategoryConfig(category) - get config for category
+- getDirectionConfig(direction) - get config for direction
+- getSizeCategoryFromValue(usdValue) - determine category from USD value
+- formatTradeWalletAddress(address) - shorten wallet address
+- formatTradeUsdValue(value) - format USD with K/M suffix
+- formatTradePrice(price) - format as percentage
+- formatTradeTimeAgo(date) - relative time display
+- formatShareSize(size) - format share count
+- truncateMarketTitle(title, maxLength) - truncate long titles
+- generateMockTrades(count) - generate mock trade data
+
+FILES CREATED/MODIFIED:
+- app/dashboard/components/RecentLargeTradesWidget.tsx (new - main component)
+- app/dashboard/components/index.ts (updated - added exports)
+- app/dashboard/page.tsx (updated - integrated component with state management)
+- tests/ui/recent-large-trades-widget.test.ts (new - 95 unit tests)
+- tests/e2e/recent-large-trades-widget.e2e.test.ts (new - 53 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-006)
+
+TESTS: 95 unit tests + 53 E2E browser tests. TypeCheck passes.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-DASH-007 (System status indicator) at priority 120
+- The RecentLargeTradesWidget accepts trades via props for real-time updates
+- sizeCategoryConfig and directionConfig exported for consistent styling
+- Mock trade generation available via generateMockTrades()
+- Suspicious trades get red ring indicator
+- Component supports click handlers for trades and wallet addresses
+- Transaction links open in new tab with noopener/noreferrer
+

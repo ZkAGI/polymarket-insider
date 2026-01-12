@@ -79,3 +79,25 @@ export {
   truncateTitle,
   generateMockMarkets,
 } from './HotMarketsWidget';
+
+export { default as RecentLargeTradesWidget } from './RecentLargeTradesWidget';
+export type {
+  RecentLargeTradesWidgetProps,
+  LargeTrade,
+  TradeDirection,
+  TradeSizeCategory,
+} from './RecentLargeTradesWidget';
+export {
+  sizeCategoryConfig,
+  directionConfig,
+  getSizeCategoryConfig,
+  getDirectionConfig,
+  getSizeCategoryFromValue,
+  formatTradeWalletAddress,
+  formatTradeUsdValue,
+  formatTradePrice,
+  formatTradeTimeAgo,
+  formatShareSize,
+  truncateMarketTitle,
+  generateMockTrades,
+} from './RecentLargeTradesWidget';

@@ -18,6 +18,10 @@ import HotMarketsWidget, {
   HotMarket,
   generateMockMarkets,
 } from './components/HotMarketsWidget';
+import RecentLargeTradesWidget, {
+  LargeTrade,
+  generateMockTrades,
+} from './components/RecentLargeTradesWidget';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -46,6 +50,8 @@ export default function DashboardPage() {
   const [isWalletsLoading, setIsWalletsLoading] = useState(true);
   const [hotMarkets, setHotMarkets] = useState<HotMarket[]>([]);
   const [isMarketsLoading, setIsMarketsLoading] = useState(true);
+  const [largeTrades, setLargeTrades] = useState<LargeTrade[]>([]);
+  const [isTradesLoading, setIsTradesLoading] = useState(true);
 
   // Load initial dashboard data
   useEffect(() => {
@@ -70,13 +76,17 @@ export default function DashboardPage() {
         const mockMarkets = generateMockMarkets(5);
         setHotMarkets(mockMarkets);
 
+        // Generate initial mock large trades
+        const mockTrades = generateMockTrades(5);
+        setLargeTrades(mockTrades);
+
         // Set mock initial data - count unread alerts
         const unreadCount = mockAlerts.filter((a) => !a.read).length;
         setStats({
           activeAlerts: unreadCount,
           suspiciousWallets: mockWallets.length,
           hotMarkets: mockMarkets.length,
-          recentTrades: 156,
+          recentTrades: mockTrades.length,
           systemStatus: 'connected',
         });
       } finally {
@@ -85,6 +95,7 @@ export default function DashboardPage() {
         setIsSignalsLoading(false);
         setIsWalletsLoading(false);
         setIsMarketsLoading(false);
+        setIsTradesLoading(false);
       }
     };
 
@@ -237,6 +248,32 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Handle trade click
+  const handleTradeClick = useCallback((trade: LargeTrade) => {
+    console.log('Trade clicked:', trade);
+    // In a real app, this would navigate to trade details or open a modal
+  }, []);
+
+  // Handle trade wallet click
+  const handleTradeWalletClick = useCallback((walletAddress: string) => {
+    console.log('Wallet clicked from trade:', walletAddress);
+    // In a real app, this would navigate to wallet details
+  }, []);
+
+  // Handle refresh trades
+  const handleRefreshTrades = useCallback(async () => {
+    setIsTradesLoading(true);
+    try {
+      // Simulate API fetch
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const newTrades = generateMockTrades(5);
+      setLargeTrades(newTrades);
+      setStats((s) => ({ ...s, recentTrades: newTrades.length }));
+    } finally {
+      setIsTradesLoading(false);
+    }
+  }, []);
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -324,10 +361,18 @@ export default function DashboardPage() {
           title="Recent Large Trades"
           testId="large-trades-widget"
           className="h-full min-h-[250px]"
+          onRefresh={handleRefreshTrades}
+          isLoading={isTradesLoading}
         >
-          <div className="text-gray-500 dark:text-gray-400 text-sm">
-            Whale trades will be displayed here
-          </div>
+          <RecentLargeTradesWidget
+            trades={largeTrades}
+            maxTrades={5}
+            minUsdValue={10000}
+            onTradeClick={handleTradeClick}
+            onWalletClick={handleTradeWalletClick}
+            showMarketInfo={true}
+            testId="recent-large-trades-content"
+          />
         </WidgetContainer>
       </div>
     </DashboardLayout>

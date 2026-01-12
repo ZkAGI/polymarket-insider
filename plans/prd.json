@@ -2372,7 +2372,9 @@
       "priority": 119,
       "name": "Recent large trades widget",
       "description": "Show recent trades above whale threshold",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T13:55:00Z",
+      "notes": "Implemented RecentLargeTradesWidget component with: 2 trade directions (BUY/SELL); 3 size categories (WHALE >= $100K, VERY_LARGE >= $25K, LARGE >= $10K); trade item display with index badge, direction badge, size category badge, USD value, price/probability, market title, wallet address, timestamp; special indicators for whale/maker/suspicious trades; summary section with total volume, whale count, suspicious count, buy/sell counts; tx hash links to Polygonscan; loading skeleton state; empty state; real-time prop updates; keyboard navigation; accessibility features. 95 unit tests and 53 E2E Puppeteer browser tests. TypeScript types verified clean.",
       "steps": [
         "Create trade list component",
         "Filter by size threshold",
