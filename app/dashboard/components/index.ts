@@ -159,3 +159,12 @@ export {
   formatTimeUntilRefresh,
   generateMockRefreshState,
 } from './DashboardRefreshControls';
+
+export { default as ThemeToggle } from './ThemeToggle';
+export { ThemeToggleIcon, ThemeToggleButton, ThemeToggleDropdown } from './ThemeToggle';
+export type {
+  ThemeToggleProps,
+  ThemeToggleMode,
+  ThemeToggleSize,
+} from './ThemeToggle';
+export { generateMockThemeState } from './ThemeToggle';

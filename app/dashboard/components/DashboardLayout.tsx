@@ -4,6 +4,8 @@ import { ReactNode } from 'react';
 import type { DashboardStats } from '../page';
 import QuickStatsSummaryBar, { StatValue } from './QuickStatsSummaryBar';
 import DashboardRefreshControls, { RefreshInterval } from './DashboardRefreshControls';
+import ThemeToggle from './ThemeToggle';
+import { Theme } from '../../contexts/ThemeContext';
 
 export interface DashboardLayoutProps {
   children: ReactNode;
@@ -24,6 +26,10 @@ export interface DashboardLayoutProps {
   onAutoRefreshChange?: (interval: RefreshInterval) => void;
   /** Whether to show refresh controls in header */
   showRefreshControls?: boolean;
+  /** Whether to show theme toggle in header */
+  showThemeToggle?: boolean;
+  /** Callback fired when theme changes */
+  onThemeChange?: (theme: Theme) => void;
 }
 
 function StatusIndicator({ status }: { status: DashboardStats['systemStatus'] }) {
@@ -60,6 +66,8 @@ export default function DashboardLayout({
   autoRefreshInterval = 'OFF',
   onAutoRefreshChange,
   showRefreshControls = true,
+  showThemeToggle = true,
+  onThemeChange,
 }: DashboardLayoutProps) {
   // Default refresh handler that does nothing if not provided
   const handleDashboardRefresh = async () => {
@@ -92,6 +100,18 @@ export default function DashboardLayout({
                   showAutoRefresh={!!onAutoRefreshChange}
                   showLastRefresh={true}
                   testId="dashboard-refresh-controls"
+                />
+              )}
+              {/* Theme Toggle */}
+              {showThemeToggle && (
+                <ThemeToggle
+                  mode="dropdown"
+                  size="sm"
+                  showLabel={false}
+                  showSystemOption={true}
+                  onThemeChange={onThemeChange}
+                  dropdownPosition="right"
+                  testId="dashboard-theme-toggle"
                 />
               )}
               <StatusIndicator status={stats.systemStatus} />

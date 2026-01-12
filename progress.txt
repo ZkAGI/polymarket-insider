@@ -8222,3 +8222,94 @@ NOTES FOR NEXT SESSION:
 - Component supports compact mode (hide labels, show only icons)
 - Mock refresh state generation available via generateMockRefreshState()
 
+
+================================================================================
+FEATURE: UI-DASH-010 - Dashboard theme toggle
+DATE: 2026-01-12T20:10:00Z
+PRIORITY: 123
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Implemented complete theme toggle functionality for the dashboard with light, dark, and system theme options.
+
+TYPES DEFINED:
+- Theme: "light" | "dark" | "system"
+- ResolvedTheme: "light" | "dark"
+- ThemeConfig: storageKey, defaultTheme, enableSystem, attribute, colorScheme
+- ThemeOption: value, label, icon, description
+- ThemeContextValue: theme, resolvedTheme, setTheme, toggleTheme, isDark, isLight, isSystem, systemTheme, config
+- ThemeToggleMode: "icon" | "button" | "dropdown"
+- ThemeToggleSize: "sm" | "md" | "lg"
+- ThemeToggleProps interface
+
+FEATURES IMPLEMENTED:
+- ThemeContext with ThemeProvider:
+  - Light, dark, and system theme options
+  - localStorage persistence with "polymarket-tracker-theme" key
+  - System preference detection via prefers-color-scheme media query
+  - Automatic class application to document.documentElement
+  - Color scheme meta tag support
+  - Event callback on theme change
+
+- Inline script in layout.tsx:
+  - Prevents flash of incorrect theme on page load
+  - Reads stored theme before React hydration
+  - Applies theme class immediately
+
+- ThemeToggle component:
+  - 3 display modes: icon (simple toggle), button (with label), dropdown (full options)
+  - 3 sizes: sm, md, lg with appropriate styling
+  - Full accessibility support:
+    - aria-label on toggle button
+    - aria-expanded, aria-haspopup on dropdown button
+    - role=listbox on dropdown container
+    - role=option, aria-selected on dropdown items
+  - Keyboard navigation:
+    - Enter/Space to activate button
+    - Escape to close dropdown
+    - Tab for focus navigation
+  - Click outside to close dropdown
+  - Animated icon transitions (rotation between sun/moon)
+  - Checkmark indicator on selected option
+  - Option descriptions in dropdown
+  - Disabled state support
+  - Custom className and testId support
+  - dropdownPosition: "left" | "right"
+
+DASHBOARD INTEGRATION:
+- Updated DashboardLayoutProps with:
+  - showThemeToggle: boolean (default true)
+  - onThemeChange: (theme: Theme) => void
+- ThemeToggle positioned in header between refresh controls and status indicator
+- Uses dropdown mode with sm size
+
+HELPER FUNCTIONS EXPORTED:
+- DEFAULT_THEME_CONFIG - default configuration
+- THEME_OPTIONS - array of theme options with icons and descriptions
+- getThemeOption(theme) - get option by theme value
+- getResolvedThemeIcon(resolved) - get icon for resolved theme (sun/moon)
+- generateMockThemeState() - generate random theme state for testing
+- useTheme() - hook to access theme context (throws if outside provider)
+- useThemeSafe() - hook that returns null if outside provider
+- ThemeToggleIcon, ThemeToggleButton, ThemeToggleDropdown - convenience components
+
+FILES CREATED/MODIFIED:
+- app/contexts/ThemeContext.tsx (new - theme context and provider)
+- app/dashboard/components/ThemeToggle.tsx (new - theme toggle component)
+- app/dashboard/components/index.ts (updated - added ThemeToggle exports)
+- app/dashboard/components/DashboardLayout.tsx (updated - integrated ThemeToggle)
+- app/layout.tsx (updated - added ThemeProvider and inline theme script)
+- tests/ui/theme-toggle.test.ts (new - 104 unit tests)
+- tests/e2e/theme-toggle.e2e.test.ts (new - 33 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-010)
+
+TESTS: 104 unit tests + 33 E2E browser tests pass.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-ALERT-001 (Alerts list view) at priority 124
+- The ThemeToggle is in the dashboard header
+- Theme persists across page refreshes via localStorage
+- System theme follows OS preference and updates in real-time
+- ThemeProvider wraps entire app in root layout
+- Inline script prevents flash of wrong theme before React hydrates
+- Dark mode uses Tailwind dark: variant classes throughout the app

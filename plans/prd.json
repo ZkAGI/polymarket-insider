@@ -2456,7 +2456,9 @@
       "priority": 123,
       "name": "Dashboard theme toggle",
       "description": "Light/dark theme toggle for dashboard",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T20:10:00Z",
+      "notes": "Implemented ThemeContext and ThemeProvider with: light/dark/system theme support; localStorage persistence with 'polymarket-tracker-theme' key; system theme detection via prefers-color-scheme media query; inline script to prevent flash of incorrect theme; ThemeToggle component with 3 modes (icon, button, dropdown), 3 sizes (sm, md, lg), full accessibility (aria-label, aria-expanded, aria-haspopup, role=listbox/option), keyboard navigation (Enter, Space, Escape, Tab), click-outside-to-close, animated icon transitions. Integrated into DashboardLayout header with showThemeToggle prop. Helper functions: getThemeOption(), getResolvedThemeIcon(), generateMockThemeState(). 104 unit tests and 33 E2E Puppeteer browser tests pass.",
       "steps": [
         "Create theme context",
         "Implement theme toggle",
