@@ -7882,3 +7882,46 @@ NOTES FOR NEXT SESSION:
 - Critical wallets get pulsing animation in summary badge
 - Component supports watch/unwatch functionality with local state fallback
 - formatTimeAgo from this component is exported as formatWalletTimeAgo to avoid collision
+
+================================================================================
+FEATURE: UI-DASH-005 - Hot markets widget
+DATE: 2026-01-12T19:07:00Z
+PRIORITY: 118
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Implemented HotMarketsWidget component to display markets with the most suspicious activity.
+
+TYPES DEFINED:
+- HotMarket interface with id, title, slug, category, heatLevel, heatScore, alertCount, alertTypes, currentProbability, probabilityChange, volume24h, volumeChange, suspiciousWallets, lastAlert, isWatched
+- HeatLevel type: CRITICAL, HIGH, MEDIUM, LOW, NONE
+- MarketCategory type: POLITICS, CRYPTO, SPORTS, ENTERTAINMENT, FINANCE, SCIENCE, GEOPOLITICAL, OTHER
+- MarketAlertType type: WHALE_ACTIVITY, COORDINATED_TRADING, VOLUME_SPIKE, PRICE_MANIPULATION, FRESH_WALLET_CLUSTER, INSIDER_PATTERN
+
+FEATURES IMPLEMENTED:
+- Market list sorted by heat score (highest first)
+- Rank badges showing position
+- Color-coded heat levels
+- Heat score bar with fill percentage
+- Alert type badges with emoji icons (max 3 shown)
+- Category icons
+- Probability display with change indicator
+- Volume display (24h)
+- Alert count and last alert time
+- Watch/unwatch functionality
+- Loading skeleton and empty states
+- Summary section with critical/high/watched/total counts
+
+FILES CREATED/MODIFIED:
+- app/dashboard/components/HotMarketsWidget.tsx (new - main component)
+- app/dashboard/components/index.ts (updated - added exports)
+- app/dashboard/page.tsx (updated - integrated component)
+- tests/ui/hot-markets-widget.test.ts (new - 114 unit tests)
+- tests/e2e/hot-markets-widget.e2e.test.ts (new - 53 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-005)
+
+TESTS: 114 unit tests + 53 E2E browser tests pass. TypeCheck passes.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-DASH-006 (Recent large trades widget) at priority 119
+

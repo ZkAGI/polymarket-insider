@@ -2351,7 +2351,9 @@
       "priority": 118,
       "name": "Hot markets widget",
       "description": "Display markets with most suspicious activity",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T19:07:00Z",
+      "notes": "Implemented HotMarketsWidget component with: 8 market categories (POLITICS, CRYPTO, SPORTS, ENTERTAINMENT, FINANCE, SCIENCE, GEOPOLITICAL, OTHER); 5 heat levels (CRITICAL, HIGH, MEDIUM, LOW, NONE); 6 alert types (WHALE_ACTIVITY, COORDINATED_TRADING, VOLUME_SPIKE, PRICE_MANIPULATION, FRESH_WALLET_CLUSTER, INSIDER_PATTERN); heat score bar with fill percentage; alert type badges with emoji icons; category icons; probability with change indicator; volume display; alert count; last alert time; watch/unwatch functionality; ranking by heat score descending; loading skeleton state; empty state; summary section with critical/high/watched counts. 114 unit tests and 53 E2E Puppeteer browser tests pass. TypeScript types verified clean.",
       "steps": [
         "Create market list component",
         "Sort by alert count",

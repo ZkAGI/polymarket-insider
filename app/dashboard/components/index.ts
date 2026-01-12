@@ -55,3 +55,27 @@ export {
   getSuspicionLevelFromScore,
   generateMockWallets,
 } from './SuspiciousWalletsWidget';
+
+export { default as HotMarketsWidget } from './HotMarketsWidget';
+export type {
+  HotMarketsWidgetProps,
+  HotMarket,
+  HeatLevel,
+  MarketCategory,
+  MarketAlertType,
+} from './HotMarketsWidget';
+export {
+  heatLevelConfig,
+  categoryConfig,
+  alertTypeConfig,
+  getHeatLevelConfig,
+  getCategoryConfig,
+  getAlertTypeConfig,
+  getHeatLevelFromScore,
+  formatMarketVolume,
+  formatPercentageChange,
+  formatProbability,
+  formatMarketTimeAgo,
+  truncateTitle,
+  generateMockMarkets,
+} from './HotMarketsWidget';

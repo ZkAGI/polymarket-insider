@@ -14,6 +14,10 @@ import SuspiciousWalletsWidget, {
   SuspiciousWallet,
   generateMockWallets,
 } from './components/SuspiciousWalletsWidget';
+import HotMarketsWidget, {
+  HotMarket,
+  generateMockMarkets,
+} from './components/HotMarketsWidget';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -40,6 +44,8 @@ export default function DashboardPage() {
   const [isSignalsLoading, setIsSignalsLoading] = useState(true);
   const [suspiciousWallets, setSuspiciousWallets] = useState<SuspiciousWallet[]>([]);
   const [isWalletsLoading, setIsWalletsLoading] = useState(true);
+  const [hotMarkets, setHotMarkets] = useState<HotMarket[]>([]);
+  const [isMarketsLoading, setIsMarketsLoading] = useState(true);
 
   // Load initial dashboard data
   useEffect(() => {
@@ -60,12 +66,16 @@ export default function DashboardPage() {
         const mockWallets = generateMockWallets(5);
         setSuspiciousWallets(mockWallets);
 
+        // Generate initial mock hot markets
+        const mockMarkets = generateMockMarkets(5);
+        setHotMarkets(mockMarkets);
+
         // Set mock initial data - count unread alerts
         const unreadCount = mockAlerts.filter((a) => !a.read).length;
         setStats({
           activeAlerts: unreadCount,
           suspiciousWallets: mockWallets.length,
-          hotMarkets: 8,
+          hotMarkets: mockMarkets.length,
           recentTrades: 156,
           systemStatus: 'connected',
         });
@@ -74,6 +84,7 @@ export default function DashboardPage() {
         setIsAlertFeedLoading(false);
         setIsSignalsLoading(false);
         setIsWalletsLoading(false);
+        setIsMarketsLoading(false);
       }
     };
 
@@ -197,6 +208,35 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Handle market click
+  const handleMarketClick = useCallback((market: HotMarket) => {
+    console.log('Market clicked:', market);
+    // In a real app, this would navigate to market details
+  }, []);
+
+  // Handle market watch toggle
+  const handleMarketWatchToggle = useCallback((marketId: string) => {
+    setHotMarkets((prev) =>
+      prev.map((m) =>
+        m.id === marketId ? { ...m, isWatched: !m.isWatched } : m
+      )
+    );
+  }, []);
+
+  // Handle refresh markets
+  const handleRefreshMarkets = useCallback(async () => {
+    setIsMarketsLoading(true);
+    try {
+      // Simulate API fetch
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const newMarkets = generateMockMarkets(5);
+      setHotMarkets(newMarkets);
+      setStats((s) => ({ ...s, hotMarkets: newMarkets.length }));
+    } finally {
+      setIsMarketsLoading(false);
+    }
+  }, []);
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -265,10 +305,17 @@ export default function DashboardPage() {
           title="Hot Markets"
           testId="hot-markets-widget"
           className="h-full min-h-[250px]"
+          onRefresh={handleRefreshMarkets}
+          isLoading={isMarketsLoading}
         >
-          <div className="text-gray-500 dark:text-gray-400 text-sm">
-            Markets with suspicious activity will be displayed here
-          </div>
+          <HotMarketsWidget
+            markets={hotMarkets}
+            maxMarkets={5}
+            onMarketClick={handleMarketClick}
+            onWatchToggle={handleMarketWatchToggle}
+            showAlertTypes={true}
+            testId="hot-markets-content"
+          />
         </WidgetContainer>
       </div>
 
