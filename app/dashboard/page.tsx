@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import DashboardLayout from './components/DashboardLayout';
 import WidgetContainer from './components/WidgetContainer';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
@@ -27,6 +27,12 @@ import SystemStatusIndicator, {
   SystemHealth,
   generateMockSources,
 } from './components/SystemStatusIndicator';
+import {
+  StatValue,
+  StatType,
+  calculateTrend,
+  statTypeConfig,
+} from './components/QuickStatsSummaryBar';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -44,9 +50,38 @@ const initialStats: DashboardStats = {
   systemStatus: 'connecting',
 };
 
+// Helper to create a StatValue from raw data
+function createStatValue(
+  type: StatType,
+  value: number,
+  previousValue: number,
+  options?: { prefix?: string; isCritical?: boolean; isHighlighted?: boolean }
+): StatValue {
+  const config = statTypeConfig[type];
+  const { direction, percentage, absoluteChange } = calculateTrend(value, previousValue);
+
+  return {
+    id: `stat-${type.toLowerCase()}`,
+    type,
+    category: config.category,
+    label: config.label,
+    value,
+    previousValue,
+    trend: direction,
+    trendValue: absoluteChange,
+    trendPercentage: percentage,
+    prefix: options?.prefix,
+    isCritical: options?.isCritical,
+    isHighlighted: options?.isHighlighted,
+    lastUpdated: new Date(),
+    description: config.description,
+  };
+}
+
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>(initialStats);
+  const [previousStats, setPreviousStats] = useState<DashboardStats>(initialStats);
   const [alerts, setAlerts] = useState<FeedAlert[]>([]);
   const [isAlertFeedLoading, setIsAlertFeedLoading] = useState(true);
   const [signals, setSignals] = useState<SignalCount[]>([]);
@@ -59,6 +94,45 @@ export default function DashboardPage() {
   const [isTradesLoading, setIsTradesLoading] = useState(true);
   const [dataSources, setDataSources] = useState<DataSourceStatus[]>([]);
   const [isStatusExpanded, setIsStatusExpanded] = useState(false);
+  const [isQuickStatsLoading, setIsQuickStatsLoading] = useState(true);
+  const [totalVolume, setTotalVolume] = useState(0);
+  const [previousTotalVolume, setPreviousTotalVolume] = useState(0);
+  const [criticalAlerts, setCriticalAlerts] = useState(0);
+  const [previousCriticalAlerts, setPreviousCriticalAlerts] = useState(0);
+  const [whaleTradesCount, setWhaleTradesCount] = useState(0);
+  const [previousWhaleTradesCount, setPreviousWhaleTradesCount] = useState(0);
+  const [connectedSourcesCount, setConnectedSourcesCount] = useState(0);
+  const [previousConnectedSourcesCount, setPreviousConnectedSourcesCount] = useState(0);
+
+  // Build quickStats from current state
+  const quickStats = useMemo<StatValue[]>(() => {
+    return [
+      createStatValue('ACTIVE_ALERTS', stats.activeAlerts, previousStats.activeAlerts, {
+        isHighlighted: stats.activeAlerts > 10,
+      }),
+      createStatValue('CRITICAL_ALERTS', criticalAlerts, previousCriticalAlerts, {
+        isCritical: criticalAlerts > 0,
+        isHighlighted: criticalAlerts > 0,
+      }),
+      createStatValue('SUSPICIOUS_WALLETS', stats.suspiciousWallets, previousStats.suspiciousWallets),
+      createStatValue('HOT_MARKETS', stats.hotMarkets, previousStats.hotMarkets),
+      createStatValue('LARGE_TRADES', stats.recentTrades, previousStats.recentTrades),
+      createStatValue('WHALE_TRADES', whaleTradesCount, previousWhaleTradesCount),
+      createStatValue('TOTAL_VOLUME', totalVolume, previousTotalVolume, { prefix: '$' }),
+      createStatValue('CONNECTED_SOURCES', connectedSourcesCount, previousConnectedSourcesCount),
+    ];
+  }, [
+    stats,
+    previousStats,
+    criticalAlerts,
+    previousCriticalAlerts,
+    whaleTradesCount,
+    previousWhaleTradesCount,
+    totalVolume,
+    previousTotalVolume,
+    connectedSourcesCount,
+    previousConnectedSourcesCount,
+  ]);
 
   // Load initial dashboard data
   useEffect(() => {
@@ -93,6 +167,25 @@ export default function DashboardPage() {
 
         // Set mock initial data - count unread alerts
         const unreadCount = mockAlerts.filter((a) => !a.read).length;
+        const criticalCount = mockAlerts.filter((a) => a.severity === 'CRITICAL').length;
+        const whaleCount = mockTrades.filter((t) => t.usdValue >= 100000).length;
+        const connectedCount = mockSources.filter((s) => s.status === 'CONNECTED').length;
+        const mockVolume = Math.floor(Math.random() * 2000000) + 500000;
+
+        // Store previous values before updating
+        setPreviousStats((prev) => ({
+          activeAlerts: prev.activeAlerts || 0,
+          suspiciousWallets: prev.suspiciousWallets || 0,
+          hotMarkets: prev.hotMarkets || 0,
+          recentTrades: prev.recentTrades || 0,
+          systemStatus: prev.systemStatus,
+        }));
+        setPreviousCriticalAlerts(0);
+        setPreviousWhaleTradesCount(0);
+        setPreviousTotalVolume(0);
+        setPreviousConnectedSourcesCount(0);
+
+        // Set current values
         setStats({
           activeAlerts: unreadCount,
           suspiciousWallets: mockWallets.length,
@@ -100,6 +193,10 @@ export default function DashboardPage() {
           recentTrades: mockTrades.length,
           systemStatus: 'connected',
         });
+        setCriticalAlerts(criticalCount);
+        setWhaleTradesCount(whaleCount);
+        setTotalVolume(mockVolume);
+        setConnectedSourcesCount(connectedCount);
       } finally {
         setIsLoading(false);
         setIsAlertFeedLoading(false);
@@ -107,6 +204,7 @@ export default function DashboardPage() {
         setIsWalletsLoading(false);
         setIsMarketsLoading(false);
         setIsTradesLoading(false);
+        setIsQuickStatsLoading(false);
       }
     };
 
@@ -302,12 +400,53 @@ export default function DashboardPage() {
     setIsStatusExpanded((prev) => !prev);
   }, []);
 
+  // Handle quick stat click
+  const handleStatClick = useCallback((stat: StatValue) => {
+    console.log('Quick stat clicked:', stat);
+    // In a real app, this could navigate to relevant section or filter data
+  }, []);
+
+  // Handle quick stats refresh
+  const handleQuickStatsRefresh = useCallback(async () => {
+    setIsQuickStatsLoading(true);
+    try {
+      // Simulate API fetch
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Store previous values
+      setPreviousStats({ ...stats });
+      setPreviousCriticalAlerts(criticalAlerts);
+      setPreviousWhaleTradesCount(whaleTradesCount);
+      setPreviousTotalVolume(totalVolume);
+      setPreviousConnectedSourcesCount(connectedSourcesCount);
+
+      // Generate new mock values with some variation
+      const newCritical = Math.max(0, criticalAlerts + Math.floor(Math.random() * 3) - 1);
+      const newWhale = Math.max(0, whaleTradesCount + Math.floor(Math.random() * 3) - 1);
+      const newVolume = totalVolume + Math.floor(Math.random() * 200000) - 100000;
+      const newConnected = Math.max(3, Math.min(5, connectedSourcesCount + Math.floor(Math.random() * 3) - 1));
+
+      setCriticalAlerts(newCritical);
+      setWhaleTradesCount(newWhale);
+      setTotalVolume(newVolume);
+      setConnectedSourcesCount(newConnected);
+    } finally {
+      setIsQuickStatsLoading(false);
+    }
+  }, [stats, criticalAlerts, whaleTradesCount, totalVolume, connectedSourcesCount]);
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
 
   return (
-    <DashboardLayout stats={stats}>
+    <DashboardLayout
+      stats={stats}
+      quickStats={quickStats}
+      onStatClick={handleStatClick}
+      onStatsRefresh={handleQuickStatsRefresh}
+      isStatsLoading={isQuickStatsLoading}
+    >
       {/* Row 1: Alert Feed and Active Signals */}
       <div className="lg:col-span-2">
         <WidgetContainer

@@ -123,3 +123,23 @@ export {
   formatTimeSince,
   generateMockSources,
 } from './SystemStatusIndicator';
+
+export { default as QuickStatsSummaryBar } from './QuickStatsSummaryBar';
+export type {
+  QuickStatsSummaryBarProps,
+  StatValue,
+  StatType,
+  StatCategory,
+  TrendDirection,
+} from './QuickStatsSummaryBar';
+export {
+  statTypeConfig,
+  trendConfig,
+  getStatTypeConfig,
+  getTrendConfig,
+  calculateTrend,
+  formatStatValue,
+  formatTrendValue,
+  formatLastUpdated,
+  generateMockStats,
+} from './QuickStatsSummaryBar';
