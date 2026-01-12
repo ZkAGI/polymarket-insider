@@ -1705,3 +1705,45 @@ export type {
   CalibrationSummary,
   HistoricalScoreCalibratorConfig,
 } from "./historical-score-calibrator";
+
+// DET-SCORE-008: Multi-Signal Correlation Scorer
+export {
+  SignalCorrelationType,
+  CorrelationStrength,
+  CorrelationPattern,
+  BoostImpact,
+  CORRELATION_TYPE_DESCRIPTIONS,
+  CORRELATION_STRENGTH_DESCRIPTIONS,
+  CORRELATION_PATTERN_DESCRIPTIONS,
+  BOOST_IMPACT_DESCRIPTIONS,
+  DEFAULT_SIGNAL_PAIRS,
+  DEFAULT_CORRELATION_SCORER_CONFIG,
+  CORRELATION_STRENGTH_THRESHOLDS,
+  BOOST_IMPACT_THRESHOLDS,
+  MultiSignalCorrelationScorer,
+  createMultiSignalCorrelationScorer,
+  getSharedMultiSignalCorrelationScorer,
+  setSharedMultiSignalCorrelationScorer,
+  resetSharedMultiSignalCorrelationScorer,
+  analyzeSignalCorrelations,
+  batchAnalyzeSignalCorrelations,
+  applySignalCorrelationBoost,
+  getCorrelationScorerSummary,
+  recordCorrelationBoostEffectiveness,
+  getCorrelationTypeDescription,
+  getCorrelationStrengthDescription,
+  getCorrelationPatternDescription,
+  getBoostImpactDescription,
+} from "./multi-signal-correlation-scorer";
+
+export type {
+  SignalPair,
+  DetectedCorrelation,
+  PatternDetection,
+  SignalCorrelationAnalysisResult,
+  BoostEffectiveness,
+  BatchSignalCorrelationResult,
+  CorrelationScorerSummary,
+  MultiSignalCorrelationScorerConfig,
+  AnalyzeSignalCorrelationOptions,
+} from "./multi-signal-correlation-scorer";

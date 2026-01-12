@@ -2249,7 +2249,8 @@
       "priority": 113,
       "name": "Multi-signal correlation scorer",
       "description": "Boost score when multiple signals correlate",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T09:45:00Z",
       "steps": [
         "Detect signal correlations",
         "Calculate correlation boost",
