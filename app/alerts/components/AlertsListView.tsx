@@ -24,6 +24,13 @@ import AlertSeverityFilter, {
   areAllSeveritiesSelected,
   areNoSeveritiesSelected,
 } from './AlertSeverityFilter';
+import AlertDateRangeFilter, {
+  ActiveDateRangeChip,
+  DEFAULT_DATE_RANGE,
+  isDateRangeActive,
+  isDateInRange,
+} from './AlertDateRangeFilter';
+import type { DateRange } from './AlertDateRangeFilter';
 import type { AlertSeverity } from '../../dashboard/components/AlertFeed';
 
 // Re-export types for external use
@@ -54,13 +61,16 @@ export interface AlertsListViewProps {
   onPageChange?: (page: number) => void;
   onTypeFilterChange?: (types: AlertType[]) => void;
   onSeverityFilterChange?: (severities: AlertSeverity[]) => void;
+  onDateRangeChange?: (dateRange: DateRange) => void;
   initialTypeFilters?: AlertType[];
   initialSeverityFilters?: AlertSeverity[];
+  initialDateRange?: DateRange;
   emptyMessage?: string;
   emptyIcon?: string;
   showBackLink?: boolean;
   showTypeFilter?: boolean;
   showSeverityFilter?: boolean;
+  showDateRangeFilter?: boolean;
   testId?: string;
 }
 
@@ -590,13 +600,16 @@ export default function AlertsListView({
   onPageChange,
   onTypeFilterChange,
   onSeverityFilterChange,
+  onDateRangeChange,
   initialTypeFilters,
   initialSeverityFilters,
+  initialDateRange,
   emptyMessage = 'No alerts have been generated yet. The system is actively monitoring for suspicious activity.',
   emptyIcon = '🔔',
   showBackLink = true,
   showTypeFilter = true,
   showSeverityFilter = true,
+  showDateRangeFilter = true,
   testId = 'alerts-list-view',
 }: AlertsListViewProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -607,6 +620,9 @@ export default function AlertsListView({
   );
   const [selectedSeverityFilters, setSelectedSeverityFilters] = useState<AlertSeverity[]>(
     initialSeverityFilters || [...ALL_SEVERITY_LEVELS]
+  );
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange>(
+    initialDateRange || DEFAULT_DATE_RANGE
   );
 
   // Update alerts when external alerts change
@@ -633,7 +649,7 @@ export default function AlertsListView({
     return () => clearTimeout(timer);
   }, [externalAlerts]);
 
-  // Filter alerts by type and severity
+  // Filter alerts by type, severity, and date range
   const filteredAlerts = useMemo(() => {
     let result = alerts;
 
@@ -649,8 +665,14 @@ export default function AlertsListView({
       result = result.filter((alert) => selectedSeverityFilters.includes(alert.severity));
     }
 
+    // Filter by date range
+    const dateFilterActive = isDateRangeActive(selectedDateRange);
+    if (dateFilterActive) {
+      result = result.filter((alert) => isDateInRange(alert.createdAt, selectedDateRange));
+    }
+
     return result;
-  }, [alerts, selectedTypeFilters, selectedSeverityFilters]);
+  }, [alerts, selectedTypeFilters, selectedSeverityFilters, selectedDateRange]);
 
   // Calculate pagination based on filtered alerts
   const pagination = useMemo(
@@ -743,11 +765,28 @@ export default function AlertsListView({
     handleSeverityFilterChange([...ALL_SEVERITY_LEVELS]);
   }, [handleSeverityFilterChange]);
 
-  // Handle clearing all filters (both type and severity)
+  // Handle date range filter change
+  const handleDateRangeChange = useCallback(
+    (dateRange: DateRange) => {
+      setSelectedDateRange(dateRange);
+      // Reset to page 1 when filters change
+      setCurrentPage(1);
+      onDateRangeChange?.(dateRange);
+    },
+    [onDateRangeChange]
+  );
+
+  // Handle clearing date range filter
+  const handleClearDateRangeFilter = useCallback(() => {
+    handleDateRangeChange(DEFAULT_DATE_RANGE);
+  }, [handleDateRangeChange]);
+
+  // Handle clearing all filters (type, severity, and date)
   const handleClearAllFilters = useCallback(() => {
     handleTypeFilterChange([...ALL_ALERT_TYPES]);
     handleSeverityFilterChange([...ALL_SEVERITY_LEVELS]);
-  }, [handleTypeFilterChange, handleSeverityFilterChange]);
+    handleDateRangeChange(DEFAULT_DATE_RANGE);
+  }, [handleTypeFilterChange, handleSeverityFilterChange, handleDateRangeChange]);
 
   // Calculate stats from all alerts (for header display)
   const stats = useMemo(() => {
@@ -763,8 +802,11 @@ export default function AlertsListView({
   // Check if severity filter is active (not showing all)
   const isSeverityFilterActive = !areAllSeveritiesSelected(selectedSeverityFilters) && !areNoSeveritiesSelected(selectedSeverityFilters);
 
+  // Check if date range filter is active
+  const isDateRangeFilterActive = isDateRangeActive(selectedDateRange);
+
   // Check if any filters are active
-  const hasActiveFilters = isTypeFilterActive || isSeverityFilterActive;
+  const hasActiveFilters = isTypeFilterActive || isSeverityFilterActive || isDateRangeFilterActive;
 
   return (
     <div className="w-full" data-testid={testId}>
@@ -816,7 +858,7 @@ export default function AlertsListView({
         </div>
 
         {/* Filters section */}
-        {(showTypeFilter || showSeverityFilter) && !isLoading && alerts.length > 0 && (
+        {(showTypeFilter || showSeverityFilter || showDateRangeFilter) && !isLoading && alerts.length > 0 && (
           <div className="mt-4" data-testid="alerts-filter-section">
             {/* Filter controls row */}
             <div className="flex flex-wrap items-center gap-3">
@@ -835,6 +877,15 @@ export default function AlertsListView({
                   selectedSeverities={selectedSeverityFilters}
                   onChange={handleSeverityFilterChange}
                   testId="alerts-severity-filter"
+                />
+              )}
+
+              {/* Date range filter */}
+              {showDateRangeFilter && (
+                <AlertDateRangeFilter
+                  dateRange={selectedDateRange}
+                  onChange={handleDateRangeChange}
+                  testId="alerts-date-range-filter"
                 />
               )}
 
@@ -875,6 +926,15 @@ export default function AlertsListView({
                   onRemove={handleRemoveSeverityFilter}
                   onClearAll={handleClearAllSeverityFilters}
                   testId="alerts-active-severity-filters"
+                />
+              )}
+
+              {/* Date range filter chip */}
+              {showDateRangeFilter && (
+                <ActiveDateRangeChip
+                  dateRange={selectedDateRange}
+                  onClear={handleClearDateRangeFilter}
+                  testId="alerts-active-date-range-filter"
                 />
               )}
             </div>

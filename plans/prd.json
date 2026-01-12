@@ -2561,7 +2561,9 @@
       "priority": 128,
       "name": "Alert date range filter",
       "description": "Filter alerts by date range",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T18:55:00Z",
+      "notes": "Implemented comprehensive AlertDateRangeFilter component with: 10 preset options (ALL_TIME, TODAY, YESTERDAY, LAST_7_DAYS, LAST_30_DAYS, LAST_90_DAYS, THIS_WEEK, THIS_MONTH, THIS_YEAR, CUSTOM); custom date range picker with start/end date inputs; timezone-aware date calculations using Intl API; date range validation (start before end, not in future); green color scheme to distinguish from type (blue) and severity (purple) filters; ActiveDateRangeChip component for displaying active filter as removable chip; CombinedDateFilterSummary component for filter results display; full integration with AlertsListView supporting combined type+severity+date filtering; preset quick-select buttons and period presets; keyboard navigation (Escape to close); click-outside-to-close dropdown; full accessibility support (aria-expanded, aria-haspopup, role=listbox/option); full dark mode support with dark: variant classes. Helper functions exported: getStartOfToday, getEndOfToday, getStartOfYesterday, getEndOfYesterday, getStartOfThisWeek, getStartOfThisMonth, getStartOfThisYear, getDateRangeFromPreset, formatDateForDisplay, formatDateForInput, parseDateFromInput, getDateRangeLabel, isDateRangeActive, isDateInRange, validateDateRange. 90+ unit tests and 37 E2E Puppeteer browser tests written. TypeScript types verified clean.",
       "steps": [
         "Create date picker",
         "Apply date filtering",

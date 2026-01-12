@@ -8618,3 +8618,106 @@ NOTES FOR NEXT SESSION:
 - Filter summary and 'Clear all' button appear when any filter is active
 - Quick presets are commonly used severity combinations
 - Severity chips are sorted by rank (CRITICAL first) for consistent display
+
+====================
+Session: 2026-01-12 (UI-ALERT-005)
+====================
+
+FEATURE COMPLETED: UI-ALERT-005 - Alert date range filter
+
+DESCRIPTION:
+Implemented alert date range filter to filter alerts by date range with preset options and custom date selection.
+
+COMPONENTS CREATED:
+- AlertDateRangeFilter: Main filter component with dropdown selector
+- ActiveDateRangeChip: Removable chip showing selected date range
+- CombinedDateFilterSummary: Summary component for combined type+severity+date filtering
+
+CONSTANTS DEFINED:
+- DATE_RANGE_PRESETS: 10 preset options
+- PRESET_LABELS: human-readable labels for each preset
+- PRESET_ICONS: emoji icons for each preset
+- PRESET_DESCRIPTIONS: detailed descriptions for accessibility
+- DEFAULT_DATE_RANGE: {startDate: null, endDate: null, preset: 'ALL_TIME'}
+
+DATE RANGE PRESETS:
+- ALL_TIME: No date filtering (default)
+- TODAY: Current day only
+- YESTERDAY: Previous day only
+- LAST_7_DAYS: Past 7 days including today
+- LAST_30_DAYS: Past 30 days including today
+- LAST_90_DAYS: Past 90 days including today
+- THIS_WEEK: From Sunday of current week to today
+- THIS_MONTH: From first of month to today
+- THIS_YEAR: From January 1st to today
+- CUSTOM: User-defined start/end dates
+
+FEATURES IMPLEMENTED:
+- Filter dropdown with quick-select presets (Today, Yesterday, Last 7/30/90 Days)
+- Period presets section (All Time, This Week, This Month, This Year)
+- Custom date range toggle with start/end date inputs (HTML5 date inputs)
+- Apply button to confirm custom range selection
+- Validation: start date must be before end date, dates cannot be in future
+- Clear button to reset to All Time (visible when filter is active)
+- Green color scheme to distinguish from blue type filter and purple severity filter
+- Active indicator dot on button when filter is active
+- Selected range summary showing formatted date range
+- Filter results summary showing 'X of Y alerts'
+- Global 'Clear all' button clears type, severity, AND date filters
+- ActiveDateRangeChip showing selected range as removable chip
+- Click-outside-to-close dropdown behavior
+- Escape key closes dropdown and returns focus to button
+- Full dark mode support with dark: Tailwind classes
+
+DATE HELPER FUNCTIONS:
+- getStartOfToday(timezone?) - Get midnight of today
+- getEndOfToday(timezone?) - Get 23:59:59.999 of today
+- getStartOfYesterday(timezone?) - Get midnight of yesterday
+- getEndOfYesterday(timezone?) - Get end of yesterday
+- getStartOfThisWeek(timezone?) - Get Sunday of current week
+- getStartOfThisMonth(timezone?) - Get first of current month
+- getStartOfThisYear(timezone?) - Get January 1st of current year
+- getDateRangeFromPreset(preset, timezone?) - Get DateRange for a preset
+- formatDateForDisplay(date, format) - Format date for UI display
+- formatDateForInput(date) - Format date as YYYY-MM-DD for inputs
+- parseDateFromInput(value) - Parse YYYY-MM-DD string to Date
+- getDateRangeLabel(dateRange) - Get display label for DateRange
+- isDateRangeActive(dateRange) - Check if filter is active (not ALL_TIME)
+- isDateInRange(date, dateRange) - Check if date falls within range
+- validateDateRange(startDate, endDate) - Validate custom date range
+
+INTEGRATION WITH AlertsListView:
+- New props: onDateRangeChange, initialDateRange, showDateRangeFilter
+- Combined type+severity+date filtering in filteredAlerts useMemo
+- Date range filter handlers parallel to type and severity handlers
+- Filter chips displayed in separate rows for each filter type
+- Global 'Clear all' clears all three filter types simultaneously
+
+ACCESSIBILITY:
+- aria-expanded on button
+- aria-haspopup='listbox' on button
+- role='listbox' on dropdown container
+- role='option' on each preset item
+- aria-selected on preset options
+- Keyboard navigation (Escape to close)
+- Focus management (button receives focus on close)
+- aria-label on remove buttons
+
+FILES CREATED/MODIFIED:
+- app/alerts/components/AlertDateRangeFilter.tsx (new - 650+ lines)
+- app/alerts/components/index.ts (updated - added exports)
+- app/alerts/components/AlertsListView.tsx (updated - integrated date range filter)
+- tests/ui/alert-date-range-filter.test.ts (new - 90+ unit tests)
+- tests/e2e/alert-date-range-filter.e2e.test.ts (new - 37 E2E tests)
+- plans/prd.json (updated passes: true for UI-ALERT-005)
+
+TESTS: 90+ unit tests + 37 E2E Puppeteer browser tests written.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-WALLET-001 (Wallet profile page) at priority 129
+- AlertDateRangeFilter uses green color scheme to distinguish from blue type and purple severity filters
+- All three filters work together in AlertsListView with combined filtering logic
+- Date validation prevents invalid ranges (start after end, future dates)
+- Timezone support available via optional timezone parameter on date functions
+- Custom date inputs use HTML5 date input type for native date picker
+- End date is automatically set to 23:59:59.999 for accurate range filtering
