@@ -7537,3 +7537,110 @@ NOTES FOR NEXT SESSION:
 - Brier score history tracks calibration improvement over time
 - Listen to 'recalibration-recommended' event for proactive adjustments
 - calibrateScore() adjusts raw scores based on historical bucket performance
+
+================================================================================
+SESSION: 2026-01-12 - UI-DASH-001 Implementation
+================================================================================
+
+FEATURE: UI-DASH-001 - Main dashboard layout
+PRIORITY: 114
+STATUS: COMPLETED
+
+DESCRIPTION:
+Implemented the primary dashboard layout with responsive grid for the Polymarket Tracker UI.
+This is the first UI feature and forms the foundation for all subsequent dashboard components.
+
+IMPLEMENTATION DETAILS:
+
+DashboardLayout Component (app/dashboard/components/DashboardLayout.tsx):
+- Header with app title and system status indicator
+- StatusIndicator showing connected/disconnected/connecting states with color coding
+- QuickStats bar displaying 4 key metrics (Active Alerts, Suspicious Wallets, Hot Markets, Recent Trades)
+- Main content area with responsive grid layout
+- Footer with app branding
+
+WidgetContainer Component (app/dashboard/components/WidgetContainer.tsx):
+- Reusable container for dashboard widgets
+- Title header with optional refresh button
+- Loading state with animated skeleton
+- Support for custom actions
+- Proper accessibility attributes (aria-label for refresh)
+
+DashboardSkeleton Component (app/dashboard/components/DashboardSkeleton.tsx):
+- Full-page loading skeleton matching actual dashboard structure
+- Animated pulse effect for loading indication
+- Widget placeholders with matching dimensions
+
+Dashboard Page (app/dashboard/page.tsx):
+- Client-side component with loading state management
+- Simulated data loading with mock stats
+- 5 widget containers:
+  1. Real-time Alert Feed (2 columns wide)
+  2. Active Signals (1 column)
+  3. Top Suspicious Wallets
+  4. Hot Markets
+  5. Recent Large Trades
+
+RESPONSIVE DESIGN:
+- Mobile: 1 column layout
+- Tablet (md): 2 columns
+- Desktop (lg): 3 columns
+- Stats bar: 2 cols mobile, 4 cols tablet+
+
+DATA TEST IDs:
+- dashboard-layout, dashboard-skeleton
+- stats-bar, stat-active-alerts, stat-suspicious-wallets, stat-hot-markets, stat-recent-trades
+- system-status
+- alert-feed-widget, active-signals-widget, suspicious-wallets-widget, hot-markets-widget, large-trades-widget
+- widget-title, widget-content, widget-refresh-button, widget-skeleton
+
+UNIT TESTS (32 tests - tests/ui/dashboard.test.ts):
+- DashboardStats interface validation
+- Initial stats structure
+- WidgetContainer props validation
+- Loading state logic
+- Refresh functionality
+- DashboardLayout status indicator colors and labels
+- Quick stats display
+- Grid layout responsive classes
+- DashboardSkeleton structure
+- Dashboard page integration tests
+- Accessibility tests (ARIA, semantic HTML, headings)
+- Theme support (dark mode classes)
+- Error handling
+
+E2E BROWSER TESTS (29 tests - tests/e2e/dashboard.e2e.test.ts):
+Using Puppeteer for real browser testing:
+- Dashboard page loading
+- Skeleton to layout transition
+- Header, stats bar, main content, footer presence
+- All 5 widgets display with correct titles
+- System status indicator
+- Responsive layout at different viewport sizes (mobile 375px, tablet 768px, desktop 1280px)
+- Navigation from home page to dashboard
+- Loading states
+- Console error verification
+- Stats display with numeric values
+- Accessibility (heading hierarchy, semantic elements)
+- Visual verification (widget styling, grid spacing)
+
+TYPECHECK: Passes with no errors
+
+FILES CREATED/MODIFIED:
+- app/dashboard/page.tsx (new - main dashboard page)
+- app/dashboard/components/DashboardLayout.tsx (new)
+- app/dashboard/components/WidgetContainer.tsx (new)
+- app/dashboard/components/DashboardSkeleton.tsx (new)
+- app/dashboard/components/index.ts (new - exports)
+- app/page.tsx (updated - added dashboard link)
+- tests/ui/dashboard.test.ts (new - 32 unit tests)
+- tests/e2e/dashboard.e2e.test.ts (new - 29 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-001)
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-DASH-002 (Real-time alert feed widget) at priority 115
+- The WidgetContainer component is reusable for all dashboard widgets
+- Each widget has a data-testid for E2E testing
+- The DashboardLayout supports dark mode via Tailwind dark: variants
+- Stats bar values will be replaced with real API data in future features
+- Loading states use consistent skeleton animations

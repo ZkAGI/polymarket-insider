@@ -2264,6 +2264,523 @@
         "manual_verification": "Verify boost behavior"
       }
     },
+
+    {
+      "id": "UI-DASH-001",
+      "priority": 114,
+      "name": "Main dashboard layout",
+      "description": "Primary dashboard layout with responsive grid",
+      "passes": true,
+      "completed_at": "2026-01-12T10:45:00Z",
+      "notes": "Implemented main dashboard layout with: DashboardLayout component with header, stats bar, responsive grid main content, and footer; WidgetContainer component with loading states, refresh capability, and customizable actions; DashboardSkeleton for loading state display; StatusIndicator showing connected/disconnected/connecting states; QuickStats bar with 4 key metrics; Responsive grid (1 col mobile, 2 col tablet, 3 col desktop); 5 widget placeholders (Alert Feed, Active Signals, Suspicious Wallets, Hot Markets, Large Trades). 32 unit tests and 29 E2E Puppeteer browser tests pass. TypeScript types verified clean.",
+      "steps": [
+        "Create dashboard page",
+        "Implement responsive grid",
+        "Add widget containers",
+        "Handle loading states"
+      ],
+      "test_instructions": {
+        "unit": "Test component rendering",
+        "typecheck": "Run tsc",
+        "e2e": "Load dashboard in browser",
+        "manual_verification": "Verify responsive layout"
+      }
+    },
+    {
+      "id": "UI-DASH-002",
+      "priority": 115,
+      "name": "Real-time alert feed widget",
+      "description": "Live-updating feed of latest alerts",
+      "passes": false,
+      "steps": [
+        "Create alert feed component",
+        "Subscribe to alert stream",
+        "Animate new alerts",
+        "Handle feed overflow"
+      ],
+      "test_instructions": {
+        "unit": "Test feed component",
+        "typecheck": "Verify types",
+        "e2e": "Verify live updates",
+        "manual_verification": "Watch alert feed"
+      }
+    },
+    {
+      "id": "UI-DASH-003",
+      "priority": 116,
+      "name": "Active signals counter",
+      "description": "Display count of current active signals by type",
+      "passes": false,
+      "steps": [
+        "Create counter component",
+        "Group counts by signal type",
+        "Update in real-time",
+        "Add visual indicators"
+      ],
+      "test_instructions": {
+        "unit": "Test counter component",
+        "typecheck": "Verify types",
+        "e2e": "Verify count accuracy",
+        "manual_verification": "Verify counter display"
+      }
+    },
+    {
+      "id": "UI-DASH-004",
+      "priority": 117,
+      "name": "Top suspicious wallets widget",
+      "description": "Show top wallets by suspicion score",
+      "passes": false,
+      "steps": [
+        "Create wallet list component",
+        "Sort by suspicion score",
+        "Show score and key info",
+        "Link to wallet details"
+      ],
+      "test_instructions": {
+        "unit": "Test list component",
+        "typecheck": "Verify types",
+        "e2e": "Verify wallet ranking",
+        "manual_verification": "Verify widget display"
+      }
+    },
+    {
+      "id": "UI-DASH-005",
+      "priority": 118,
+      "name": "Hot markets widget",
+      "description": "Display markets with most suspicious activity",
+      "passes": false,
+      "steps": [
+        "Create market list component",
+        "Sort by alert count",
+        "Show market key info",
+        "Link to market details"
+      ],
+      "test_instructions": {
+        "unit": "Test list component",
+        "typecheck": "Verify types",
+        "e2e": "Verify market ranking",
+        "manual_verification": "Verify widget display"
+      }
+    },
+    {
+      "id": "UI-DASH-006",
+      "priority": 119,
+      "name": "Recent large trades widget",
+      "description": "Show recent trades above whale threshold",
+      "passes": false,
+      "steps": [
+        "Create trade list component",
+        "Filter by size threshold",
+        "Show trade details",
+        "Update in real-time"
+      ],
+      "test_instructions": {
+        "unit": "Test trade list",
+        "typecheck": "Verify types",
+        "e2e": "Verify trade display",
+        "manual_verification": "Verify large trades shown"
+      }
+    },
+    {
+      "id": "UI-DASH-007",
+      "priority": 120,
+      "name": "System status indicator",
+      "description": "Show connection status for all data sources",
+      "passes": false,
+      "steps": [
+        "Create status component",
+        "Monitor all connections",
+        "Show status icons",
+        "Alert on disconnection"
+      ],
+      "test_instructions": {
+        "unit": "Test status component",
+        "typecheck": "Verify types",
+        "e2e": "Verify status accuracy",
+        "manual_verification": "Verify status indicators"
+      }
+    },
+    {
+      "id": "UI-DASH-008",
+      "priority": 121,
+      "name": "Quick stats summary bar",
+      "description": "Summary stats bar with key metrics",
+      "passes": false,
+      "steps": [
+        "Create stats bar component",
+        "Show key metrics",
+        "Update in real-time",
+        "Add trend indicators"
+      ],
+      "test_instructions": {
+        "unit": "Test stats component",
+        "typecheck": "Verify types",
+        "e2e": "Verify stats accuracy",
+        "manual_verification": "Verify stats display"
+      }
+    },
+    {
+      "id": "UI-DASH-009",
+      "priority": 122,
+      "name": "Dashboard refresh controls",
+      "description": "Manual refresh and auto-refresh toggle",
+      "passes": false,
+      "steps": [
+        "Add refresh button",
+        "Implement auto-refresh toggle",
+        "Show last refresh time",
+        "Handle refresh states"
+      ],
+      "test_instructions": {
+        "unit": "Test refresh logic",
+        "typecheck": "Verify types",
+        "e2e": "Test refresh functionality",
+        "manual_verification": "Verify refresh behavior"
+      }
+    },
+    {
+      "id": "UI-DASH-010",
+      "priority": 123,
+      "name": "Dashboard theme toggle",
+      "description": "Light/dark theme toggle for dashboard",
+      "passes": false,
+      "steps": [
+        "Create theme context",
+        "Implement theme toggle",
+        "Persist preference",
+        "Apply theme styles"
+      ],
+      "test_instructions": {
+        "unit": "Test theme switching",
+        "typecheck": "Verify types",
+        "e2e": "Toggle theme in browser",
+        "manual_verification": "Verify theme appearance"
+      }
+    },
+    {
+      "id": "UI-ALERT-001",
+      "priority": 124,
+      "name": "Alerts list view",
+      "description": "Paginated list view of all alerts",
+      "passes": false,
+      "steps": [
+        "Create alerts page",
+        "Implement pagination",
+        "Show alert summaries",
+        "Handle empty state"
+      ],
+      "test_instructions": {
+        "unit": "Test list component",
+        "typecheck": "Verify types",
+        "e2e": "Navigate alert pages",
+        "manual_verification": "Verify list display"
+      }
+    },
+    {
+      "id": "UI-ALERT-002",
+      "priority": 125,
+      "name": "Alert detail modal",
+      "description": "Detailed view of individual alert with all context",
+      "passes": false,
+      "steps": [
+        "Create modal component",
+        "Show full alert details",
+        "Include related data",
+        "Add action buttons"
+      ],
+      "test_instructions": {
+        "unit": "Test modal component",
+        "typecheck": "Verify types",
+        "e2e": "Open alert details",
+        "manual_verification": "Verify detail display"
+      }
+    },
+    {
+      "id": "UI-ALERT-003",
+      "priority": 126,
+      "name": "Alert type filter",
+      "description": "Filter alerts by type (fresh wallet, volume, etc.)",
+      "passes": false,
+      "steps": [
+        "Create filter dropdown",
+        "Apply type filtering",
+        "Show active filters",
+        "Clear filters option"
+      ],
+      "test_instructions": {
+        "unit": "Test filter logic",
+        "typecheck": "Verify types",
+        "e2e": "Apply type filters",
+        "manual_verification": "Verify filtering works"
+      }
+    },
+    {
+      "id": "UI-ALERT-004",
+      "priority": 127,
+      "name": "Alert severity filter",
+      "description": "Filter alerts by severity/priority level",
+      "passes": false,
+      "steps": [
+        "Create severity filter",
+        "Define severity levels",
+        "Apply filtering",
+        "Show severity indicators"
+      ],
+      "test_instructions": {
+        "unit": "Test severity filter",
+        "typecheck": "Verify types",
+        "e2e": "Filter by severity",
+        "manual_verification": "Verify severity filtering"
+      }
+    },
+    {
+      "id": "UI-ALERT-005",
+      "priority": 128,
+      "name": "Alert date range filter",
+      "description": "Filter alerts by date range",
+      "passes": false,
+      "steps": [
+        "Create date picker",
+        "Apply date filtering",
+        "Support preset ranges",
+        "Handle timezone"
+      ],
+      "test_instructions": {
+        "unit": "Test date filter",
+        "typecheck": "Verify types",
+        "e2e": "Filter by date range",
+        "manual_verification": "Verify date filtering"
+      }
+    },
+    {
+      "id": "UI-WALLET-001",
+      "priority": 129,
+      "name": "Wallet profile page",
+      "description": "Detailed profile page for individual wallet",
+      "passes": false,
+      "steps": [
+        "Create wallet page",
+        "Show wallet metadata",
+        "Display suspicion score",
+        "Show activity summary"
+      ],
+      "test_instructions": {
+        "unit": "Test page component",
+        "typecheck": "Verify types",
+        "e2e": "Navigate to wallet",
+        "manual_verification": "Verify profile display"
+      }
+    },
+    {
+      "id": "UI-WALLET-002",
+      "priority": 130,
+      "name": "Wallet trading history table",
+      "description": "Paginated table of wallet trading history",
+      "passes": false,
+      "steps": [
+        "Create history table",
+        "Implement pagination",
+        "Add sorting options",
+        "Show trade details"
+      ],
+      "test_instructions": {
+        "unit": "Test table component",
+        "typecheck": "Verify types",
+        "e2e": "Browse trade history",
+        "manual_verification": "Verify history display"
+      }
+    },
+    {
+      "id": "UI-WALLET-003",
+      "priority": 131,
+      "name": "Wallet P&L chart",
+      "description": "Chart showing wallet profit/loss over time",
+      "passes": false,
+      "steps": [
+        "Create P&L chart",
+        "Plot cumulative P&L",
+        "Add time range selector",
+        "Show profit/loss zones"
+      ],
+      "test_instructions": {
+        "unit": "Test chart component",
+        "typecheck": "Verify types",
+        "e2e": "View P&L chart",
+        "manual_verification": "Verify chart accuracy"
+      }
+    },
+    {
+      "id": "UI-MARKET-001",
+      "priority": 132,
+      "name": "Market detail page",
+      "description": "Detailed page for individual market",
+      "passes": false,
+      "steps": [
+        "Create market page",
+        "Show market info",
+        "Display current odds",
+        "Link to Polymarket"
+      ],
+      "test_instructions": {
+        "unit": "Test page component",
+        "typecheck": "Verify types",
+        "e2e": "Navigate to market",
+        "manual_verification": "Verify market display"
+      }
+    },
+    {
+      "id": "UI-MARKET-002",
+      "priority": 133,
+      "name": "Market price chart",
+      "description": "Interactive price/probability chart over time",
+      "passes": false,
+      "steps": [
+        "Create price chart",
+        "Plot probability history",
+        "Add zoom/pan controls",
+        "Show key events"
+      ],
+      "test_instructions": {
+        "unit": "Test chart component",
+        "typecheck": "Verify types",
+        "e2e": "Interact with chart",
+        "manual_verification": "Verify chart accuracy"
+      }
+    },
+    {
+      "id": "UI-MARKET-003",
+      "priority": 134,
+      "name": "Market volume chart",
+      "description": "Trading volume chart over time",
+      "passes": false,
+      "steps": [
+        "Create volume chart",
+        "Plot volume bars",
+        "Show volume trends",
+        "Highlight anomalies"
+      ],
+      "test_instructions": {
+        "unit": "Test chart component",
+        "typecheck": "Verify types",
+        "e2e": "View volume chart",
+        "manual_verification": "Verify volume display"
+      }
+    },
+    {
+      "id": "UI-SET-001",
+      "priority": 135,
+      "name": "Settings page layout",
+      "description": "Main settings page with categorized sections",
+      "passes": false,
+      "steps": [
+        "Create settings page",
+        "Organize by category",
+        "Add navigation",
+        "Handle form state"
+      ],
+      "test_instructions": {
+        "unit": "Test settings page",
+        "typecheck": "Verify types",
+        "e2e": "Navigate settings",
+        "manual_verification": "Verify settings layout"
+      }
+    },
+    {
+      "id": "UI-SET-002",
+      "priority": 136,
+      "name": "Alert threshold configuration",
+      "description": "UI to configure alert thresholds",
+      "passes": false,
+      "steps": [
+        "Create threshold form",
+        "Add input validation",
+        "Show current values",
+        "Save to backend"
+      ],
+      "test_instructions": {
+        "unit": "Test form validation",
+        "typecheck": "Verify types",
+        "e2e": "Update thresholds",
+        "manual_verification": "Verify threshold persistence"
+      }
+    },
+    {
+      "id": "UI-SET-003",
+      "priority": 137,
+      "name": "Notification preferences",
+      "description": "Configure notification channels and frequency",
+      "passes": false,
+      "steps": [
+        "Create notification form",
+        "Toggle channels",
+        "Set frequency",
+        "Test notifications"
+      ],
+      "test_instructions": {
+        "unit": "Test preference form",
+        "typecheck": "Verify types",
+        "e2e": "Update preferences",
+        "manual_verification": "Verify notifications work"
+      }
+    },
+    {
+      "id": "UI-CHART-001",
+      "priority": 138,
+      "name": "Line chart component",
+      "description": "Reusable line chart for time series data",
+      "passes": false,
+      "steps": [
+        "Create line chart",
+        "Support multiple series",
+        "Add tooltips",
+        "Handle responsive sizing"
+      ],
+      "test_instructions": {
+        "unit": "Test chart rendering",
+        "typecheck": "Verify types",
+        "e2e": "Render with data",
+        "manual_verification": "Verify chart appearance"
+      }
+    },
+    {
+      "id": "UI-CHART-002",
+      "priority": 139,
+      "name": "Bar chart component",
+      "description": "Reusable bar chart for volume/comparison data",
+      "passes": false,
+      "steps": [
+        "Create bar chart",
+        "Support stacked bars",
+        "Add tooltips",
+        "Handle responsive sizing"
+      ],
+      "test_instructions": {
+        "unit": "Test chart rendering",
+        "typecheck": "Verify types",
+        "e2e": "Render with data",
+        "manual_verification": "Verify chart appearance"
+      }
+    },
+    {
+      "id": "UI-CHART-003",
+      "priority": 140,
+      "name": "Chart time range selector",
+      "description": "Common time range selector for charts (1H, 24H, 7D, etc.)",
+      "passes": false,
+      "steps": [
+        "Create range selector",
+        "Define preset ranges",
+        "Handle custom range",
+        "Emit range changes"
+      ],
+      "test_instructions": {
+        "unit": "Test selector logic",
+        "typecheck": "Verify types",
+        "e2e": "Change time ranges",
+        "manual_verification": "Verify range updates chart"
+      }
+    },
+
     {
       "id": "TEST-PERF-001",
       "priority": 200,
