@@ -2435,7 +2435,9 @@
       "priority": 122,
       "name": "Dashboard refresh controls",
       "description": "Manual refresh and auto-refresh toggle",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-12T19:52:00Z",
+      "notes": "Implemented DashboardRefreshControls component with: 6 refresh interval options (OFF, 5s, 10s, 30s, 1m, 5m); 4 refresh states (IDLE, REFRESHING, SUCCESS, ERROR); manual refresh button with spinner/success/error icon states; auto-refresh toggle with dropdown interval selector; countdown display showing time until next auto-refresh; last refresh time display with relative formatting (Just now, Xs ago, Xm ago, Xh ago); disabled state during refresh; keyboard navigation (Enter to activate, Escape to close dropdown); full accessibility support (aria-label, aria-expanded, aria-haspopup, role=listbox/option, aria-selected); responsive design (works on desktop, tablet, mobile); integration with DashboardLayout in header; full dashboard refresh triggers all widgets refresh in parallel. Helper functions: formatRelativeTime(), formatTimeUntilRefresh(), generateMockRefreshState(). 107 unit tests and 35 E2E Puppeteer browser tests pass. TypeScript types verified clean.",
       "steps": [
         "Add refresh button",
         "Implement auto-refresh toggle",

@@ -143,3 +143,19 @@ export {
   formatLastUpdated,
   generateMockStats,
 } from './QuickStatsSummaryBar';
+
+export { default as DashboardRefreshControls } from './DashboardRefreshControls';
+export type {
+  DashboardRefreshControlsProps,
+  RefreshInterval,
+  RefreshState,
+  RefreshIntervalConfig,
+} from './DashboardRefreshControls';
+export {
+  refreshIntervalConfig,
+  getRefreshIntervalConfig,
+  getRefreshIntervalOptions,
+  formatRelativeTime,
+  formatTimeUntilRefresh,
+  generateMockRefreshState,
+} from './DashboardRefreshControls';

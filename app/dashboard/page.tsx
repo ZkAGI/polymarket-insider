@@ -33,6 +33,7 @@ import {
   calculateTrend,
   statTypeConfig,
 } from './components/QuickStatsSummaryBar';
+import { RefreshInterval } from './components/DashboardRefreshControls';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -103,6 +104,11 @@ export default function DashboardPage() {
   const [previousWhaleTradesCount, setPreviousWhaleTradesCount] = useState(0);
   const [connectedSourcesCount, setConnectedSourcesCount] = useState(0);
   const [previousConnectedSourcesCount, setPreviousConnectedSourcesCount] = useState(0);
+
+  // Dashboard refresh controls state
+  const [isDashboardRefreshing, setIsDashboardRefreshing] = useState(false);
+  const [lastDashboardRefresh, setLastDashboardRefresh] = useState<Date | null>(null);
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<RefreshInterval>('OFF');
 
   // Build quickStats from current state
   const quickStats = useMemo<StatValue[]>(() => {
@@ -197,6 +203,8 @@ export default function DashboardPage() {
         setWhaleTradesCount(whaleCount);
         setTotalVolume(mockVolume);
         setConnectedSourcesCount(connectedCount);
+        // Set initial last refresh time
+        setLastDashboardRefresh(new Date());
       } finally {
         setIsLoading(false);
         setIsAlertFeedLoading(false);
@@ -435,6 +443,40 @@ export default function DashboardPage() {
     }
   }, [stats, criticalAlerts, whaleTradesCount, totalVolume, connectedSourcesCount]);
 
+  // Handle full dashboard refresh - refreshes all widgets
+  const handleDashboardRefresh = useCallback(async () => {
+    setIsDashboardRefreshing(true);
+    try {
+      // Refresh all widgets in parallel
+      await Promise.all([
+        handleRefreshAlerts(),
+        handleRefreshSignals(),
+        handleRefreshWallets(),
+        handleRefreshMarkets(),
+        handleRefreshTrades(),
+        handleQuickStatsRefresh(),
+      ]);
+
+      // Update last refresh time
+      setLastDashboardRefresh(new Date());
+    } finally {
+      setIsDashboardRefreshing(false);
+    }
+  }, [
+    handleRefreshAlerts,
+    handleRefreshSignals,
+    handleRefreshWallets,
+    handleRefreshMarkets,
+    handleRefreshTrades,
+    handleQuickStatsRefresh,
+  ]);
+
+  // Handle auto-refresh interval change
+  const handleAutoRefreshChange = useCallback((interval: RefreshInterval) => {
+    setAutoRefreshInterval(interval);
+    console.log('Auto-refresh interval changed:', interval);
+  }, []);
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -446,6 +488,12 @@ export default function DashboardPage() {
       onStatClick={handleStatClick}
       onStatsRefresh={handleQuickStatsRefresh}
       isStatsLoading={isQuickStatsLoading}
+      onDashboardRefresh={handleDashboardRefresh}
+      isDashboardRefreshing={isDashboardRefreshing}
+      lastDashboardRefresh={lastDashboardRefresh}
+      autoRefreshInterval={autoRefreshInterval}
+      onAutoRefreshChange={handleAutoRefreshChange}
+      showRefreshControls={true}
     >
       {/* Row 1: Alert Feed and Active Signals */}
       <div className="lg:col-span-2">

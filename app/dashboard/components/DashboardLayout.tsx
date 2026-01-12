@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import type { DashboardStats } from '../page';
 import QuickStatsSummaryBar, { StatValue } from './QuickStatsSummaryBar';
+import DashboardRefreshControls, { RefreshInterval } from './DashboardRefreshControls';
 
 export interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,6 +12,18 @@ export interface DashboardLayoutProps {
   onStatClick?: (stat: StatValue) => void;
   onStatsRefresh?: () => void;
   isStatsLoading?: boolean;
+  /** Callback fired when dashboard refresh is triggered */
+  onDashboardRefresh?: () => Promise<void>;
+  /** Whether dashboard is currently refreshing */
+  isDashboardRefreshing?: boolean;
+  /** Last time the dashboard was refreshed */
+  lastDashboardRefresh?: Date | null;
+  /** Current auto-refresh interval */
+  autoRefreshInterval?: RefreshInterval;
+  /** Callback fired when auto-refresh interval changes */
+  onAutoRefreshChange?: (interval: RefreshInterval) => void;
+  /** Whether to show refresh controls in header */
+  showRefreshControls?: boolean;
 }
 
 function StatusIndicator({ status }: { status: DashboardStats['systemStatus'] }) {
@@ -41,7 +54,20 @@ export default function DashboardLayout({
   onStatClick,
   onStatsRefresh,
   isStatsLoading = false,
+  onDashboardRefresh,
+  isDashboardRefreshing = false,
+  lastDashboardRefresh = null,
+  autoRefreshInterval = 'OFF',
+  onAutoRefreshChange,
+  showRefreshControls = true,
 }: DashboardLayoutProps) {
+  // Default refresh handler that does nothing if not provided
+  const handleDashboardRefresh = async () => {
+    if (onDashboardRefresh) {
+      await onDashboardRefresh();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900" data-testid="dashboard-layout">
       {/* Header */}
@@ -54,7 +80,22 @@ export default function DashboardLayout({
               </h1>
               <span className="text-sm text-gray-500 dark:text-gray-400">Dashboard</span>
             </div>
-            <StatusIndicator status={stats.systemStatus} />
+            <div className="flex items-center gap-4">
+              {/* Refresh Controls */}
+              {showRefreshControls && onDashboardRefresh && (
+                <DashboardRefreshControls
+                  onRefresh={handleDashboardRefresh}
+                  isRefreshing={isDashboardRefreshing}
+                  lastRefreshTime={lastDashboardRefresh}
+                  autoRefreshInterval={autoRefreshInterval}
+                  onAutoRefreshChange={onAutoRefreshChange}
+                  showAutoRefresh={!!onAutoRefreshChange}
+                  showLastRefresh={true}
+                  testId="dashboard-refresh-controls"
+                />
+              )}
+              <StatusIndicator status={stats.systemStatus} />
+            </div>
           </div>
         </div>
       </header>

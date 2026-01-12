@@ -8140,3 +8140,85 @@ NOTES FOR NEXT SESSION:
 - Mock stat generation available via generateMockStats()
 - Previous values tracked for trend calculation between updates
 
+================================================================================
+FEATURE: UI-DASH-009 - Dashboard refresh controls
+DATE: 2026-01-12T19:52:00Z
+PRIORITY: 122
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Implemented DashboardRefreshControls component to provide manual refresh button, auto-refresh toggle with interval selector, and last refresh time display.
+
+TYPES DEFINED:
+- RefreshInterval: OFF, 5s, 10s, 30s, 1m, 5m
+- RefreshState: IDLE, REFRESHING, SUCCESS, ERROR
+- RefreshIntervalConfig interface with label, ms, description
+- DashboardRefreshControlsProps interface with all component props
+
+FEATURES IMPLEMENTED:
+- Manual refresh button with state-specific icons:
+  - Default: circular arrows icon
+  - REFRESHING: animated spinner
+  - SUCCESS: green checkmark (shows for 1s)
+  - ERROR: red X icon (shows for 2s)
+- Auto-refresh toggle with dropdown interval selector
+- 6 interval options with descriptions
+- Countdown timer showing time until next refresh
+- Last refresh time with relative formatting:
+  - "Just now" for < 5 seconds
+  - "Xs ago" for < 60 seconds
+  - "Xm ago" for < 60 minutes
+  - "Xh ago" for < 24 hours
+  - Locale time string for older times
+- Button disabled state during refresh
+- Dropdown closes on click outside
+- Dropdown closes on Escape key
+- Green background on toggle when auto-refresh enabled
+- Full accessibility:
+  - aria-label on refresh button
+  - aria-expanded, aria-haspopup on toggle
+  - role=listbox on dropdown
+  - role=option, aria-selected on options
+- Keyboard navigation (Tab, Enter, Space, Escape)
+- Responsive design (works on all viewports)
+
+DASHBOARD INTEGRATION:
+- Updated DashboardLayoutProps with new refresh-related props:
+  - onDashboardRefresh: () => Promise<void>
+  - isDashboardRefreshing: boolean
+  - lastDashboardRefresh: Date | null
+  - autoRefreshInterval: RefreshInterval
+  - onAutoRefreshChange: (interval) => void
+  - showRefreshControls: boolean
+- Refresh controls positioned in header next to status indicator
+- Full dashboard refresh triggers all widgets refresh in parallel
+
+HELPER FUNCTIONS EXPORTED:
+- refreshIntervalConfig - configuration for all intervals
+- getRefreshIntervalConfig(interval) - get config for interval
+- getRefreshIntervalOptions() - get all interval options
+- formatRelativeTime(date) - format date to relative string
+- formatTimeUntilRefresh(intervalMs, lastRefresh) - format countdown
+- generateMockRefreshState() - generate mock state for testing
+
+FILES CREATED/MODIFIED:
+- app/dashboard/components/DashboardRefreshControls.tsx (new - main component)
+- app/dashboard/components/index.ts (updated - added exports)
+- app/dashboard/components/DashboardLayout.tsx (updated - integrated controls)
+- app/dashboard/page.tsx (updated - added state management and handlers)
+- tests/ui/dashboard-refresh-controls.test.ts (new - 107 unit tests)
+- tests/e2e/dashboard-refresh-controls.e2e.test.ts (new - 35 E2E tests)
+- plans/prd.json (updated passes: true for UI-DASH-009)
+
+TESTS: 107 unit tests + 35 E2E browser tests pass. TypeCheck passes.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-DASH-010 (Dashboard theme toggle) at priority 123
+- The DashboardRefreshControls is in the header on the right side
+- Auto-refresh when enabled will automatically trigger handleDashboardRefresh
+- Full dashboard refresh refreshes all widgets in parallel
+- Countdown shows time until next auto-refresh
+- Last refresh time updates after each refresh completes
+- Component supports compact mode (hide labels, show only icons)
+- Mock refresh state generation available via generateMockRefreshState()
+
