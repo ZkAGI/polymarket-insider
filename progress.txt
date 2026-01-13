@@ -9837,3 +9837,68 @@ NOTES FOR NEXT SESSION:
 - Next feature: NOTIF-CORE-001 (Notification queue system)
 - Integration: Import from src/notifications/push/service-worker.ts
 - For browser use: registerServiceWorker() then subscribeToPush()
+
+=== Session 2026-01-13 ===
+
+COMPLETED: NOTIF-CORE-001 - Notification queue system
+- Created comprehensive notification queue system for processing notifications across all channels
+- Implemented async queue processor with configurable concurrency control
+
+FILES CREATED:
+- src/notifications/core/types.ts (Core types, interfaces, utility functions - 541 lines)
+  - NotificationChannel enum (EMAIL, TELEGRAM, DISCORD, PUSH, SMS)
+  - NotificationPriority enum (LOW, NORMAL, HIGH, CRITICAL)
+  - NotificationStatus enum (PENDING, PROCESSING, SENT, FAILED, RETRYING, DEAD_LETTER)
+  - QueueItem interface with full lifecycle tracking
+  - Channel-specific payload interfaces (Email, Telegram, Discord, Push, SMS)
+  - QueueStorage interface for pluggable storage backends
+  - Utility functions: generateQueueItemId, calculateBackoff, shouldRetry, shouldDeadLetter
+
+- src/notifications/core/storage.ts (InMemoryQueueStorage - 455 lines)
+  - Implements QueueStorage interface
+  - Uses Map for items and Set indexes for fast filtering
+  - Methods: add, get, update, remove, find, count, getReadyForProcessing
+  - markProcessing for atomic status transition
+  - getStats for queue metrics
+  - getDeadLetter for failed item retrieval
+
+- src/notifications/core/processor.ts (QueueProcessor - 450 lines)
+  - Async processor with configurable concurrency
+  - ChannelRateLimiter for per-channel throttling
+  - Event emission for monitoring (started, stopped, item_sent, item_failed, etc.)
+  - Retry logic with exponential backoff
+  - Dead letter queue for exhausted retries
+  - Graceful start/stop/pause/resume
+
+- src/notifications/core/queue.ts (NotificationQueue - 350 lines)
+  - High-level API wrapping storage and processor
+  - Convenience methods: addEmail, addTelegram, addDiscord, addPush, addSms
+  - find, count, getStats, retryFailed, cleanupExpired
+  - Singleton management functions
+
+- src/notifications/core/index.ts (Exports)
+  - Properly separates value and type exports for isolatedModules
+
+TEST FILES CREATED:
+- tests/notifications/core/types.test.ts (40 unit tests)
+- tests/notifications/core/storage.test.ts (43 unit tests)
+- tests/notifications/core/queue.test.ts (40 unit tests)
+- tests/notifications/core/processor.e2e.test.ts (19 E2E tests)
+
+TOTAL: 142 tests passing
+
+KEY FEATURES:
+- Priority-based processing (CRITICAL > HIGH > NORMAL > LOW)
+- Configurable concurrency and batch size
+- Per-channel rate limiting (default: email 60/min, telegram/discord 30/min, push 120/min, sms 10/min)
+- Exponential backoff with jitter for retries
+- Dead letter queue for failed notifications after max attempts
+- Queue depth monitoring with warning/critical thresholds
+- Event emission for external monitoring integration
+- Pluggable storage backend (InMemoryQueueStorage provided, interface for Redis/DB)
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-CORE-001 complete and marked in prd.json
+- Import from src/notifications/core/index.ts
+- Usage: getNotificationQueue(), queue.addEmail(), queue.start()
+- Next feature: NOTIF-CORE-002 (Notification deduplication)
