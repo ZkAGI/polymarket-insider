@@ -451,3 +451,70 @@ export type {
   SignalEffectivenessTrackerConfig,
   SignalEffectivenessTrackerEvents,
 } from "./signal-effectiveness-tracker";
+
+// AI-PRED-005: Backtesting Framework
+export {
+  // Enums
+  BacktestStatus,
+  StrategyType,
+  DataSourceType,
+  ValidationMethod,
+  ReportDetailLevel,
+  PerformanceTier,
+
+  // Constants
+  DEFAULT_BACKTEST_CONFIG,
+  DEFAULT_DETECTION_THRESHOLDS,
+  DEFAULT_FRAMEWORK_CONFIG,
+  PERFORMANCE_TIER_THRESHOLDS,
+
+  // Classes
+  BacktestingFramework,
+
+  // Factory functions
+  createBacktestingFramework,
+  getSharedBacktestingFramework,
+  setSharedBacktestingFramework,
+  resetSharedBacktestingFramework,
+
+  // Utility functions
+  generateBacktestId,
+  generateDetectionId,
+  getStrategyTypeDescription,
+  getValidationMethodDescription,
+  getPerformanceTierDescription,
+  getPerformanceTierColor,
+  getBacktestStatusDescription,
+  formatAccuracyPercent,
+  formatMetricsForDisplay,
+  createDefaultStrategyConfig,
+  createDefaultBacktestConfig,
+
+  // Mock data generators
+  createMockBacktestReport,
+  createMockMetrics,
+  createMockDetectionResult,
+  createMockHistoricalDataset,
+} from "./backtesting-framework";
+
+export type {
+  HistoricalTrade,
+  HistoricalMarket,
+  PricePoint,
+  HistoricalWallet,
+  HistoricalAlert,
+  HistoricalDataset,
+  StrategyConfig,
+  DetectionThresholds,
+  DetectionResult,
+  BacktestMetrics,
+  PeriodMetrics,
+  ParameterSensitivity,
+  WalkForwardFold,
+  BacktestReport,
+  BacktestInsight,
+  BacktestConfig,
+  BacktestProgress,
+  BacktestingFrameworkConfig,
+  BacktestingFrameworkEvents,
+} from "./backtesting-framework";

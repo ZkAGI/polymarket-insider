@@ -10502,3 +10502,122 @@ NOTES FOR NEXT SESSION:
 - Next feature to implement: Check prd.json for next highest priority with passes:false
 - Dashboard provides centralized view of all AI model performance
 - Alerts trigger on performance drops below configurable thresholds
+
+================================================================================
+FEATURE: AI-PRED-005 - Backtesting Framework
+================================================================================
+DATE: 2026-01-13
+STATUS: COMPLETED
+
+DESCRIPTION:
+Implemented comprehensive BacktestingFramework for validating and testing
+detection strategies against historical data. The framework supports multiple
+validation methods, calculates extensive metrics, and generates detailed reports.
+
+FILES CREATED:
+- src/ai/backtesting-framework.ts (~2100 lines)
+- tests/ai/backtesting-framework.test.ts (99 unit tests)
+- tests/ai/backtesting-framework.e2e.test.ts (22 E2E tests)
+
+FILES MODIFIED:
+- src/ai/index.ts (added exports for backtesting framework)
+- plans/prd.json (marked AI-PRED-005 as complete)
+
+KEY COMPONENTS:
+1. Enums:
+   - BacktestStatus: PENDING, RUNNING, COMPLETED, FAILED, CANCELLED
+   - StrategyType: INSIDER_DETECTION, WHALE_DETECTION, FRESH_WALLET_DETECTION, etc.
+   - DataSourceType: FILE, API, DATABASE, MOCK
+   - ValidationMethod: TRAIN_TEST_SPLIT, K_FOLD, WALK_FORWARD, TIME_SERIES
+   - ReportDetailLevel: SUMMARY, STANDARD, DETAILED
+   - PerformanceTier: EXCELLENT, GOOD, ACCEPTABLE, POOR, VERY_POOR
+
+2. Interfaces:
+   - HistoricalTrade, HistoricalMarket, HistoricalWallet, HistoricalAlert
+   - HistoricalDataset - Complete historical data container
+   - StrategyConfig - Detection strategy configuration
+   - DetectionThresholds - Configurable thresholds for detection
+   - DetectionResult - Individual detection result
+   - BacktestMetrics - Comprehensive performance metrics
+   - PeriodMetrics - Time-period breakdown of metrics
+   - WalkForwardFold - Walk-forward validation fold data
+   - BacktestReport - Complete backtest report
+   - BacktestInsight - Generated insights from analysis
+   - BacktestConfig - Backtest run configuration
+   - BacktestProgress - Progress tracking during backtest
+
+3. Core Features:
+   - Multiple validation methods (train/test split, k-fold, walk-forward, time-series)
+   - Comprehensive metrics: accuracy, precision, recall, F1, F2, MCC, AUC-ROC, AUC-PR
+   - Performance tier assessment
+   - Insight generation based on metrics
+   - Event emission for progress tracking
+   - Historical data loading from multiple sources
+   - Mock data generation for testing
+   - Caching support
+   - Statistics tracking
+
+4. Metrics Calculated:
+   - True/False Positives/Negatives
+   - Accuracy, Precision, Recall
+   - F1 Score, F2 Score
+   - Matthews Correlation Coefficient (MCC)
+   - AUC-ROC, AUC-PR
+   - Brier Score
+   - Sensitivity, Specificity
+   - Optimal threshold determination
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 99 tests passing (tests/ai/backtesting-framework.test.ts)
+- E2E tests: 22 tests passing (tests/ai/backtesting-framework.e2e.test.ts)
+
+USAGE EXAMPLE:
+  import {
+    createBacktestingFramework,
+    StrategyType,
+    ValidationMethod,
+    ReportDetailLevel,
+    createMockHistoricalDataset
+  } from "@/ai";
+
+  const framework = createBacktestingFramework({
+    cacheEnabled: true,
+    cacheTtlMs: 300000,
+    defaultValidationMethod: ValidationMethod.WALK_FORWARD,
+    defaultReportDetailLevel: ReportDetailLevel.DETAILED,
+  });
+
+  // Load historical data
+  const dataset = createMockHistoricalDataset({
+    tradeCount: 1000,
+    marketCount: 50,
+    walletCount: 100,
+    alertCount: 200,
+  });
+  await framework.loadHistoricalData(dataset);
+
+  // Configure and run backtest
+  const config = {
+    strategyType: StrategyType.INSIDER_DETECTION,
+    validationMethod: ValidationMethod.WALK_FORWARD,
+    walkForwardFolds: 5,
+    reportDetailLevel: ReportDetailLevel.DETAILED,
+  };
+
+  const report = await framework.runBacktest(config);
+  console.log(report.metrics.accuracy);       // Overall accuracy
+  console.log(report.metrics.f1Score);        // F1 score
+  console.log(report.performanceTier);        // EXCELLENT/GOOD/ACCEPTABLE/POOR
+  console.log(report.insights);               // Generated insights
+
+  // Get statistics
+  const stats = framework.getStatistics();
+  console.log(stats.totalBacktests);
+  console.log(stats.averageAccuracy);
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PRED-005 complete and marked in prd.json
+- Next feature to implement: Check prd.json for next highest priority with passes:false
+- Framework provides comprehensive backtesting for all detection strategies
+- Supports walk-forward validation for realistic performance estimation

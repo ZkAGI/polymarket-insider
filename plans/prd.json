@@ -3304,7 +3304,9 @@
       "priority": 164,
       "name": "Backtesting framework",
       "description": "Framework to backtest detection strategies",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T23:45:00.000Z",
+      "notes": "Implemented comprehensive BacktestingFramework with: backtesting engine supporting multiple validation methods (walk-forward, k-fold CV, train/test split); historical data loading with mock data generation for trades, markets, wallets, alerts; detection strategy simulation for 8 strategy types (INSIDER_DETECTION, WHALE_DETECTION, FRESH_WALLET_DETECTION, COORDINATED_TRADING, VOLUME_ANOMALY, PRICE_MANIPULATION, COMPOSITE, CUSTOM); comprehensive metrics calculation (accuracy, precision, recall, F1/F2 scores, MCC, AUC-ROC, AUC-PR, Brier score, log loss); walk-forward fold tracking with overfitting detection; period metrics breakdown; performance tier assessment (EXCELLENT/GOOD/ACCEPTABLE/POOR/VERY_POOR); insight generation (strengths, weaknesses, recommendations, warnings); event emission for backtest lifecycle; caching support; statistics tracking. Created src/ai/backtesting-framework.ts with types, enums, classes, factory functions, and utilities. 99 unit tests and 22 E2E tests pass. TypeScript types verified clean.",
       "steps": [
         "Create backtesting engine",
         "Load historical data",
