@@ -28,6 +28,35 @@ import {
   getDiscordClient,
   createDiscordClient,
   resetDiscordClient,
+  // Embed Formatter
+  type AlertSeverity,
+  type AlertType,
+  type DiscordAlertData,
+  ALERT_TYPE_CONFIG,
+  SEVERITY_CONFIG,
+  formatCurrency,
+  formatPercentage,
+  truncateWallet,
+  getAlertColor,
+  createEmbedField,
+  createAlertFields,
+  buildAlertEmbed,
+  formatDiscordAlert,
+  createAlertMessage,
+  createAlertEmbeds,
+  createAlertSummaryEmbed,
+  createAlertSummaryMessage,
+  getSeverityEmoji,
+  getSeverityColor,
+  getAlertTypeEmoji,
+  getAlertTypeLabel,
+  getAlertTypeColor,
+  validateAlertData,
+  createSimpleEmbed,
+  createErrorEmbed,
+  createSuccessEmbed,
+  createInfoEmbed,
+  createWarningEmbed,
   // Types for type checking
   type DiscordWebhookConfig,
   type DiscordEmbed,
@@ -463,6 +492,373 @@ describe("Discord E2E Integration Tests", () => {
       const formatted = formatTimestampForEmbed(date);
 
       expect(formatted).toBe("2024-06-15T12:30:45.000Z");
+    });
+  });
+
+  describe("Embed Formatter E2E", () => {
+    /**
+     * Create a sample alert for E2E testing
+     */
+    function createSampleAlert(overrides: Partial<DiscordAlertData> = {}): DiscordAlertData {
+      return {
+        alertId: "e2e-alert-123",
+        alertType: "whale_trade",
+        severity: "high",
+        title: "Large Whale Trade Detected",
+        message: "A significant trade has been detected on the Presidential Election 2026 market.",
+        timestamp: new Date("2026-01-13T10:00:00Z"),
+        walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
+        marketId: "election-2026",
+        marketTitle: "Presidential Election 2026",
+        tradeSize: 100000,
+        priceChange: 12.5,
+        suspicionScore: 85,
+        actionUrl: "https://tracker.example.com/alert/e2e-alert-123",
+        dashboardUrl: "https://tracker.example.com/dashboard",
+        ...overrides,
+      };
+    }
+
+    describe("Module Exports for Embed Formatter", () => {
+      it("should export all embed formatter functions", () => {
+        expect(typeof formatCurrency).toBe("function");
+        expect(typeof formatPercentage).toBe("function");
+        expect(typeof truncateWallet).toBe("function");
+        expect(typeof getAlertColor).toBe("function");
+        expect(typeof createEmbedField).toBe("function");
+        expect(typeof createAlertFields).toBe("function");
+        expect(typeof buildAlertEmbed).toBe("function");
+        expect(typeof formatDiscordAlert).toBe("function");
+        expect(typeof createAlertMessage).toBe("function");
+        expect(typeof createAlertEmbeds).toBe("function");
+        expect(typeof createAlertSummaryEmbed).toBe("function");
+        expect(typeof createAlertSummaryMessage).toBe("function");
+        expect(typeof getSeverityEmoji).toBe("function");
+        expect(typeof getSeverityColor).toBe("function");
+        expect(typeof getAlertTypeEmoji).toBe("function");
+        expect(typeof getAlertTypeLabel).toBe("function");
+        expect(typeof getAlertTypeColor).toBe("function");
+        expect(typeof validateAlertData).toBe("function");
+        expect(typeof createSimpleEmbed).toBe("function");
+        expect(typeof createErrorEmbed).toBe("function");
+        expect(typeof createSuccessEmbed).toBe("function");
+        expect(typeof createInfoEmbed).toBe("function");
+        expect(typeof createWarningEmbed).toBe("function");
+      });
+
+      it("should export alert type and severity configs", () => {
+        expect(ALERT_TYPE_CONFIG).toBeDefined();
+        expect(SEVERITY_CONFIG).toBeDefined();
+        expect(Object.keys(ALERT_TYPE_CONFIG).length).toBe(12);
+        expect(Object.keys(SEVERITY_CONFIG).length).toBe(5);
+      });
+    });
+
+    describe("Full Alert Embed Creation E2E", () => {
+      it("should create a complete alert embed ready for sending", () => {
+        const alert = createSampleAlert();
+        const message = createAlertMessage(alert);
+
+        expect(message.embeds).toBeDefined();
+        expect(message.embeds?.length).toBe(1);
+        expect(message.embeds?.[0]?.title).toContain("🐋");
+        expect(message.embeds?.[0]?.title).toContain("Large Whale Trade Detected");
+        expect(message.embeds?.[0]?.color).toBeDefined();
+        expect(message.embeds?.[0]?.fields?.length).toBeGreaterThan(0);
+      });
+
+      it("should create critical alert with content warning", () => {
+        const alert = createSampleAlert({ severity: "critical" });
+        const message = createAlertMessage(alert);
+
+        expect(message.content).toBeDefined();
+        expect(message.content).toContain("Critical");
+      });
+
+      it("should create batch embeds for multiple alerts", () => {
+        const alerts = [
+          createSampleAlert({ alertId: "1", alertType: "whale_trade" }),
+          createSampleAlert({ alertId: "2", alertType: "insider_activity" }),
+          createSampleAlert({ alertId: "3", alertType: "fresh_wallet" }),
+          createSampleAlert({ alertId: "4", alertType: "coordinated_activity" }),
+          createSampleAlert({ alertId: "5", alertType: "price_movement" }),
+        ];
+
+        const embeds = createAlertEmbeds(alerts);
+
+        expect(embeds.length).toBe(5);
+        embeds.forEach((embed) => {
+          expect(embed.title).toBeDefined();
+          expect(embed.description).toBeDefined();
+          expect(embed.color).toBeDefined();
+        });
+      });
+
+      it("should create summary embed with severity and type breakdown", () => {
+        const alerts = [
+          createSampleAlert({ severity: "critical", alertType: "insider_activity" }),
+          createSampleAlert({ severity: "critical", alertType: "whale_trade" }),
+          createSampleAlert({ severity: "high", alertType: "whale_trade" }),
+          createSampleAlert({ severity: "medium", alertType: "fresh_wallet" }),
+          createSampleAlert({ severity: "low", alertType: "price_movement" }),
+        ];
+
+        const embed = createAlertSummaryEmbed(alerts);
+
+        expect(embed.title).toContain("5 alerts");
+        expect(embed.fields).toBeDefined();
+        expect(embed.fields?.length).toBeGreaterThan(0);
+
+        const severityField = embed.fields?.find((f) => f.name === "By Severity");
+        const typeField = embed.fields?.find((f) => f.name === "By Type");
+
+        expect(severityField).toBeDefined();
+        expect(typeField).toBeDefined();
+      });
+    });
+
+    describe("Alert Type Integration E2E", () => {
+      const alertTypes: AlertType[] = [
+        "whale_trade",
+        "price_movement",
+        "insider_activity",
+        "fresh_wallet",
+        "wallet_reactivation",
+        "coordinated_activity",
+        "unusual_pattern",
+        "market_resolved",
+        "new_market",
+        "suspicious_funding",
+        "sanctioned_activity",
+        "system",
+      ];
+
+      it.each(alertTypes)("should handle alert type: %s", (alertType) => {
+        const alert = createSampleAlert({ alertType });
+        const embed = buildAlertEmbed(alert);
+
+        const typeConfig = ALERT_TYPE_CONFIG[alertType];
+        expect(embed.title).toContain(typeConfig.emoji);
+        expect(embed.color).toBeDefined();
+      });
+    });
+
+    describe("Severity Integration E2E", () => {
+      const severities: AlertSeverity[] = ["critical", "high", "medium", "low", "info"];
+
+      it.each(severities)("should handle severity: %s", (severity) => {
+        const alert = createSampleAlert({ severity });
+        const embed = buildAlertEmbed(alert);
+        const fields = embed.fields || [];
+
+        const severityField = fields.find((f) => f.name === "Severity");
+        const severityConfig = SEVERITY_CONFIG[severity];
+
+        expect(severityField).toBeDefined();
+        expect(severityField?.value).toContain(severityConfig.emoji);
+        expect(severityField?.value).toContain(severityConfig.label);
+      });
+    });
+
+    describe("Client Integration with Embed Formatter E2E", () => {
+      let client: DiscordClient;
+
+      beforeEach(() => {
+        client = new DiscordClient({
+          webhookUrl:
+            "https://discord.com/api/webhooks/1234567890/test-token-abc123",
+          devMode: true,
+        });
+      });
+
+      it("should send formatted alert via client", async () => {
+        const alert = createSampleAlert();
+        const message = createAlertMessage(alert);
+
+        const result = await client.sendMessage(message);
+
+        expect(result.status).toBe(DiscordMessageStatus.SENT);
+      });
+
+      it("should send summary message via client", async () => {
+        const alerts = [
+          createSampleAlert({ alertId: "1" }),
+          createSampleAlert({ alertId: "2" }),
+        ];
+        const message = createAlertSummaryMessage(alerts);
+
+        const result = await client.sendMessage(message);
+
+        expect(result.status).toBe(DiscordMessageStatus.SENT);
+      });
+
+      it("should send utility embeds via client", async () => {
+        const embeds = [
+          createSuccessEmbed("Success", "Operation completed"),
+          createErrorEmbed("Error", "Something failed"),
+          createInfoEmbed("Info", "Information message"),
+          createWarningEmbed("Warning", "Be careful"),
+        ];
+
+        for (const embed of embeds) {
+          const message: DiscordMessage = { embeds: [embed] };
+          const result = await client.sendMessage(message);
+          expect(result.status).toBe(DiscordMessageStatus.SENT);
+        }
+      });
+    });
+
+    describe("Currency and Formatting E2E", () => {
+      it("should format various trade sizes correctly", () => {
+        const testCases = [
+          { value: 100, expected: "$100" },
+          { value: 1000, expected: "$1,000" },
+          { value: 10000, expected: "$10,000" },
+          { value: 100000, expected: "$100,000" },
+          { value: 1000000, expected: "$1,000,000" },
+          { value: 1234567.89, expected: "$1,234,567.89" },
+        ];
+
+        for (const { value, expected } of testCases) {
+          expect(formatCurrency(value)).toBe(expected);
+        }
+      });
+
+      it("should format various percentages correctly", () => {
+        const testCases = [
+          { value: 0, expected: "+0.00%" },
+          { value: 5.5, expected: "+5.50%" },
+          { value: -3.25, expected: "-3.25%" },
+          { value: 100, expected: "+100.00%" },
+          { value: -50.5, expected: "-50.50%" },
+        ];
+
+        for (const { value, expected } of testCases) {
+          expect(formatPercentage(value)).toBe(expected);
+        }
+      });
+
+      it("should truncate wallet addresses consistently", () => {
+        const testCases = [
+          {
+            address: "0x1234567890abcdef1234567890abcdef12345678",
+            expected: "0x1234...5678"
+          },
+          {
+            address: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+            expected: "0xabcd...abcd"
+          },
+          {
+            address: "0x123",
+            expected: "0x123"
+          },
+        ];
+
+        for (const { address, expected } of testCases) {
+          expect(truncateWallet(address)).toBe(expected);
+        }
+      });
+    });
+
+    describe("Validation E2E", () => {
+      it("should validate complete alert data", () => {
+        const alert = createSampleAlert();
+        const errors = validateAlertData(alert);
+
+        expect(errors.length).toBe(0);
+      });
+
+      it("should report all validation errors", () => {
+        const invalidAlert: DiscordAlertData = {
+          alertId: "",
+          alertType: "invalid_type" as AlertType,
+          severity: "invalid_severity" as AlertSeverity,
+          title: "",
+          message: "",
+          timestamp: "not-a-date" as unknown as Date,
+        };
+
+        const errors = validateAlertData(invalidAlert);
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors).toContain("alertId is required");
+        expect(errors).toContain("title is required");
+        expect(errors).toContain("message is required");
+      });
+    });
+
+    describe("Color Selection E2E", () => {
+      it("should return severity color for critical/high alerts", () => {
+        expect(getAlertColor("critical", "whale_trade")).toBe(getSeverityColor("critical"));
+        expect(getAlertColor("high", "fresh_wallet")).toBe(getSeverityColor("high"));
+      });
+
+      it("should return type color for medium/low/info alerts", () => {
+        expect(getAlertColor("medium", "whale_trade")).toBe(getAlertTypeColor("whale_trade"));
+        expect(getAlertColor("low", "fresh_wallet")).toBe(getAlertTypeColor("fresh_wallet"));
+        expect(getAlertColor("info", "system")).toBe(getAlertTypeColor("system"));
+      });
+    });
+
+    describe("Edge Cases E2E", () => {
+      it("should handle alert with missing optional fields", () => {
+        const minimalAlert: DiscordAlertData = {
+          alertId: "minimal-123",
+          alertType: "system",
+          severity: "info",
+          title: "Simple Alert",
+          message: "A simple system message",
+          timestamp: new Date(),
+        };
+
+        const embed = buildAlertEmbed(minimalAlert);
+
+        expect(embed.title).toBeDefined();
+        expect(embed.description).toBeDefined();
+        expect(embed.fields?.length).toBeGreaterThan(0);
+      });
+
+      it("should handle very long alert messages", () => {
+        const longMessage = "A".repeat(5000);
+        const alert = createSampleAlert({ message: longMessage });
+
+        const embed = buildAlertEmbed(alert, { maxDescriptionLength: 1000 });
+
+        expect(embed.description?.length).toBeLessThanOrEqual(1000);
+      });
+
+      it("should handle alert with metadata", () => {
+        const alert = createSampleAlert({
+          metadata: {
+            customKey1: "Custom Value 1",
+            customKey2: 42,
+            customKey3: true,
+          },
+        });
+
+        const fields = createAlertFields(alert);
+        const customField = fields.find((f) => f.name === "customKey1");
+
+        expect(customField).toBeDefined();
+        expect(customField?.value).toBe("Custom Value 1");
+      });
+
+      it("should limit batch embeds to 10 maximum", () => {
+        const alerts = Array.from({ length: 15 }, (_, i) =>
+          createSampleAlert({ alertId: `alert-${i}` })
+        );
+
+        const embeds = createAlertEmbeds(alerts);
+
+        expect(embeds.length).toBe(10);
+      });
+
+      it("should handle empty alerts array for summary", () => {
+        const embed = createAlertSummaryEmbed([]);
+
+        expect(embed.title).toBe("📊 Alert Summary");
+        expect(embed.description).toBe("No alerts to display.");
+      });
     });
   });
 });

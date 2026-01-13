@@ -9567,3 +9567,84 @@ NOTES FOR NEXT SESSION:
   3. NotificationService for high-level delivery
 - Next feature: Check prd.json for next priority with passes:false
 - Integration ready for alert system
+
+---
+
+## Session: NOTIF-DC-002 - Discord Embed Formatter
+Date: 2026-01-13
+
+COMPLETED: NOTIF-DC-002 - Discord embed formatter
+
+FILES CREATED/MODIFIED:
+1. src/notifications/discord/embed-formatter.ts (NEW)
+   - Complete Discord embed formatting system
+   - 25+ exported functions for embed creation
+   - Type definitions for alerts and options
+   - Color schemes based on severity and alert type
+
+2. src/notifications/discord/index.ts
+   - Updated to export all embed formatter functions and types
+
+3. tests/notifications/discord/embed-formatter.test.ts (NEW)
+   - 96 comprehensive unit tests
+
+4. tests/notifications/discord/e2e.test.ts
+   - Extended with 59 new E2E integration tests for embed formatter
+
+KEY FEATURES:
+- buildAlertEmbed() - Build complete embed from alert data
+- formatDiscordAlert() - Format with optional content warning
+- createAlertMessage() - Create ready-to-send Discord message
+- createAlertEmbeds() - Batch create embeds (max 10)
+- createAlertSummaryEmbed() - Summary with severity/type breakdown
+- Utility embeds:
+  * createSuccessEmbed()
+  * createErrorEmbed()
+  * createInfoEmbed()
+  * createWarningEmbed()
+  * createSimpleEmbed()
+
+ALERT TYPES SUPPORTED (12):
+- whale_trade, price_movement, insider_activity
+- fresh_wallet, wallet_reactivation, coordinated_activity
+- unusual_pattern, market_resolved, new_market
+- suspicious_funding, sanctioned_activity, system
+
+SEVERITY LEVELS WITH COLORS (5):
+- critical (RED), high (ORANGE), medium (GOLD)
+- low (GREEN), info (BLUE)
+
+EMBED FIELDS:
+- Severity and Type badges
+- Market info with Polymarket link
+- Wallet address with Polygonscan link
+- Trade size (USD formatted)
+- Price change (percentage)
+- Suspicion score (with emoji indicators)
+- Custom metadata fields
+- Timestamps (ISO 8601)
+- Footer with alert ID
+
+HELPERS:
+- formatCurrency() - USD formatting
+- formatPercentage() - +/- percentage
+- truncateWallet() - 0x1234...5678 format
+- getAlertColor() - Priority-based color selection
+- validateAlertData() - Data validation
+- getSeverityEmoji/Color() - Quick lookups
+- getAlertTypeEmoji/Label/Color() - Quick lookups
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 96 tests passing
+- E2E tests: 59 embed formatter tests + 172 existing Discord tests
+- Total Discord module: 231 tests passing
+- All notification tests: 695 tests passing
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-DC-002 complete and marked in prd.json
+- Discord notification pipeline ready:
+  1. DiscordClient for webhook API
+  2. Embed formatter for rich embeds
+- Next feature: Check prd.json for next priority with passes:false
+- Integration: Use createAlertMessage() with DiscordClient.sendMessage()

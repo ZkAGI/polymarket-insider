@@ -2976,7 +2976,9 @@
       "priority": 148,
       "name": "Discord embed formatter",
       "description": "Format alerts as Discord embeds",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T18:55:00Z",
+      "notes": "Implemented embed-formatter.ts with 25+ functions: buildAlertEmbed, formatDiscordAlert, createAlertMessage, createAlertEmbeds, createAlertSummaryEmbed, and utility embeds (success, error, info, warning). Supports all 12 alert types, 5 severity levels with appropriate colors, market/wallet links, suspicion scores, trade sizes, and price changes. 96 unit tests and 59 E2E integration tests pass.",
       "steps": [
         "Create embed builder",
         "Design embed layout",
