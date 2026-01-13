@@ -10794,3 +10794,46 @@ NOTES FOR NEXT SESSION:
 - TEST-API-001 complete and marked in prd.json
 - Next feature to implement: Check prd.json for next highest priority with passes:false
 - Likely TEST-API-002 (CLOB API client unit tests) or another testing feature
+
+COMPLETED: TEST-API-002 - CLOB API client unit tests
+
+Summary:
+- Fixed vitest path alias configuration in vitest.config.ts to match tsconfig.json
+- Changed "@": path.resolve(__dirname, "./") to "@": path.resolve(__dirname, "./src") to properly resolve @/* imports
+- Fixed test assertion in tests/api/clob/client.test.ts for crypto.subtle signature generation test
+- Used ArrayBuffer.isView() instead of toBeInstanceOf(Uint8Array) to handle jsdom/node environment mismatch
+
+Verification:
+- TypeScript typecheck (pnpm typecheck): PASSED
+- All 9 CLOB API test files pass with 747 total unit tests:
+  - tests/api/clob/client.test.ts: 43 tests
+  - tests/api/clob/orderbook.test.ts: 67 tests
+  - tests/api/clob/trades.test.ts: 103 tests
+  - tests/api/clob/orders.test.ts: 65 tests
+  - tests/api/clob/auth.test.ts: 80 tests
+  - tests/api/clob/rate-limiter.test.ts: 81 tests
+  - tests/api/clob/error-handler.test.ts: 111 tests
+  - tests/api/clob/trade-execution.test.ts: 114 tests
+  - tests/api/clob/usd-calculator.test.ts: 83 tests
+
+Test Coverage:
+The CLOB API tests comprehensively cover:
+- ClobClient constructor, configuration, GET/POST/PUT/DELETE methods
+- Authentication header generation with HMAC-SHA256 signatures
+- Error handling, retry logic for 429/5xx errors
+- Rate limiter with token bucket algorithm
+- Order book fetching and depth calculations
+- Trade filtering, wallet-specific trades, VWAP calculations
+- Open orders management
+- Trade execution parsing
+- USD value calculations
+
+E2E Browser Testing:
+- Ran Puppeteer tests verifying homepage, dashboard, and alerts pages load correctly
+- Screenshot confirms dashboard UI renders properly with dark theme
+
+NOTES FOR NEXT SESSION:
+- TEST-API-002 complete and marked in prd.json
+- Next feature to implement: Check prd.json for next highest priority with passes:false
+- Remaining features: TEST-API-003 (WebSocket tests), TEST-API-004 (API error handling tests), 
+  TEST-API-005 (Rate limiter tests), TEST-API-006 (API integration tests)

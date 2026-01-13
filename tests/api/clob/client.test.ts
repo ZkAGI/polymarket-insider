@@ -333,13 +333,16 @@ describe("ClobClient", () => {
 
       await client.get("/test", { requiresAuth: true });
 
-      expect(mockImportKey).toHaveBeenCalledWith(
-        "raw",
-        expect.any(Uint8Array),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
+      expect(mockImportKey).toHaveBeenCalled();
+      const importKeyCall = mockImportKey.mock.calls[0];
+      expect(importKeyCall?.[0]).toBe("raw");
+      // Check it's a typed array with numeric elements (handles jsdom/node Uint8Array mismatch)
+      const keyData = importKeyCall?.[1];
+      expect(keyData).toBeDefined();
+      expect(ArrayBuffer.isView(keyData)).toBe(true);
+      expect(importKeyCall?.[2]).toEqual({ name: "HMAC", hash: "SHA-256" });
+      expect(importKeyCall?.[3]).toBe(false);
+      expect(importKeyCall?.[4]).toEqual(["sign"]);
       expect(mockSign).toHaveBeenCalled();
     });
   });
