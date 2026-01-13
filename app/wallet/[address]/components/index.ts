@@ -22,3 +22,6 @@ export type {
   SortField,
   SortDirection,
 } from './WalletTradingHistoryTable';
+
+export { WalletPnLChart } from './WalletPnLChart';
+export type { WalletPnLChartProps, PnLDataPoint, TimeRange } from './WalletPnLChart';

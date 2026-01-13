@@ -8,7 +8,9 @@ import {
   SuspicionScoreDisplay,
   ActivitySummaryWidget,
   WalletTradingHistoryTable,
+  WalletPnLChart,
   type WalletTrade,
+  type PnLDataPoint,
   type SortField,
   type SortDirection,
 } from './components';
@@ -155,6 +157,40 @@ function generateMockWalletData(address: string): WalletData {
   };
 }
 
+// Generate mock P&L historical data
+function generateMockPnLData(walletAddress: string, tradeCount: number): PnLDataPoint[] {
+  const dataPoints: PnLDataPoint[] = [];
+  const hash = walletAddress.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  // Determine the time span based on trade count
+  const daysSpan = Math.max(30, Math.min(365, tradeCount * 2));
+  const now = new Date();
+  const startDate = new Date(now.getTime() - daysSpan * 24 * 60 * 60 * 1000);
+
+  // Generate daily data points
+  let cumulativePnL = 0;
+
+  for (let i = 0; i <= daysSpan; i++) {
+    const timestamp = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+
+    // Generate semi-realistic daily P&L with some randomness but trends
+    const dayHash = (hash + i) % 1000;
+    const trendFactor = Math.sin((i / daysSpan) * Math.PI * 2) * 500; // Sine wave trend
+    const randomFactor = ((dayHash % 200) - 100) * 5; // Random daily fluctuation
+    const dailyPnL = trendFactor + randomFactor;
+
+    cumulativePnL += dailyPnL;
+
+    dataPoints.push({
+      timestamp,
+      cumulativePnL,
+      dailyPnL,
+    });
+  }
+
+  return dataPoints;
+}
+
 /**
  * Wallet Profile Page
  *
@@ -169,6 +205,9 @@ export default function WalletProfilePage() {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // P&L data state
+  const [pnlData, setPnlData] = useState<PnLDataPoint[]>([]);
 
   // Trading history state
   const [allTrades, setAllTrades] = useState<WalletTrade[]>([]);
@@ -207,6 +246,10 @@ export default function WalletProfilePage() {
         // Generate mock trades
         const mockTrades = generateMockTrades(address, mockWallet.tradeCount);
         setAllTrades(mockTrades);
+
+        // Generate mock P&L data
+        const mockPnL = generateMockPnLData(address, mockWallet.tradeCount);
+        setPnlData(mockPnL);
 
         setError(null);
       } catch (err) {
@@ -407,6 +450,9 @@ export default function WalletProfilePage() {
               />
             </div>
           </div>
+
+          {/* P&L Chart */}
+          <WalletPnLChart data={pnlData} showTimeRangeSelector={true} />
 
           {/* Trading history table */}
           <WalletTradingHistoryTable

@@ -2624,7 +2624,9 @@
       "priority": 131,
       "name": "Wallet P&L chart",
       "description": "Chart showing wallet profit/loss over time",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T13:36:00Z",
+      "notes": "Implemented comprehensive P&L chart with SVG visualization, time range selector (1D/1W/1M/3M/1Y/ALL), interactive tooltips, profit/loss zones with color coding, and axis labels. Chart displays cumulative P&L over time with green for profit and red for loss. Includes mock data generation function that creates realistic P&L trends. All 12 E2E tests pass including chart rendering, time range filtering, interactivity, responsiveness, and error handling.",
       "steps": [
         "Create P&L chart",
         "Plot cumulative P&L",

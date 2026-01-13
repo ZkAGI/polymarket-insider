@@ -8847,3 +8847,43 @@ NOTES FOR NEXT SESSION:
 - Trading history table fully functional with mock data
 - Ready to connect to real API when backend is implemented
 
+
+=== Session 2026-01-13 ===
+
+COMPLETED: UI-WALLET-003 - Wallet P&L chart
+- Created WalletPnLChart component with SVG-based visualization
+- Features implemented:
+  * Time-series line chart showing cumulative P&L over time
+  * Time range selector with 6 options (1D, 1W, 1M, 3M, 1Y, ALL)
+  * Interactive tooltips on hover showing P&L, date, and daily change
+  * Color-coded profit/loss zones (green for profit, red for loss)
+  * Zero line indicator with dashed styling
+  * Y-axis labels with currency formatting (k for thousands, M for millions)
+  * X-axis labels with smart date formatting based on time range
+  * Responsive SVG chart that scales with container
+- Generated mock P&L historical data with realistic trends
+- Integrated chart into wallet profile page between activity summary and trading history
+- Created comprehensive E2E tests using Puppeteer (12 tests, all passing):
+  * Chart rendering and SVG elements
+  * Time range selector functionality
+  * Interactive hover tooltips
+  * Data display and formatting
+  * Visual regression testing with screenshots
+  * Mobile responsiveness
+  * Error handling and console error checking
+- Fixed TypeScript errors in component and tests
+- Updated vitest.config.ts to support JSX/TSX tests with jsdom environment
+- Verified: All 12 E2E tests pass, typecheck passes (except pre-existing errors in other files)
+
+Implementation notes:
+- Used pure SVG for chart rendering (no external libraries) for lightweight implementation
+- Chart calculates scales dynamically based on data range
+- Filtering by time range is done client-side for instant response
+- Mock data generator creates sine wave trends with random fluctuations for realistic visualization
+- Tooltip positioning uses transform: translate for proper centering
+- Chart handles edge cases: empty data, single data point, zero P&L, volatile data
+
+Next session notes:
+- Feature UI-WALLET-003 is complete and ready for production
+- All tests pass, code is clean and well-documented
+- Next feature to implement would be UI-MARKET-001 (Market detail page)
