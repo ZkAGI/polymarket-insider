@@ -7,8 +7,11 @@ import {
   MarketDetailHeader,
   CurrentOddsDisplay,
   MarketInfoSection,
+  MarketPriceChart,
   type MarketData,
   type MarketOutcomeData,
+  type PriceDataPoint,
+  type ChartEvent,
 } from './components';
 
 // Generate mock market data
@@ -125,10 +128,109 @@ function generateMockMarketData(marketId: string): MarketData {
 }
 
 /**
+ * Generate mock price history data for a market outcome
+ */
+function generateMockPriceHistory(
+  marketId: string,
+  outcomeId: string,
+  currentPrice: number,
+  daysOfHistory: number = 180
+): PriceDataPoint[] {
+  const hash = (marketId + outcomeId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const points: PriceDataPoint[] = [];
+  const now = new Date();
+  const pointsPerDay = 24; // One point per hour
+  const totalPoints = daysOfHistory * pointsPerDay;
+
+  // Determine trend (upward or downward)
+  const trendDirection = hash % 2 === 0 ? 1 : -1;
+  const trendStrength = 0.2 + ((hash % 30) / 100); // 0.2 to 0.5
+
+  // Starting price (work backwards from current price)
+  const startPrice = Math.max(5, Math.min(95, currentPrice - trendDirection * trendStrength * 100 * (hash % 3)));
+
+  for (let i = 0; i < totalPoints; i++) {
+    const progress = i / totalPoints;
+    const timestamp = new Date(now.getTime() - (totalPoints - i) * 60 * 60 * 1000);
+
+    // Calculate base price with trend
+    let price = startPrice + trendDirection * trendStrength * 100 * progress;
+
+    // Add sine wave for natural fluctuations
+    const sineWave = Math.sin(progress * Math.PI * 4 + hash) * 8;
+    price += sineWave;
+
+    // Add random noise
+    const noise = (Math.sin((i * 7 + hash) * 0.1) * 3) + (Math.sin((i * 13 + hash) * 0.05) * 2);
+    price += noise;
+
+    // Add occasional jumps (simulating news events)
+    if (i % 100 === hash % 100) {
+      price += (hash % 2 === 0 ? 1 : -1) * (5 + (hash % 10));
+    }
+
+    // Ensure price stays in valid range
+    price = Math.max(5, Math.min(95, price));
+
+    // Calculate volume (higher volume during price changes)
+    const priceChange = i > 0 ? Math.abs(price - (points[i - 1]?.probability ?? price)) : 0;
+    const baseVolume = 10000 + (hash % 50000);
+    const volume = baseVolume * (1 + priceChange * 2);
+
+    points.push({
+      timestamp,
+      price: price / 100,
+      probability: price,
+      volume,
+    });
+  }
+
+  return points;
+}
+
+/**
+ * Generate mock chart events for a market
+ */
+function generateMockChartEvents(marketId: string, daysOfHistory: number = 180): ChartEvent[] {
+  const hash = marketId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const events: ChartEvent[] = [];
+  const now = new Date();
+  const eventCount = 3 + (hash % 5); // 3-7 events
+
+  const eventLabels = [
+    'Major news announcement',
+    'Large whale trade detected',
+    'Market sentiment shift',
+    'Related market resolved',
+    'Breaking news',
+    'Insider activity alert',
+    'Volume spike detected',
+    'Price manipulation suspected',
+  ];
+
+  const eventTypes: ChartEvent['type'][] = ['news', 'trade', 'alert', 'other'];
+
+  for (let i = 0; i < eventCount; i++) {
+    const dayOffset = Math.floor((daysOfHistory * (i + 1)) / (eventCount + 1));
+    const timestamp = new Date(now.getTime() - dayOffset * 24 * 60 * 60 * 1000);
+    const labelIndex = (hash + i * 17) % eventLabels.length;
+    const typeIndex = (hash + i * 13) % eventTypes.length;
+
+    events.push({
+      timestamp,
+      label: eventLabels[labelIndex] ?? 'Market event',
+      type: eventTypes[typeIndex] ?? 'other',
+    });
+  }
+
+  return events.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+}
+
+/**
  * Market Detail Page
  *
  * Detailed page for an individual prediction market.
- * Displays market information, current odds, and links to Polymarket.
+ * Displays market information, current odds, price history chart, and links to Polymarket.
  */
 export default function MarketDetailPage() {
   const params = useParams();
@@ -247,6 +349,13 @@ export default function MarketDetailPage() {
     );
   }
 
+  // Generate price history for the primary outcome
+  const primaryOutcome = market.outcomes[0];
+  const priceHistory = primaryOutcome
+    ? generateMockPriceHistory(market.id, primaryOutcome.id, primaryOutcome.probability)
+    : [];
+  const chartEvents = generateMockChartEvents(market.id);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
@@ -273,6 +382,19 @@ export default function MarketDetailPage() {
             {/* Market info section */}
             <MarketInfoSection market={market} />
           </div>
+
+          {/* Price history chart */}
+          {primaryOutcome && (
+            <MarketPriceChart
+              priceHistory={priceHistory}
+              events={chartEvents}
+              outcomeName={primaryOutcome.name}
+              height={400}
+              enableZoom={true}
+              enablePan={true}
+              showGrid={true}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -2666,7 +2666,9 @@
       "priority": 133,
       "name": "Market price chart",
       "description": "Interactive price/probability chart over time",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T13:55:00Z",
+      "notes": "Implemented comprehensive MarketPriceChart component with: SVG-based interactive line chart showing price/probability over time; Time range selector with 6 options (1D, 1W, 1M, 3M, 6M, ALL); Zoom controls (zoom in/out/reset) with level indicator and pan support; Key event markers with color-coded types (news/trade/alert/other) and tooltips; Responsive SVG chart with area gradient fill; Interactive hover tooltips showing price, date, and volume; Y-axis with percentage labels (0-100%), X-axis with smart date formatting based on time range; Grid lines (configurable); Generated 180 days of mock price history data with realistic trends, sine waves, noise, and occasional jumps; Mock event generator for chart markers; Integrated into market detail page below current odds display; 45 unit tests and 40 E2E Puppeteer browser tests covering rendering, time range selection, zoom controls, event markers, grid lines, axes, responsive behavior, dark mode, accessibility, error handling, and visual verification with screenshots. TypeScript types verified clean (component files have no errors). Browser testing confirmed all features working correctly including zoom, pan, time range switching, and event markers.",
       "steps": [
         "Create price chart",
         "Plot probability history",
