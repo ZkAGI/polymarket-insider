@@ -10950,3 +10950,43 @@ NOTES FOR NEXT SESSION:
 - TG-BOT-001 depends on TG-DB-001 (now complete)
 - The TelegramSubscriberService is ready for use by the bot implementation
 - Run "npx prisma db push" to sync schema with database when ready
+
+
+=== Session 2026-01-14 (TG-BOT-001) ===
+
+COMPLETED: TG-BOT-001 - Telegram bot initialization with grammy
+
+Summary:
+- Installed grammy package (npm install grammy)
+- Created TelegramBotClient class in src/telegram/bot.ts
+- Created index.ts for module exports
+
+TelegramBotClient Features:
+- Full lifecycle management: initialize(), start(), stop()
+- Bot status tracking: stopped, starting, running, stopping, error
+- Message sending with options (parseMode, disableNotification, disableWebPagePreview)
+- Command handlers: onCommand(), onMessage(), onCallbackQuery()
+- Admin checking: isAdmin() using TELEGRAM_ADMIN_IDS from env
+- Health monitoring: getHealthInfo(), getUptime(), getStartedAt()
+- Error handling with GrammyError and HttpError support
+- Singleton pattern via getTelegramBot() or new instances via createTelegramBot()
+- Convenience functions: startTelegramBot(), stopTelegramBot()
+
+Files Created:
+- src/telegram/bot.ts: Main bot client implementation
+- src/telegram/index.ts: Module exports
+- tests/telegram/bot.test.ts: 41 unit tests
+- tests/telegram/bot.e2e.test.ts: 8 E2E tests
+
+Verification:
+- TypeScript typecheck (pnpm typecheck): PASSED
+- Unit tests: 41 tests PASSED
+- E2E tests: 8 tests PASSED (including browser tests for homepage and dashboard)
+- Browser smoke test: PASSED (homepage and dashboard render correctly)
+
+NOTES FOR NEXT SESSION:
+- TG-BOT-001 complete and marked in prd.json
+- Next feature to implement: TG-BOT-002 (Auto-register users on /start command)
+- TG-BOT-002 depends on TG-BOT-001 (now complete)
+- The TelegramBotClient is ready for command handlers to be added
+- To actually connect to Telegram, set TELEGRAM_BOT_TOKEN in .env
