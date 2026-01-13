@@ -197,3 +197,76 @@ export type {
   SummaryGeneratorConfig,
   SummaryGeneratorEvents,
 } from "./alert-summary-generator";
+
+// AI-NLP-002: Market Context Analyzer
+export {
+  // Enums
+  ContentSourceType,
+  Sentiment,
+  RelevanceLevel,
+  ImpactPrediction,
+  AnalysisStatus,
+  EntityType,
+
+  // Constants
+  DEFAULT_CONTENT_SOURCES,
+  DEFAULT_ANALYZER_CONFIG,
+  SENTIMENT_THRESHOLDS,
+  IMPACT_THRESHOLDS,
+  RELEVANCE_THRESHOLDS,
+  CATEGORY_KEYWORDS,
+  POSITIVE_WORDS,
+  NEGATIVE_WORDS,
+
+  // Classes
+  MarketContextAnalyzer,
+
+  // Factory functions
+  createMarketContextAnalyzer,
+  getSharedMarketContextAnalyzer,
+  setSharedMarketContextAnalyzer,
+  resetSharedMarketContextAnalyzer,
+
+  // Convenience functions
+  analyzeMarketContext,
+  getSentiment,
+  isContentRelevant,
+
+  // Utility functions
+  scoreToSentiment,
+  scoreToImpact,
+  scoreToRelevance,
+  getSentimentDescription,
+  getSentimentColor,
+  getImpactDescription,
+  getImpactEmoji,
+  getRelevanceDescription,
+  extractMarketKeywords,
+  calculateKeywordMatch,
+  escapeRegex,
+  calculateEngagementScore,
+  generateSnippet,
+  truncateText as contextTruncateText,
+  formatTimestamp as contextFormatTimestamp,
+  isWithinAgeLimit,
+  calculateContentAge,
+
+  // Mock data generators
+  createMockContentItem,
+  createMockMarketMention,
+  createMockContextResult,
+} from "./market-context-analyzer";
+
+export type {
+  ContentSource,
+  ContentItem,
+  ContentEngagement,
+  ExtractedEntity,
+  MarketMention,
+  SentimentAnalysis,
+  ActivityCorrelation,
+  MarketContextResult,
+  BatchAnalysisResult,
+  MarketContextAnalyzerConfig,
+  MarketContextAnalyzerEvents,
+} from "./market-context-analyzer";
