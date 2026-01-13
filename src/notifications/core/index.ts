@@ -129,3 +129,27 @@ export type {
   RateLimiterEvent,
   RateLimiterEventHandler,
 } from "./rate-limiter";
+
+// Router
+export {
+  NotificationRouter,
+  getNotificationRouter,
+  resetNotificationRouter,
+  setNotificationRouter,
+  routeNotification,
+  setUserNotificationPreferences,
+  registerChannelHandler,
+  DEFAULT_ROUTER_CONFIG,
+} from "./router";
+
+export type {
+  ChannelConfig,
+  UserNotificationPreferences,
+  RoutingDecision,
+  ChannelRoutingResult,
+  NotificationRoutingResult,
+  RouterEventType,
+  RouterEvent,
+  RouterEventHandler,
+  RouterConfig,
+} from "./router";

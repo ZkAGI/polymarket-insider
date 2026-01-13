@@ -9938,3 +9938,47 @@ NOTES FOR NEXT SESSION:
 - Import from src/notifications/core/index.ts
 - Next feature: NOTIF-CORE-003 (Notification rate limiting)
 
+
+=== Session 2026-01-13 (continued) ===
+
+COMPLETED: NOTIF-CORE-004 - Multi-channel notification router
+- Implemented multi-channel notification router for routing notifications to configured channels
+
+FILES CREATED:
+- src/notifications/core/router.ts (790 lines)
+  - NotificationRouter class with comprehensive routing logic
+  - ChannelHandler interface for pluggable channel handlers
+  - UserNotificationPreferences for per-user channel configuration
+  - RoutingDecision for transparent routing decisions
+  - Fallback channel support for failure recovery
+  - Quiet hours with priority bypass
+  - Payload adaptation between channel types
+  - Event emission system for monitoring
+  - Statistics tracking
+
+- tests/notifications/core/router.test.ts (45 unit tests)
+
+KEY FEATURES:
+- Channel handler registration (EMAIL, TELEGRAM, DISCORD, PUSH, SMS)
+- User preference management with per-channel config:
+  - enabled/disabled state
+  - minimum priority threshold
+  - fallback designation
+  - quiet hours with bypass priority
+- Quiet hours support: time-based blocking with priority override
+- Payload adaptation: converts payloads between channel types
+- Retry logic with configurable attempts and exponential backoff
+- Comprehensive event system (routing_started, channel_sending, channel_success, channel_failed, fallback_triggered, etc.)
+- Statistics: total routed, success/failed counts, per-channel stats, fallbacks triggered
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 45 tests passing
+- All notification/core tests: 340 tests passing
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-CORE-004 complete and marked in prd.json
+- Import from src/notifications/core/index.ts
+- Usage: getNotificationRouter(), router.registerHandler(), router.route()
+- Next feature: AI-PAT-001 (Anomaly detection model training pipeline)
+
