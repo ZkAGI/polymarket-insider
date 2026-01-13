@@ -2876,7 +2876,8 @@
       "priority": 143,
       "name": "Daily digest email",
       "description": "Daily summary email of activity and alerts",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13",
       "steps": [
         "Aggregate daily data",
         "Create digest template",

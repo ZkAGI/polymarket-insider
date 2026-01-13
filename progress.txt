@@ -9213,3 +9213,102 @@ NOTES FOR NEXT SESSION:
   * NOTIF-EMAIL-003 (priority 143): Daily digest email
   * NOTIF-EMAIL-004 (priority 144): Weekly report email
   * Or other notification channels (Telegram, Discord, Web Push)
+
+=== Session 2026-01-13 (continued) ===
+
+COMPLETED: NOTIF-EMAIL-003 - Daily digest email
+- Created comprehensive daily digest email template and scheduling system
+- Files created:
+  * templates/digest-types.ts - Type definitions for digest data structures
+  * templates/digest-template.ts - Core digest template rendering functions
+  * templates/digest-scheduler.ts - Timezone-aware scheduling system
+
+DIGEST TEMPLATE FEATURES:
+- Comprehensive Data Structures:
+  * DailyDigestData - Main digest container with all sections
+  * DigestAlertSummary - Individual alert summaries
+  * DigestWalletSummary - Top wallet activity
+  * DigestMarketSummary - Hot/trending markets
+  * DigestTradingStats - Volume, trades, active wallets
+  * DigestPeriodComparison - Day-over-day comparisons
+  * DigestHighlight - Key highlights/achievements
+
+- Email Template Features:
+  * Table-based email-safe HTML layout
+  * Inline styles for Gmail compatibility
+  * MSO conditionals for Outlook
+  * Dark mode support
+  * Mobile-responsive design
+  * XSS protection via HTML escaping
+
+- Dynamic Sections:
+  * Summary statistics header with severity counts
+  * Recent alerts with severity badges
+  * Suspicious wallets section
+  * Hot markets section
+  * Trading statistics with two-column layout
+  * Day-over-day comparisons with trend indicators
+  * Key highlights section
+  * Dashboard link and unsubscribe footer
+
+- Formatting Utilities:
+  * formatDigestDate() - Full date formatting with weekday
+  * formatDigestTime() - Time formatting with timezone
+  * formatCompactNumber() - Compact number display (K/M/B)
+  * getTrendIndicator() - Up/down/stable arrows
+
+SCHEDULER FEATURES:
+- Timezone-Aware Scheduling:
+  * 14 supported timezones (UTC, US, Europe, Asia, Australia, NZ)
+  * Proper DST handling
+  * User-preferred send times
+
+- Schedule Configuration:
+  * sendHour/sendMinute - Preferred delivery time
+  * daysOfWeek - Enable/disable by day
+  * timezone - User's timezone
+  * recipientEmail/recipientName - Recipient info
+
+- Scheduler Functions:
+  * calculateNextRunTime() - Calculate next scheduled run
+  * isScheduledTimeDue() - Check if job is due with grace period
+  * getDigestDateFromRunTime() - Get digest coverage date
+
+- DigestScheduler Class:
+  * scheduleDigest() - Add/update scheduled job
+  * removeJob() - Remove scheduled job
+  * triggerDigest() - Manual trigger for testing
+  * start()/stop() - Scheduler lifecycle
+  * Event emitter for job:scheduled, job:running, job:completed, job:failed
+
+- Retry Logic:
+  * Configurable retry attempts (default 3)
+  * Exponential backoff delay
+  * Grace period for job due check (default 5 min)
+
+CUSTOMIZATION OPTIONS:
+- showFooter - Toggle footer section
+- showBranding - Toggle "Powered by" branding
+- showStats - Toggle trading statistics
+- showComparison - Toggle period comparison
+- maxAlerts - Limit recent alerts shown
+- customStyles - Inject custom CSS
+
+TESTS VERIFIED:
+- Unit tests: 126 tests passing (tests/notifications/email/digest-template.test.ts)
+- E2E tests: 62 tests passing (tests/e2e/digest-email-template.e2e.test.ts)
+- TypeScript: No type errors, full type safety
+
+KEY EXPORTS from templates/index.ts:
+- Types: DailyDigestData, DigestAlertSummary, DigestWalletSummary, DigestMarketSummary, etc.
+- Functions: renderDigestEmail, generateDigestHtml, generateDigestPlainText, createDigestEmailMessage
+- Scheduler: DigestScheduler, createDigestScheduler, calculateNextRunTime, validateScheduleConfig
+- Constants: SUPPORTED_TIMEZONES, DEFAULT_DIGEST_OPTIONS, DEFAULT_SCHEDULE_CONFIG
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-EMAIL-003 complete and marked in prd.json
+- Digest templates and scheduler ready for production use
+- Next features to implement:
+  * NOTIF-TG-001 (priority 144): Telegram bot setup
+  * NOTIF-TG-002 (priority 145): Telegram message formatting
+  * Or other notification channels (Discord, Web Push)
