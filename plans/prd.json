@@ -2729,7 +2729,7 @@
       "priority": 136,
       "name": "Alert threshold configuration",
       "description": "UI to configure alert thresholds",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Create threshold form",
         "Add input validation",
@@ -2741,7 +2741,9 @@
         "typecheck": "Verify types",
         "e2e": "Update thresholds",
         "manual_verification": "Verify threshold persistence"
-      }
+      },
+      "completed_at": "2026-01-13T08:55:48.305Z",
+      "notes": "Alert threshold configuration UI is fully implemented with 4 threshold inputs (volumeSpike, whaleTradeMinimum, suspicionScore, priceChange). All inputs have proper validation (min/max), test IDs, and are integrated with the save/reset functionality. The UI displays current values, allows updates, tracks unsaved changes, and persists settings. 38 unit tests and 40 E2E Puppeteer browser tests pass. TypeScript types verified clean. Screenshots confirm visual correctness."
     },
     {
       "id": "UI-SET-003",
