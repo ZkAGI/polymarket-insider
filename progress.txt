@@ -10093,3 +10093,69 @@ NOTES FOR NEXT SESSION:
 - Next features to implement: AI-PAT-003 (Wallet clustering algorithm)
 - The scorer caches results by default - call clearCache() to reset
 - Use batch scoring for large trade sets: scoreTradesBatch(trades)
+
+=============================================================================
+AI-PAT-003: Wallet Clustering Algorithm
+Completed: 2026-01-13
+=============================================================================
+
+IMPLEMENTATION:
+Created src/ai/wallet-clustering.ts with WalletClustering class:
+- Multiple clustering algorithms: K-means, K-means++, DBSCAN, Hierarchical Agglomerative
+- Feature extraction from wallet behavioral data (24 features across 4 categories)
+- Distance metrics: Euclidean, Manhattan, Cosine similarity
+- Silhouette score calculation for cluster quality assessment
+- Cluster quality grades: EXCELLENT, GOOD, FAIR, POOR, VERY_POOR
+- Risk assessment per cluster (LOW, MEDIUM, HIGH, CRITICAL)
+- Dominant feature identification for each cluster
+- Event emission (clustering_started, clustering_completed, wallet_assigned, high_risk_cluster_detected)
+- Statistics tracking (total clusterings, wallets clustered, avg quality, cluster counts)
+- Membership lookup for quick wallet-to-cluster mapping
+- Incremental clustering support
+- Feature caching with configurable TTL
+
+KEY FEATURES:
+- 24 default feature definitions covering:
+  - Volume: total_volume, avg_trade_size, max_trade_size, trade_frequency
+  - Timing: wallet_age_days, avg_holding_period, time_between_trades, active_days_ratio
+  - Performance: win_rate, profit_factor, max_drawdown, sharpe_ratio
+  - Behavior: suspicion_score, coordination_score, sybil_risk_score, pre_event_trading_ratio
+  - Plus: market_concentration, timing_consistency, unique_markets, total_trades, etc.
+- Configurable number of clusters (default: 5) and max iterations (default: 100)
+- Convergence threshold for early stopping
+- Random seed support for reproducibility
+- Risk indicators based on cluster centroid analysis
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 64 tests passing (tests/ai/wallet-clustering.test.ts)
+- E2E tests: 24 tests passing (tests/ai/wallet-clustering.e2e.test.ts)
+
+EXPORTS ADDED TO src/ai/index.ts:
+- ClusterFeatureCategory, ClusteringAlgorithm, DistanceMetric, ClusterQuality, WalletClusterRiskLevel enums
+- DEFAULT_CLUSTER_FEATURE_DEFINITIONS, DEFAULT_CLUSTERING_CONFIG, DEFAULT_CACHE_CONFIG constants
+- WalletClustering class
+- Factory functions: createWalletClustering, getSharedWalletClustering, setSharedWalletClustering, resetSharedWalletClustering
+- Utility functions: getClusterQualityDescription, getClusterRiskLevelDescription, getClusterRiskLevelColor, getAlgorithmDescription
+- Mock data helpers: createMockWalletData, createMockWalletDataBatch
+- Type exports: ClusterFeatureDefinition, WalletFeatureVector, ClusterCentroid, WalletClusterMembership, WalletCluster, ClusteringResult, etc.
+
+USAGE EXAMPLE:
+  const clustering = createWalletClustering({ numClusters: 5 });
+  const walletData = [...]; // Array of wallet behavioral data
+  const vectors = clustering.extractFeaturesForWallets(walletData);
+  const result = await clustering.cluster(vectors);
+
+  // Access results
+  console.log(result.clusters); // Array of clusters with members, centroids, risk levels
+  console.log(result.quality); // Overall clustering quality
+
+  // Get wallet's cluster
+  const membership = clustering.getWalletCluster(walletAddress);
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PAT-003 complete and marked in prd.json
+- Next feature: AI-NLP-001 (Alert summary generator) at priority 158
+- Supports multiple algorithms - use ClusteringAlgorithm enum to switch
+- DBSCAN is best for detecting outliers and noise
+- Hierarchical clustering provides dendrogram-style groupings

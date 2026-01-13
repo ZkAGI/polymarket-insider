@@ -92,3 +92,50 @@ export type {
   FeatureExtractionConfig,
   ScoringEvents,
 } from "./realtime-anomaly-scoring";
+
+// AI-PAT-003: Wallet Clustering Algorithm
+export {
+  // Enums
+  ClusterFeatureCategory,
+  ClusteringAlgorithm,
+  DistanceMetric,
+  ClusterQuality,
+  WalletClusterRiskLevel,
+
+  // Constants
+  DEFAULT_CLUSTER_FEATURE_DEFINITIONS,
+  DEFAULT_CLUSTERING_CONFIG,
+  DEFAULT_CACHE_CONFIG,
+
+  // Classes
+  WalletClustering,
+
+  // Factory functions
+  createWalletClustering,
+  getSharedWalletClustering,
+  setSharedWalletClustering,
+  resetSharedWalletClustering,
+
+  // Utility functions
+  getClusterQualityDescription,
+  getRiskLevelDescription as getClusterRiskLevelDescription,
+  getRiskLevelColor as getClusterRiskLevelColor,
+  getAlgorithmDescription,
+  createMockWalletData,
+  createMockWalletDataBatch,
+} from "./wallet-clustering";
+
+export type {
+  ClusterFeatureDefinition,
+  WalletFeatureVector,
+  ClusterCentroid,
+  WalletClusterMembership,
+  WalletCluster,
+  DominantFeature,
+  ClusteringResult,
+  ClusteringConfig,
+  RiskThresholds as ClusterRiskThresholds,
+  CacheConfig as ClusterCacheConfig,
+  ClusteringEvents,
+  WalletData,
+} from "./wallet-clustering";
