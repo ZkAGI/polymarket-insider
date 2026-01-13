@@ -139,3 +139,61 @@ export type {
   ClusteringEvents,
   WalletData,
 } from "./wallet-clustering";
+
+// AI-NLP-001: Alert Summary Generator
+export {
+  // Enums
+  AlertType as SummaryAlertType,
+  AlertSeverity as SummaryAlertSeverity,
+  SummaryStyle,
+  SummaryLanguage,
+
+  // Constants
+  DEFAULT_SUMMARY_CONFIG,
+  ALERT_TYPE_DESCRIPTIONS,
+  SEVERITY_DESCRIPTORS,
+  RISK_THRESHOLDS,
+
+  // Classes
+  AlertSummaryGenerator,
+
+  // Factory functions
+  createAlertSummaryGenerator,
+  getSharedAlertSummaryGenerator,
+  setSharedAlertSummaryGenerator,
+  resetSharedAlertSummaryGenerator,
+
+  // Convenience functions
+  generateAlertSummary,
+  getBriefSummary,
+  getStandardSummary,
+  getDetailedSummary,
+  getTechnicalSummary,
+  getCasualSummary,
+
+  // Utility functions
+  truncateAddress,
+  truncateText,
+  formatNumber,
+  capitalize,
+  formatTimestamp,
+  getSeverityEmoji,
+  getTypeVerb,
+  calculateConfidence,
+  validateAlertData,
+  parseAlertType,
+  parseAlertSeverity,
+
+  // Mock data generators
+  createMockAlert,
+  createMockAlertBatch,
+} from "./alert-summary-generator";
+
+export type {
+  AlertData,
+  AlertSummary,
+  SummaryOptions,
+  BatchSummaryResult,
+  SummaryGeneratorConfig,
+  SummaryGeneratorEvents,
+} from "./alert-summary-generator";
