@@ -10621,3 +10621,140 @@ NOTES FOR NEXT SESSION:
 - Next feature to implement: Check prd.json for next highest priority with passes:false
 - Framework provides comprehensive backtesting for all detection strategies
 - Supports walk-forward validation for realistic performance estimation
+
+================================================================================
+FEATURE: AI-PRED-006 - Model Retraining Scheduler
+================================================================================
+DATE: 2026-01-13
+STATUS: COMPLETED
+
+DESCRIPTION:
+Implemented automated model retraining scheduler that handles scheduled retraining
+of ML models, collecting new training data, validation before deployment, and
+deployment strategies for updated models.
+
+FILES CREATED:
+- src/ai/model-retraining-scheduler.ts (main implementation)
+- tests/ai/model-retraining-scheduler.test.ts (87 unit tests)
+- tests/ai/model-retraining-scheduler.e2e.test.ts (23 E2E tests)
+
+FILES MODIFIED:
+- src/ai/index.ts (added exports for model-retraining-scheduler)
+- plans/prd.json (marked AI-PRED-006 as complete)
+
+KEY COMPONENTS:
+1. Enums:
+   - RetrainableModelType: ANOMALY_DETECTION, INSIDER_PREDICTOR, MARKET_PREDICTOR, SIGNAL_TRACKER
+   - ScheduleType: INTERVAL, CRON, PERFORMANCE_TRIGGER, DATA_VOLUME_TRIGGER, MANUAL
+   - RetrainingJobStatus: PENDING, COLLECTING_DATA, TRAINING, VALIDATING, DEPLOYING, COMPLETED, FAILED, CANCELLED
+   - DataSourceType: LIVE, HISTORICAL, SYNTHETIC, HYBRID
+   - ValidationStrategy: HOLDOUT_VALIDATION, ACCURACY_COMPARISON, AB_TEST, SHADOW_MODE, CROSS_VALIDATION
+   - DeploymentStrategy: IMMEDIATE, GRADUAL, CANARY, BLUE_GREEN
+   - TriggerReason: SCHEDULED, PERFORMANCE_DEGRADATION, DATA_VOLUME, MANUAL, DRIFT_DETECTED
+
+2. Interfaces:
+   - RetrainingSchedule - Schedule configuration for model retraining
+   - DataCollectionConfig - Data collection parameters
+   - ValidationConfig - Validation configuration
+   - DeploymentConfig - Deployment configuration
+   - RetrainingJobConfig - Complete job configuration
+   - RetrainingJob - Job state and tracking
+   - ValidationResults - Validation outcome and metrics
+   - DeploymentResults - Deployment outcome tracking
+   - RetrainingHistoryEntry - Historical job record
+   - SchedulerStatistics - Overall scheduler metrics
+
+3. Core Features:
+   - Multiple schedule types (interval, cron, performance trigger, data volume trigger, manual)
+   - Multiple validation strategies (holdout, accuracy comparison, A/B test, shadow mode, cross-validation)
+   - Multiple deployment strategies (immediate, gradual, canary, blue-green)
+   - Custom data collection functions support
+   - Concurrent job limiting
+   - Automatic schedule checking
+   - History tracking with limit/offset pagination
+   - Statistics computation
+   - Event emission for job lifecycle
+
+4. ModelRetrainingScheduler Class Methods:
+   - start() / stop() - Scheduler lifecycle
+   - addSchedule() / removeSchedule() / getSchedule() / listSchedules()
+   - triggerRetraining() - Manual job triggering
+   - getJob() / getActiveJobs() / cancelJob()
+   - getHistory() - Historical job records
+   - getStatistics() - Scheduler metrics
+   - reset() - Clear all state
+
+5. Event Types:
+   - scheduler:started, scheduler:stopped
+   - schedule:added, schedule:removed
+   - job:started, job:progress, job:completed, job:failed, job:cancelled
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 87 tests passing (tests/ai/model-retraining-scheduler.test.ts)
+- E2E tests: 23 tests passing (tests/ai/model-retraining-scheduler.e2e.test.ts)
+
+USAGE EXAMPLE:
+  import {
+    createModelRetrainingScheduler,
+    RetrainableModelType,
+    ScheduleType,
+    ValidationStrategy,
+    DeploymentStrategy,
+    TriggerReason
+  } from "@/ai";
+
+  const scheduler = createModelRetrainingScheduler({
+    maxConcurrentJobs: 2,
+    scheduleCheckIntervalMs: 60000,
+  });
+
+  // Start the scheduler
+  scheduler.start();
+
+  // Add a schedule for anomaly detection model
+  const schedule = scheduler.addSchedule({
+    modelType: RetrainableModelType.ANOMALY_DETECTION,
+    scheduleType: ScheduleType.INTERVAL,
+    intervalMs: 24 * 60 * 60 * 1000, // Daily
+    enabled: true,
+    dataCollection: {
+      sourceType: DataSourceType.LIVE,
+      lookbackPeriodMs: 7 * 24 * 60 * 60 * 1000, // 7 days
+      minSamples: 1000,
+    },
+    validation: {
+      strategy: ValidationStrategy.ACCURACY_COMPARISON,
+      minAccuracyThreshold: 0.8,
+      requiresImprovement: true,
+    },
+    deployment: {
+      strategy: DeploymentStrategy.CANARY,
+      canaryPercentage: 10,
+      rollbackOnFailure: true,
+    },
+  });
+
+  // Manually trigger retraining
+  const job = await scheduler.triggerRetraining(
+    RetrainableModelType.ANOMALY_DETECTION,
+    TriggerReason.MANUAL
+  );
+
+  // Listen to events
+  scheduler.on("job:completed", (completedJob) => {
+    console.log(`Job ${completedJob.id} completed successfully`);
+    console.log(`Accuracy improvement: ${completedJob.validationResults?.accuracyImprovement}`);
+  });
+
+  // Get statistics
+  const stats = scheduler.getStatistics();
+  console.log(stats.totalJobsRun);
+  console.log(stats.successRate);
+  console.log(stats.averageAccuracyImprovement);
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PRED-006 complete and marked in prd.json
+- Next feature to implement: Check prd.json for next highest priority with passes:false
+- Scheduler integrates with AnomalyDetectionTrainingPipeline for actual model training
+- Supports custom data collection functions for flexibility

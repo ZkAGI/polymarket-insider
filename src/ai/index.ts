@@ -518,3 +518,65 @@ export type {
   BacktestingFrameworkConfig,
   BacktestingFrameworkEvents,
 } from "./backtesting-framework";
+
+// AI-PRED-006: Model Retraining Scheduler
+export {
+  // Enums
+  RetrainableModelType,
+  ScheduleType,
+  RetrainingJobStatus,
+  DataSourceType as RetrainingDataSourceType,
+  ValidationStrategy,
+  DeploymentStrategy,
+  TriggerReason,
+
+  // Constants
+  DEFAULT_DATA_COLLECTION_CONFIG,
+  DEFAULT_VALIDATION_CONFIG,
+  DEFAULT_DEPLOYMENT_CONFIG,
+  DEFAULT_SCHEDULER_CONFIG,
+  SCHEDULE_TYPE_DESCRIPTIONS,
+  MODEL_TYPE_DESCRIPTIONS,
+
+  // Classes
+  ModelRetrainingScheduler,
+
+  // Factory functions
+  createModelRetrainingScheduler,
+  getSharedModelRetrainingScheduler,
+  setSharedModelRetrainingScheduler,
+  resetSharedModelRetrainingScheduler,
+
+  // Utility functions
+  getScheduleTypeDescription,
+  getModelTypeDescription as getRetrainableModelTypeDescription,
+  getJobStatusDescription as getRetrainingJobStatusDescription,
+  getJobStatusColor as getRetrainingJobStatusColor,
+  getTriggerReasonDescription,
+  getValidationStrategyDescription,
+  getDeploymentStrategyDescription,
+  formatDuration,
+  formatPercent,
+  formatImprovement,
+
+  // Mock data generators
+  createMockRetrainingJob,
+  createMockRetrainingSchedule,
+  createMockHistoryEntry,
+  createMockSchedulerStatistics,
+} from "./model-retraining-scheduler";
+
+export type {
+  RetrainingSchedule,
+  DataCollectionConfig,
+  ValidationConfig,
+  DeploymentConfig,
+  RetrainingJobConfig,
+  RetrainingJob,
+  ValidationResults,
+  DeploymentResults,
+  RetrainingHistoryEntry,
+  SchedulerStatistics,
+  SchedulerConfig,
+  SchedulerEvents,
+} from "./model-retraining-scheduler";
