@@ -12,3 +12,13 @@ export type { SuspicionScoreDisplayProps } from './SuspicionScoreDisplay';
 
 export { ActivitySummaryWidget } from './ActivitySummaryWidget';
 export type { ActivitySummaryWidgetProps } from './ActivitySummaryWidget';
+
+export { WalletTradingHistoryTable } from './WalletTradingHistoryTable';
+export type {
+  WalletTradingHistoryTableProps,
+  WalletTrade,
+  TradeSide,
+  TradeOutcome,
+  SortField,
+  SortDirection,
+} from './WalletTradingHistoryTable';

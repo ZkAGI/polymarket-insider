@@ -7,6 +7,10 @@ import {
   WalletProfileHeader,
   SuspicionScoreDisplay,
   ActivitySummaryWidget,
+  WalletTradingHistoryTable,
+  type WalletTrade,
+  type SortField,
+  type SortDirection,
 } from './components';
 
 // Wallet data interface
@@ -39,6 +43,62 @@ export interface WalletData {
   notes: string | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Generate mock trade data
+function generateMockTrades(walletAddress: string, count: number): WalletTrade[] {
+  const trades: WalletTrade[] = [];
+  const markets = [
+    'Will Bitcoin hit $100k in 2024?',
+    'Trump to win 2024 election?',
+    'Fed to cut rates in March 2024?',
+    'AI to achieve AGI by 2025?',
+    'Ethereum to flip Bitcoin by 2025?',
+    'Recession in 2024?',
+    'SpaceX to land on Mars by 2026?',
+    'Will GPT-5 be released in 2024?',
+    'US inflation below 2% by end of 2024?',
+    'Will Taylor Swift win a Grammy in 2024?',
+  ];
+
+  const now = new Date();
+  const hash = walletAddress.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  for (let i = 0; i < count; i++) {
+    const daysAgo = Math.floor((hash + i * 17) % 180);
+    const timestamp = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    const marketIndex = (hash + i * 13) % markets.length;
+    const outcome = (hash + i * 7) % 2 === 0 ? ('YES' as const) : ('NO' as const);
+    const side = (hash + i * 11) % 2 === 0 ? ('BUY' as const) : ('SELL' as const);
+    const size = 100 + ((hash + i * 19) % 50000);
+    const price = 0.1 + ((hash + i * 23) % 80) / 100;
+    const shares = size / price;
+    const fee = size * 0.02;
+
+    // Only resolved trades have P&L
+    const isResolved = daysAgo > 30;
+    const profitLoss = isResolved
+      ? ((hash + i * 29) % 2 === 0 ? 1 : -1) * ((hash + i * 31) % 5000)
+      : undefined;
+
+    trades.push({
+      id: `trade-${hash}-${i}`,
+      timestamp,
+      marketId: `market-${marketIndex}`,
+      marketTitle: markets[marketIndex] ?? 'Unknown Market',
+      outcome,
+      side,
+      size,
+      price,
+      shares,
+      fee,
+      txHash: `0x${(hash + i).toString(16).padStart(64, '0')}`,
+      profitLoss,
+    });
+  }
+
+  // Sort by timestamp descending
+  return trades.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
 
 // Generate mock wallet data
@@ -110,6 +170,13 @@ export default function WalletProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Trading history state
+  const [allTrades, setAllTrades] = useState<WalletTrade[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [sortField, setSortField] = useState<SortField>('timestamp');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
   useEffect(() => {
     if (!address) {
       setError('No wallet address provided');
@@ -136,6 +203,11 @@ export default function WalletProfilePage() {
         await new Promise((resolve) => setTimeout(resolve, 500));
         const mockWallet = generateMockWalletData(address);
         setWallet(mockWallet);
+
+        // Generate mock trades
+        const mockTrades = generateMockTrades(address, mockWallet.tradeCount);
+        setAllTrades(mockTrades);
+
         setError(null);
       } catch (err) {
         console.error('Error fetching wallet:', err);
@@ -157,6 +229,51 @@ export default function WalletProfilePage() {
     if (!wallet) return;
     setWallet({ ...wallet, isFlagged: !wallet.isFlagged });
   };
+
+  // Trading history handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handleSort = (field: SortField, direction: SortDirection) => {
+    setSortField(field);
+    setSortDirection(direction);
+  };
+
+  // Get sorted and paginated trades
+  const getSortedTrades = () => {
+    const sorted = [...allTrades].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case 'timestamp':
+          comparison = a.timestamp.getTime() - b.timestamp.getTime();
+          break;
+        case 'size':
+          comparison = a.size - b.size;
+          break;
+        case 'price':
+          comparison = a.price - b.price;
+          break;
+        case 'profitLoss':
+          comparison = (a.profitLoss ?? 0) - (b.profitLoss ?? 0);
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  };
+
+  const sortedTrades = getSortedTrades();
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedTrades = sortedTrades.slice(startIndex, startIndex + pageSize);
 
   if (loading) {
     return (
@@ -290,6 +407,17 @@ export default function WalletProfilePage() {
               />
             </div>
           </div>
+
+          {/* Trading history table */}
+          <WalletTradingHistoryTable
+            trades={paginatedTrades}
+            totalCount={allTrades.length}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onSort={handleSort}
+          />
         </div>
       </div>
     </div>

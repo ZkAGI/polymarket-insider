@@ -8807,3 +8807,43 @@ NOTES FOR NEXT SESSION:
 - All TypeScript types are properly defined and exported
 - Dark mode tested and fully functional
 - Responsive design tested on mobile, tablet, and desktop viewports
+
+
+====================
+
+FEATURE COMPLETED: UI-WALLET-002 - Wallet trading history table
+
+DESCRIPTION:
+Implemented comprehensive trading history table for wallet profile pages with full pagination, sorting, and row expansion functionality.
+
+COMPONENTS CREATED:
+- WalletTradingHistoryTable: Main table component with sortable columns, pagination controls, and expandable row details
+- Updated app/wallet/[address]/page.tsx: Integrated trading history table with mock data generation and state management
+
+KEY FEATURES IMPLEMENTED:
+
+WalletTradingHistoryTable:
+- Comprehensive trade data display with 8 columns
+- Sortable columns (timestamp, size, price, P&L)
+- Pagination controls (10/25/50/100 rows per page)
+- Expandable row details with shares, fee, transaction hash
+- Formatting functions for USD, percentages, and timestamps
+- Full dark mode support
+- Responsive table layout
+
+FILES CREATED/MODIFIED:
+- app/wallet/[address]/components/WalletTradingHistoryTable.tsx (new - 420+ lines)
+- app/wallet/[address]/components/index.ts (updated - added exports)
+- app/wallet/[address]/page.tsx (updated - added trading history integration)
+- tests/ui/wallet-trading-history.test.ts (new - 52 unit tests)
+- tests/e2e/wallet-trading-history.e2e.test.ts (new - 46 E2E tests)
+- wallet-profile-final-test.js (new - browser verification script)
+- plans/prd.json (updated passes: true for UI-WALLET-002)
+
+TESTS: 52 unit tests passing + 46 E2E tests written + browser automation verified successfully
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-WALLET-003 (Wallet P&L chart) at priority 131
+- Trading history table fully functional with mock data
+- Ready to connect to real API when backend is implemented
+

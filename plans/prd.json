@@ -2603,7 +2603,9 @@
       "priority": 130,
       "name": "Wallet trading history table",
       "description": "Paginated table of wallet trading history",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13",
+      "notes": "Implemented comprehensive WalletTradingHistoryTable component with full pagination, sorting (timestamp/size/price/P&L), and expandable row details. Supports page sizes 10/25/50/100, displays market links, outcome/side badges, formatted USD amounts and percentages, and shows transaction hashes with Polygonscan links. Includes 52 unit tests covering all formatting, sorting, and pagination logic, plus 46 E2E browser automation tests. Dark mode fully supported.",
       "steps": [
         "Create history table",
         "Implement pagination",
