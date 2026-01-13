@@ -10880,3 +10880,73 @@ NOTES FOR NEXT SESSION:
 - The initializeEnv() function can be called in the app startup to log configuration
 - validateEnv() returns { valid, errors, warnings } for programmatic checks
 
+
+=== Session 2026-01-14 (TG-DB-001) ===
+
+COMPLETED: TG-DB-001 - Telegram subscribers database table
+
+Summary:
+- Added TelegramSubscriber model to prisma/schema.prisma with all required fields
+- Added TelegramChatType enum (PRIVATE, GROUP, SUPERGROUP, CHANNEL)
+- Created comprehensive TelegramSubscriberService in src/db/telegram-subscribers.ts
+- Exported all types and service from src/db/index.ts
+
+Prisma Model Fields:
+- id: String @id @default(cuid())
+- chatId: BigInt @unique - Telegram chat ID
+- chatType: TelegramChatType - Type of chat
+- username: String? - Username without @
+- firstName: String? - User first name
+- lastName: String? - User last name
+- title: String? - Group/channel title
+- languageCode: String? - User language preference
+- isActive: Boolean @default(true) - Receiving alerts
+- isAdmin: Boolean @default(false) - Can use admin commands
+- alertPreferences: Json? - Alert type preferences
+- minSeverity: AlertSeverity @default(INFO) - Minimum severity to receive
+- isBlocked: Boolean @default(false) - User blocked the bot
+- alertsSent: Int @default(0) - Alert count
+- lastAlertAt: DateTime? - Last alert timestamp
+- deactivationReason: String? - Why deactivated
+- createdAt: DateTime @default(now())
+- updatedAt: DateTime @updatedAt
+
+Indexes:
+- @@index([chatId])
+- @@index([isActive])
+- @@index([chatType])
+- @@index([isAdmin])
+- @@index([chatId, isActive])
+
+Service Features:
+- Full CRUD operations (create, findById, findByChatId, update, updateByChatId, delete, deleteByChatId)
+- Upsert support for create-or-update scenarios
+- findMany with filters (chatType, isActive, isAdmin, isBlocked, minSeverity, usernameContains, date ranges)
+- Sorting and pagination support
+- Helper methods: findActive, findActiveByType, findAdmins
+- Subscription management: activate, deactivate, markBlocked
+- Alert tracking: incrementAlertsSent, updateAlertPreferences, updateMinSeverity
+- Statistics: count, getStats, isSubscribed, isAdmin
+
+Files Created:
+- src/db/telegram-subscribers.ts: Service with full CRUD and helper methods
+- tests/db/telegram-subscribers.test.ts: 48 unit tests
+
+Files Modified:
+- prisma/schema.prisma: Added TelegramChatType enum and TelegramSubscriber model
+- src/db/index.ts: Exported TelegramSubscriberService and related types
+- tests/e2e/env-validation.e2e.test.ts: Fixed TypeScript errors with process.env.NODE_ENV
+
+Verification:
+- Prisma schema validation: PASSED (npx prisma validate)
+- Prisma client generation: PASSED (npx prisma generate)
+- TypeScript typecheck: PASSED (pnpm typecheck)
+- Unit tests: 48 tests PASSED
+- E2E browser test: PASSED (homepage and dashboard render correctly)
+
+NOTES FOR NEXT SESSION:
+- TG-DB-001 complete and marked in prd.json
+- Next feature to implement: TG-BOT-001 (Telegram bot initialization with grammy)
+- TG-BOT-001 depends on TG-DB-001 (now complete)
+- The TelegramSubscriberService is ready for use by the bot implementation
+- Run "npx prisma db push" to sync schema with database when ready

@@ -224,3 +224,20 @@ export type {
   StorageStats,
   ChunkAnalysis,
 } from "./timeseries";
+
+// Telegram subscriber service exports
+export {
+  TelegramSubscriberService,
+  telegramSubscriberService,
+  createTelegramSubscriberService,
+  TelegramChatType,
+} from "./telegram-subscribers";
+export type {
+  TelegramSubscriber,
+  AlertPreferences,
+  CreateSubscriberInput,
+  UpdateSubscriberInput,
+  SubscriberFilters,
+  SubscriberSortOptions,
+  PaginatedSubscribers,
+} from "./telegram-subscribers";

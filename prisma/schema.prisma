@@ -986,3 +986,82 @@ enum JobStatus {
   /// Job scheduled for later
   SCHEDULED
 }
+
+// ===========================================================================
+// TELEGRAM BOT
+// ===========================================================================
+
+/// Chat type for Telegram subscribers
+enum TelegramChatType {
+  /// Private chat with a user
+  PRIVATE
+  /// Group chat
+  GROUP
+  /// Supergroup chat
+  SUPERGROUP
+  /// Channel
+  CHANNEL
+}
+
+/// Telegram bot subscribers (users and groups)
+model TelegramSubscriber {
+  /// Unique record ID
+  id              String   @id @default(cuid())
+
+  /// Telegram chat ID (unique identifier for the chat)
+  chatId          BigInt   @unique
+
+  /// Type of chat (private, group, supergroup, channel)
+  chatType        TelegramChatType
+
+  /// Username of the user or group (without @)
+  username        String?
+
+  /// First name of the user (for private chats)
+  firstName       String?
+
+  /// Last name of the user (for private chats)
+  lastName        String?
+
+  /// Title of the group/channel (for non-private chats)
+  title           String?
+
+  /// Language code of the user (e.g., "en", "es")
+  languageCode    String?
+
+  /// Whether the subscriber is active (receiving alerts)
+  isActive        Boolean  @default(true)
+
+  /// Whether the subscriber is an admin (can use admin commands)
+  isAdmin         Boolean  @default(false)
+
+  /// Alert preferences as JSON (which alert types to receive)
+  alertPreferences Json?
+
+  /// Minimum alert severity to receive
+  minSeverity     AlertSeverity @default(INFO)
+
+  /// Whether the subscriber has blocked the bot
+  isBlocked       Boolean  @default(false)
+
+  /// Number of alerts sent to this subscriber
+  alertsSent      Int      @default(0)
+
+  /// Last alert sent timestamp
+  lastAlertAt     DateTime?
+
+  /// Reason for deactivation (if applicable)
+  deactivationReason String?
+
+  /// When the subscription was created
+  createdAt       DateTime @default(now())
+
+  /// When the subscription was last updated
+  updatedAt       DateTime @updatedAt
+
+  @@index([chatId])
+  @@index([isActive])
+  @@index([chatType])
+  @@index([isAdmin])
+  @@index([chatId, isActive])
+}

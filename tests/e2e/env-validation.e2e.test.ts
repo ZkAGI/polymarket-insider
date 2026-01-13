@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 describe("Environment Validation E2E", () => {
   const originalEnv = { ...process.env };
+  // Cast to allow NODE_ENV modification in tests
+  const env = process.env as { NODE_ENV?: string; [key: string]: string | undefined };
 
   beforeEach(() => {
     vi.resetModules();
@@ -19,7 +21,7 @@ describe("Environment Validation E2E", () => {
 
   describe("initializeEnv", () => {
     it("should initialize without errors in development mode", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
 
       const { initializeEnv } = await import("../../config/env");
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -41,9 +43,9 @@ describe("Environment Validation E2E", () => {
     });
 
     it("should validate and log all required API URLs", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
 
-      const { env, logConfig } = await import("../../config/env");
+      const { logConfig } = await import("../../config/env");
       const logs: string[] = [];
       const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args) => {
         logs.push(args.map(a => String(a)).join(" "));
@@ -67,7 +69,7 @@ describe("Environment Validation E2E", () => {
     });
 
     it("should validate and return warnings for missing optional config", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       delete process.env.POLYGON_RPC_URL;
       delete process.env.TELEGRAM_BOT_TOKEN;
       delete process.env.DISCORD_WEBHOOK_URL;
@@ -87,7 +89,7 @@ describe("Environment Validation E2E", () => {
     });
 
     it("should redact sensitive values in logs", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       process.env.OPENAI_API_KEY = "sk-secret12345678secret";
       process.env.DATABASE_URL = "postgresql://user:supersecret@localhost:5432/db";
 
@@ -113,27 +115,27 @@ describe("Environment Validation E2E", () => {
     });
 
     it("should parse TELEGRAM_ADMIN_IDS correctly", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       process.env.TELEGRAM_ADMIN_IDS = "123456789,987654321,111222333";
 
       vi.resetModules();
-      const { env } = await import("../../config/env");
+      const { env: envConfig } = await import("../../config/env");
 
-      expect(env.TELEGRAM_ADMIN_IDS).toEqual([123456789, 987654321, 111222333]);
+      expect(envConfig.TELEGRAM_ADMIN_IDS).toEqual([123456789, 987654321, 111222333]);
     });
 
     it("should validate TELEGRAM_BOT_TOKEN format", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       process.env.TELEGRAM_BOT_TOKEN = "123456789:ABCdefGHIjklMNOpqrsTUVwxyz";
 
       vi.resetModules();
-      const { env } = await import("../../config/env");
+      const { env: envConfig } = await import("../../config/env");
 
-      expect(env.TELEGRAM_BOT_TOKEN).toBe("123456789:ABCdefGHIjklMNOpqrsTUVwxyz");
+      expect(envConfig.TELEGRAM_BOT_TOKEN).toBe("123456789:ABCdefGHIjklMNOpqrsTUVwxyz");
     });
 
     it("should throw for invalid TELEGRAM_BOT_TOKEN format", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       process.env.TELEGRAM_BOT_TOKEN = "invalid-token-format";
 
       vi.resetModules();
@@ -144,21 +146,21 @@ describe("Environment Validation E2E", () => {
     });
 
     it("should use default values when env vars not set", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       delete process.env.GAMMA_API_URL;
       delete process.env.CLOB_API_URL;
       delete process.env.CLOB_WS_URL;
 
       vi.resetModules();
-      const { env } = await import("../../config/env");
+      const { env: envConfig } = await import("../../config/env");
 
-      expect(env.GAMMA_API_URL).toBe("https://gamma-api.polymarket.com");
-      expect(env.CLOB_API_URL).toBe("https://clob.polymarket.com");
-      expect(env.CLOB_WS_URL).toBe("wss://ws-subscriptions-clob.polymarket.com/ws/market");
+      expect(envConfig.GAMMA_API_URL).toBe("https://gamma-api.polymarket.com");
+      expect(envConfig.CLOB_API_URL).toBe("https://clob.polymarket.com");
+      expect(envConfig.CLOB_WS_URL).toBe("wss://ws-subscriptions-clob.polymarket.com/ws/market");
     });
 
     it("should throw for invalid URL format in GAMMA_API_URL", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       process.env.GAMMA_API_URL = "not-a-valid-url";
 
       vi.resetModules();
@@ -169,7 +171,7 @@ describe("Environment Validation E2E", () => {
     });
 
     it("should throw for non-WebSocket URL in CLOB_WS_URL", async () => {
-      process.env.NODE_ENV = "development";
+      env.NODE_ENV = "development";
       process.env.CLOB_WS_URL = "https://example.com";
 
       vi.resetModules();
@@ -180,7 +182,7 @@ describe("Environment Validation E2E", () => {
     });
 
     it("should detect production environment issues", async () => {
-      process.env.NODE_ENV = "production";
+      env.NODE_ENV = "production";
       process.env.DATABASE_URL = "postgresql://user:password@localhost:5432/polymarket_tracker";
 
       vi.resetModules();

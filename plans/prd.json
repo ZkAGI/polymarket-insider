@@ -3389,7 +3389,8 @@
       "priority": 168,
       "name": "Telegram subscribers database table",
       "description": "Database table to store all bot subscribers (users and groups)",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T02:20:00Z",
       "steps": [
         "Add TelegramSubscriber model to prisma/schema.prisma",
         "Fields: id mod, chatId (BigInt unique), chatType (enum: PRIVATE/GROUP/SUPERGROUP/CHANNEL)",
