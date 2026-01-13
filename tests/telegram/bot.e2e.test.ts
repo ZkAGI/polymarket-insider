@@ -187,7 +187,8 @@ describe("Browser E2E Tests", () => {
 
   it("should not have any console errors on page load", async () => {
     const errors: string[] = [];
-    page.on("pageerror", (error) => {
+    page.on("pageerror", (event: unknown) => {
+      const error = event as Error;
       errors.push(error.message);
     });
 

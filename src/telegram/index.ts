@@ -15,3 +15,11 @@ export {
   type Bot,
   type Context,
 } from "./bot";
+
+export {
+  handleStartCommand,
+  createStartCommandHandler,
+  registerUserFromContext,
+  getWelcomeMessage,
+  type RegistrationResult,
+} from "./commands";

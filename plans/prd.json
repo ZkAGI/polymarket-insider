@@ -3433,7 +3433,8 @@
       "priority": 170,
       "name": "Auto-register users on /start command",
       "description": "Automatically save user to database when they send /start",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T02:35:00Z",
       "steps": [
         "Create /start command handler",
         "Extract: ctx.chat.id, ctx.chat.type, ctx.from.username, ctx.from.first_name",

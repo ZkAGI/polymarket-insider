@@ -10990,3 +10990,62 @@ NOTES FOR NEXT SESSION:
 - TG-BOT-002 depends on TG-BOT-001 (now complete)
 - The TelegramBotClient is ready for command handlers to be added
 - To actually connect to Telegram, set TELEGRAM_BOT_TOKEN in .env
+
+
+=== Session 2026-01-14 (TG-BOT-002) ===
+
+COMPLETED: TG-BOT-002 - Auto-register users on /start command
+
+Summary:
+- Created /start command handler with full registration logic
+- Handles new users, returning users, and reactivation of inactive/blocked users
+- Sends personalized welcome message with bot capabilities
+
+Implementation Details:
+
+registerUserFromContext() function:
+- Extracts chat info (id, type) and user info (username, firstName, lastName, languageCode)
+- Checks if subscriber exists in database using TelegramSubscriberService.findByChatId()
+- For new users: Creates TelegramSubscriber with default alert preferences
+- For inactive/blocked users: Reactivates them using activate() and updates their info
+- For active users: Just updates their profile info
+- Logs all registration events
+
+handleStartCommand() function:
+- Gets display name (firstName lastName for private chats, title for groups)
+- Calls registerUserFromContext() with the context
+- Sends appropriate welcome message:
+  - "Welcome to Polymarket Whale Tracker, {name}!" for new users
+  - "Welcome back, {name}!" for returning users
+- Handles errors gracefully with user-friendly error messages
+
+Default Alert Preferences:
+- whaleAlerts: true
+- insiderAlerts: true
+- marketResolutionAlerts: false
+- priceMovementAlerts: false
+- minTradeValue: 10000 ($10,000 minimum)
+- watchedMarkets: [] (empty = all markets)
+- watchedWallets: [] (empty = none specific)
+
+Files Created:
+- src/telegram/commands.ts: Command handlers implementation
+- tests/telegram/commands.test.ts: 31 unit tests
+- tests/telegram/commands.e2e.test.ts: 16 E2E tests
+
+Files Modified:
+- src/telegram/index.ts: Added exports for commands module
+- tests/telegram/bot.e2e.test.ts: Fixed TypeScript error (pageerror event type)
+
+Verification:
+- TypeScript typecheck: PASSED (pnpm typecheck)
+- Unit tests: 31 tests PASSED
+- E2E tests: 16 tests PASSED (including browser tests)
+- All telegram module tests: 96 tests PASSED
+
+NOTES FOR NEXT SESSION:
+- TG-BOT-002 complete and marked in prd.json
+- Next feature to implement: TG-BOT-003 (Auto-register groups when bot added)
+- TG-BOT-003 will need to use bot.on('my_chat_member') event
+- The /start command handler is ready and can be registered using bot.onCommand("start", handler)
+- Commands module exports: handleStartCommand, createStartCommandHandler, registerUserFromContext, getWelcomeMessage
