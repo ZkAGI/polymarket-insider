@@ -2830,6 +2830,597 @@
       }
     },
     {
+      "id": "NOTIF-EMAIL-001",
+      "priority": 141,
+      "name": "Email service integration",
+      "description": "Integrate email service provider (SendGrid, Resend, etc.)",
+      "passes": true,
+      "completed_at": "2026-01-13T15:45:00Z",
+      "notes": "Implemented comprehensive email service integration using Resend as the email provider. Features: EmailClient class with configurable settings (apiKey, defaultFrom, defaultFromName, defaultReplyTo, devMode, rateLimit, maxRetries, retryDelay), development mode that logs instead of sending, rate limiting with token bucket algorithm, exponential backoff retry logic, event emission (sending/sent/failed/delivered/bounced), batch email sending with configurable batch size, email validation (recipients, subject, content), support for HTML/text content, CC/BCC recipients, custom headers and tags, email priority levels, statistics tracking. Created types for EmailMessage, EmailSendResult, EmailClientConfig, BatchEmailResult, AlertEmailData, DigestEmailData. Helper functions: normalizeRecipients, extractEmails, isValidEmail, formatRecipient. Environment variables: RESEND_API_KEY, EMAIL_FROM, EMAIL_FROM_NAME. 58 unit tests and 23 E2E tests pass. TypeScript types verified clean.",
+      "steps": [
+        "Choose email provider",
+        "Install SDK",
+        "Configure API keys",
+        "Create email client"
+      ],
+      "test_instructions": {
+        "unit": "Test email client",
+        "typecheck": "Verify types",
+        "e2e": "Send test email",
+        "manual_verification": "Check inbox"
+      }
+    },
+    {
+      "id": "NOTIF-EMAIL-002",
+      "priority": 142,
+      "name": "Alert email template",
+      "description": "HTML email template for alert notifications",
+      "passes": false,
+      "steps": [
+        "Design email template",
+        "Use email-safe HTML/CSS",
+        "Add dynamic content",
+        "Test rendering"
+      ],
+      "test_instructions": {
+        "unit": "Test template rendering",
+        "typecheck": "Verify types",
+        "e2e": "Send templated email",
+        "manual_verification": "Verify email appearance"
+      }
+    },
+    {
+      "id": "NOTIF-EMAIL-003",
+      "priority": 143,
+      "name": "Daily digest email",
+      "description": "Daily summary email of activity and alerts",
+      "passes": false,
+      "steps": [
+        "Aggregate daily data",
+        "Create digest template",
+        "Schedule sending",
+        "Handle timezone"
+      ],
+      "test_instructions": {
+        "unit": "Test digest generation",
+        "typecheck": "Verify types",
+        "e2e": "Generate and send digest",
+        "manual_verification": "Verify digest content"
+      }
+    },
+    {
+      "id": "NOTIF-TG-001",
+      "priority": 144,
+      "name": "Telegram bot setup",
+      "description": "Create and configure Telegram bot",
+      "passes": false,
+      "steps": [
+        "Create bot with BotFather",
+        "Get bot token",
+        "Set up webhook or polling",
+        "Handle bot commands"
+      ],
+      "test_instructions": {
+        "unit": "Test bot configuration",
+        "typecheck": "Verify types",
+        "e2e": "Send test message",
+        "manual_verification": "Receive in Telegram"
+      }
+    },
+    {
+      "id": "NOTIF-TG-002",
+      "priority": 145,
+      "name": "Telegram alert message formatter",
+      "description": "Format alert messages for Telegram",
+      "passes": false,
+      "steps": [
+        "Create message formatter",
+        "Use Telegram markdown",
+        "Include relevant data",
+        "Add action buttons"
+      ],
+      "test_instructions": {
+        "unit": "Test message formatting",
+        "typecheck": "Verify types",
+        "e2e": "Send formatted alert",
+        "manual_verification": "Verify message appearance"
+      }
+    },
+    {
+      "id": "NOTIF-TG-003",
+      "priority": 146,
+      "name": "Telegram instant notifications",
+      "description": "Send instant alerts via Telegram",
+      "passes": false,
+      "steps": [
+        "Create send function",
+        "Handle rate limits",
+        "Track delivery status",
+        "Handle errors"
+      ],
+      "test_instructions": {
+        "unit": "Test send function",
+        "typecheck": "Verify types",
+        "e2e": "Trigger instant alert",
+        "manual_verification": "Receive notification"
+      }
+    },
+    {
+      "id": "NOTIF-DC-001",
+      "priority": 147,
+      "name": "Discord webhook setup",
+      "description": "Configure Discord webhook for notifications",
+      "passes": false,
+      "steps": [
+        "Create Discord webhook",
+        "Store webhook URL",
+        "Test webhook connection",
+        "Handle webhook errors"
+      ],
+      "test_instructions": {
+        "unit": "Test webhook config",
+        "typecheck": "Verify types",
+        "e2e": "Send test message",
+        "manual_verification": "Check Discord channel"
+      }
+    },
+    {
+      "id": "NOTIF-DC-002",
+      "priority": 148,
+      "name": "Discord embed formatter",
+      "description": "Format alerts as Discord embeds",
+      "passes": false,
+      "steps": [
+        "Create embed builder",
+        "Design embed layout",
+        "Add fields and colors",
+        "Include timestamps"
+      ],
+      "test_instructions": {
+        "unit": "Test embed creation",
+        "typecheck": "Verify types",
+        "e2e": "Send embedded alert",
+        "manual_verification": "Verify embed appearance"
+      }
+    },
+    {
+      "id": "NOTIF-PUSH-001",
+      "priority": 149,
+      "name": "Web push notification setup",
+      "description": "Configure web push notifications",
+      "passes": false,
+      "steps": [
+        "Generate VAPID keys",
+        "Create push service",
+        "Handle subscriptions",
+        "Store subscription endpoints"
+      ],
+      "test_instructions": {
+        "unit": "Test push config",
+        "typecheck": "Verify types",
+        "e2e": "Send test push",
+        "manual_verification": "Receive browser notification"
+      }
+    },
+    {
+      "id": "NOTIF-PUSH-002",
+      "priority": 150,
+      "name": "Push notification service worker",
+      "description": "Service worker for background push",
+      "passes": false,
+      "steps": [
+        "Create service worker",
+        "Handle push events",
+        "Show notification",
+        "Handle notification clicks"
+      ],
+      "test_instructions": {
+        "unit": "Test service worker",
+        "typecheck": null,
+        "e2e": "Receive background push",
+        "manual_verification": "Verify notification shown"
+      }
+    },
+    {
+      "id": "NOTIF-CORE-001",
+      "priority": 151,
+      "name": "Notification queue system",
+      "description": "Queue system for processing notifications",
+      "passes": false,
+      "steps": [
+        "Create notification queue",
+        "Process queue async",
+        "Handle failures",
+        "Monitor queue depth"
+      ],
+      "test_instructions": {
+        "unit": "Test queue operations",
+        "typecheck": "Verify types",
+        "e2e": "Queue and process notifications",
+        "manual_verification": "Verify queue processing"
+      }
+    },
+    {
+      "id": "NOTIF-CORE-002",
+      "priority": 152,
+      "name": "Notification deduplication",
+      "description": "Prevent duplicate notifications for same alert",
+      "passes": false,
+      "steps": [
+        "Generate notification ID",
+        "Check for duplicates",
+        "Skip duplicates",
+        "Log deduplication"
+      ],
+      "test_instructions": {
+        "unit": "Test dedup logic",
+        "typecheck": "Verify types",
+        "e2e": "Test with duplicate alerts",
+        "manual_verification": "Verify no duplicates"
+      }
+    },
+    {
+      "id": "NOTIF-CORE-003",
+      "priority": 153,
+      "name": "Notification rate limiting",
+      "description": "Rate limit notifications to prevent spam",
+      "passes": false,
+      "steps": [
+        "Define rate limits",
+        "Track notification counts",
+        "Throttle when exceeded",
+        "Queue for later"
+      ],
+      "test_instructions": {
+        "unit": "Test rate limiting",
+        "typecheck": "Verify types",
+        "e2e": "Test burst of notifications",
+        "manual_verification": "Verify throttling works"
+      }
+    },
+    {
+      "id": "NOTIF-CORE-004",
+      "priority": 154,
+      "name": "Multi-channel notification router",
+      "description": "Route notifications to configured channels",
+      "passes": false,
+      "steps": [
+        "Get user channel preferences",
+        "Route to enabled channels",
+        "Handle channel failures",
+        "Log routing decisions"
+      ],
+      "test_instructions": {
+        "unit": "Test routing logic",
+        "typecheck": "Verify types",
+        "e2e": "Route to multiple channels",
+        "manual_verification": "Verify multi-channel delivery"
+      }
+    },
+    {
+      "id": "AI-PAT-001",
+      "priority": 155,
+      "name": "Anomaly detection model training pipeline",
+      "description": "Pipeline to train anomaly detection models on historical data",
+      "passes": false,
+      "steps": [
+        "Prepare training data",
+        "Define model architecture",
+        "Train model",
+        "Evaluate performance"
+      ],
+      "test_instructions": {
+        "unit": "Test pipeline components",
+        "typecheck": "Verify types",
+        "e2e": "Run training pipeline",
+        "manual_verification": "Verify model quality"
+      }
+    },
+    {
+      "id": "AI-PAT-002",
+      "priority": 156,
+      "name": "Real-time anomaly scoring",
+      "description": "Score incoming trades for anomaly probability",
+      "passes": false,
+      "steps": [
+        "Load trained model",
+        "Extract features from trade",
+        "Run inference",
+        "Return anomaly score"
+      ],
+      "test_instructions": {
+        "unit": "Test scoring function",
+        "typecheck": "Verify types",
+        "e2e": "Score live trades",
+        "manual_verification": "Verify scoring accuracy"
+      }
+    },
+    {
+      "id": "AI-PAT-003",
+      "priority": 157,
+      "name": "Wallet clustering algorithm",
+      "description": "Cluster wallets by behavioral similarity",
+      "passes": false,
+      "steps": [
+        "Extract wallet features",
+        "Apply clustering algorithm",
+        "Assign cluster labels",
+        "Update clusters periodically"
+      ],
+      "test_instructions": {
+        "unit": "Test clustering logic",
+        "typecheck": "Verify types",
+        "e2e": "Cluster active wallets",
+        "manual_verification": "Verify cluster quality"
+      }
+    },
+    {
+      "id": "AI-NLP-001",
+      "priority": 158,
+      "name": "Alert summary generator",
+      "description": "Generate natural language summaries of alerts",
+      "passes": false,
+      "steps": [
+        "Create summary template",
+        "Extract key details",
+        "Generate readable summary",
+        "Handle edge cases"
+      ],
+      "test_instructions": {
+        "unit": "Test summary generation",
+        "typecheck": "Verify types",
+        "e2e": "Generate live summaries",
+        "manual_verification": "Verify summary quality"
+      }
+    },
+    {
+      "id": "AI-NLP-002",
+      "priority": 159,
+      "name": "Market context analyzer",
+      "description": "Analyze market context from news/social media",
+      "passes": false,
+      "steps": [
+        "Fetch relevant news",
+        "Extract market mentions",
+        "Analyze sentiment",
+        "Correlate with activity"
+      ],
+      "test_instructions": {
+        "unit": "Test context analysis",
+        "typecheck": "Verify types",
+        "e2e": "Analyze live context",
+        "manual_verification": "Verify context relevance"
+      }
+    },
+    {
+      "id": "AI-PRED-001",
+      "priority": 160,
+      "name": "Insider probability predictor",
+      "description": "Predict probability that activity is insider-related",
+      "passes": false,
+      "steps": [
+        "Define feature set",
+        "Train classifier",
+        "Calculate probability",
+        "Calibrate predictions"
+      ],
+      "test_instructions": {
+        "unit": "Test predictor",
+        "typecheck": "Verify types",
+        "e2e": "Predict on live data",
+        "manual_verification": "Verify prediction quality"
+      }
+    },
+    {
+      "id": "AI-PRED-002",
+      "priority": 161,
+      "name": "Market outcome predictor",
+      "description": "Predict market outcomes based on insider signals",
+      "passes": false,
+      "steps": [
+        "Collect signal history",
+        "Train outcome predictor",
+        "Generate predictions",
+        "Track prediction accuracy"
+      ],
+      "test_instructions": {
+        "unit": "Test predictor",
+        "typecheck": "Verify types",
+        "e2e": "Predict outcomes",
+        "manual_verification": "Track prediction success"
+      }
+    },
+    {
+      "id": "AI-PRED-003",
+      "priority": 162,
+      "name": "Signal effectiveness tracker",
+      "description": "Track which signals historically predicted outcomes",
+      "passes": false,
+      "steps": [
+        "Log signal occurrences",
+        "Track subsequent outcomes",
+        "Calculate signal effectiveness",
+        "Rank signals by value"
+      ],
+      "test_instructions": {
+        "unit": "Test tracking logic",
+        "typecheck": "Verify types",
+        "e2e": "Track live signals",
+        "manual_verification": "Verify effectiveness metrics"
+      }
+    },
+    {
+      "id": "AI-PRED-004",
+      "priority": 163,
+      "name": "Model performance dashboard",
+      "description": "Dashboard showing AI model performance metrics",
+      "passes": false,
+      "steps": [
+        "Collect model metrics",
+        "Create performance charts",
+        "Show accuracy over time",
+        "Alert on performance drops"
+      ],
+      "test_instructions": {
+        "unit": "Test dashboard components",
+        "typecheck": "Verify types",
+        "e2e": "View performance dashboard",
+        "manual_verification": "Verify metrics accuracy"
+      }
+    },
+    {
+      "id": "AI-PRED-005",
+      "priority": 164,
+      "name": "Backtesting framework",
+      "description": "Framework to backtest detection strategies",
+      "passes": false,
+      "steps": [
+        "Create backtesting engine",
+        "Load historical data",
+        "Simulate detection logic",
+        "Generate backtest reports"
+      ],
+      "test_instructions": {
+        "unit": "Test backtesting engine",
+        "typecheck": "Verify types",
+        "e2e": "Run full backtest",
+        "manual_verification": "Verify backtest results"
+      }
+    },
+    {
+      "id": "AI-PRED-006",
+      "priority": 165,
+      "name": "Model retraining scheduler",
+      "description": "Automated retraining of models on new data",
+      "passes": false,
+      "steps": [
+        "Schedule retraining jobs",
+        "Collect new training data",
+        "Retrain models",
+        "Validate before deployment"
+      ],
+      "test_instructions": {
+        "unit": "Test scheduler logic",
+        "typecheck": "Verify types",
+        "e2e": "Trigger retraining",
+        "manual_verification": "Verify model updated"
+      }
+    },
+    {
+      "id": "TEST-API-001",
+      "priority": 166,
+      "name": "Gamma API client unit tests",
+      "description": "Unit tests for Gamma API client methods",
+      "passes": false,
+      "steps": [
+        "Mock API responses",
+        "Test each client method",
+        "Test error handling",
+        "Achieve 90%+ coverage"
+      ],
+      "test_instructions": {
+        "unit": "Run Gamma API tests",
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Review test coverage"
+      }
+    },
+    {
+      "id": "TEST-API-002",
+      "priority": 167,
+      "name": "CLOB API client unit tests",
+      "description": "Unit tests for CLOB API client methods",
+      "passes": false,
+      "steps": [
+        "Mock CLOB responses",
+        "Test each client method",
+        "Test authentication",
+        "Test error scenarios"
+      ],
+      "test_instructions": {
+        "unit": "Run CLOB API tests",
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Review test coverage"
+      }
+    },
+    {
+      "id": "TEST-API-003",
+      "priority": 168,
+      "name": "WebSocket connection tests",
+      "description": "Tests for WebSocket connection handling",
+      "passes": false,
+      "steps": [
+        "Mock WebSocket server",
+        "Test connection lifecycle",
+        "Test reconnection logic",
+        "Test message handling"
+      ],
+      "test_instructions": {
+        "unit": "Run WebSocket tests",
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Review connection scenarios"
+      }
+    },
+    {
+      "id": "TEST-API-004",
+      "priority": 169,
+      "name": "API error handling tests",
+      "description": "Tests for API error handling and retry logic",
+      "passes": false,
+      "steps": [
+        "Simulate various errors",
+        "Test retry behavior",
+        "Test backoff timing",
+        "Test error reporting"
+      ],
+      "test_instructions": {
+        "unit": "Run error handling tests",
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Verify error recovery"
+      }
+    },
+    {
+      "id": "TEST-API-005",
+      "priority": 170,
+      "name": "Rate limiter tests",
+      "description": "Tests for rate limiting functionality",
+      "passes": false,
+      "steps": [
+        "Test token bucket",
+        "Test request queuing",
+        "Test limit enforcement",
+        "Test concurrent requests"
+      ],
+      "test_instructions": {
+        "unit": "Run rate limiter tests",
+        "typecheck": null,
+        "e2e": null,
+        "manual_verification": "Verify rate limiting"
+      }
+    },
+    {
+      "id": "TEST-API-006",
+      "priority": 171,
+      "name": "API integration tests",
+      "description": "Integration tests with mocked API responses",
+      "passes": false,
+      "steps": [
+        "Set up mock server",
+        "Test end-to-end flows",
+        "Test data transformation",
+        "Test caching behavior"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "typecheck": null,
+        "e2e": "Run integration tests",
+        "manual_verification": "Review integration coverage"
+      }
+    },
+    {
       "id": "TEST-PERF-001",
       "priority": 200,
       "name": "Performance benchmarks",
