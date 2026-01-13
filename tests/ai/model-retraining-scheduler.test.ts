@@ -44,12 +44,6 @@ import {
   createMockRetrainingSchedule,
   createMockHistoryEntry,
   createMockSchedulerStatistics,
-  RetrainingSchedule,
-  DataCollectionConfig,
-  ValidationConfig,
-  DeploymentConfig,
-  RetrainingJob,
-  SchedulerConfig,
 } from "../../src/ai/model-retraining-scheduler";
 
 describe("ModelRetrainingScheduler", () => {
@@ -269,7 +263,7 @@ describe("ModelRetrainingScheduler", () => {
       );
 
       expect(eventSpy).toHaveBeenCalled();
-      expect(eventSpy.mock.calls[0][0].scheduleId).toBeDefined();
+      expect(eventSpy.mock.calls[0]?.[0]?.scheduleId).toBeDefined();
     });
 
     it("should emit schedule_updated event", () => {
@@ -300,7 +294,7 @@ describe("ModelRetrainingScheduler", () => {
       scheduler.deleteSchedule(schedule.scheduleId);
 
       expect(eventSpy).toHaveBeenCalled();
-      expect(eventSpy.mock.calls[0][0].scheduleId).toBe(schedule.scheduleId);
+      expect(eventSpy.mock.calls[0]?.[0]?.scheduleId).toBe(schedule.scheduleId);
     });
   });
 
@@ -574,7 +568,7 @@ describe("ModelRetrainingScheduler", () => {
       scheduler.updateConfig({ maxConcurrentJobs: 5 });
 
       // Trigger multiple jobs sequentially to avoid timing issues
-      const job1 = await scheduler.triggerRetraining(
+      await scheduler.triggerRetraining(
         RetrainableModelType.ANOMALY_DETECTION,
         TriggerReason.MANUAL
       );
@@ -582,7 +576,7 @@ describe("ModelRetrainingScheduler", () => {
       // Wait for first job to complete
       await new Promise((r) => setTimeout(r, 1200));
 
-      const job2 = await scheduler.triggerRetraining(
+      await scheduler.triggerRetraining(
         RetrainableModelType.ANOMALY_DETECTION,
         TriggerReason.MANUAL
       );
@@ -590,7 +584,7 @@ describe("ModelRetrainingScheduler", () => {
       // Wait for second job to complete
       await new Promise((r) => setTimeout(r, 1200));
 
-      const job3 = await scheduler.triggerRetraining(
+      await scheduler.triggerRetraining(
         RetrainableModelType.ANOMALY_DETECTION,
         TriggerReason.MANUAL
       );

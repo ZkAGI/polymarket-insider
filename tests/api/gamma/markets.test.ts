@@ -19,10 +19,10 @@ import {
   getMarketPriceHistoryBySlug,
   getTrendingMarkets,
   parseSlugFromUrl,
-} from "@/api/gamma/markets";
-import { GammaClient, GammaApiException } from "@/api/gamma/client";
-import type { GammaMarket, GammaMarketsResponse } from "@/api/gamma/types";
-import { MarketCategory } from "@/api/gamma/types";
+} from "../../../src/api/gamma/markets";
+import { GammaClient, GammaApiException } from "../../../src/api/gamma/client";
+import type { GammaMarket, GammaMarketsResponse } from "../../../src/api/gamma/types";
+import { MarketCategory } from "../../../src/api/gamma/types";
 
 // Mock fetch globally
 const mockFetch = vi.fn();

@@ -183,12 +183,12 @@ describe("Model Retraining Scheduler E2E Tests", () => {
       // Update to allow only 2 concurrent jobs
       scheduler.updateConfig({ maxConcurrentJobs: 2 });
 
-      const job1 = await scheduler.triggerRetraining(
+      await scheduler.triggerRetraining(
         RetrainableModelType.ANOMALY_DETECTION,
         TriggerReason.MANUAL
       );
 
-      const job2 = await scheduler.triggerRetraining(
+      await scheduler.triggerRetraining(
         RetrainableModelType.INSIDER_PREDICTOR,
         TriggerReason.MANUAL
       );
@@ -240,7 +240,7 @@ describe("Model Retraining Scheduler E2E Tests", () => {
 
       // Verify custom data function was called
       expect(dataCollectionFn).toHaveBeenCalled();
-      expect(dataCollectionFn.mock.calls[0][0]).toBe(
+      expect(dataCollectionFn.mock.calls[0]?.[0]).toBe(
         RetrainableModelType.ANOMALY_DETECTION
       );
 
@@ -412,7 +412,7 @@ describe("Model Retraining Scheduler E2E Tests", () => {
   describe("History and Statistics Tracking", () => {
     it("should track complete retraining history", async () => {
       // Run multiple retraining jobs
-      const jobs = await Promise.all([
+      await Promise.all([
         scheduler.triggerRetraining(
           RetrainableModelType.ANOMALY_DETECTION,
           TriggerReason.MANUAL

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { GammaClient, GammaApiException, createGammaClient, gammaClient } from "@/api/gamma/client";
+import { GammaClient, GammaApiException, createGammaClient, gammaClient } from "../../../src/api/gamma/client";
 
 // Mock fetch globally
 const mockFetch = vi.fn();

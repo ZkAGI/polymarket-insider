@@ -20,8 +20,8 @@ import {
   withErrorHandlingOrThrow,
   ErrorLogger,
   ErrorContext,
-} from "@/api/gamma/error-handler";
-import { GammaApiException } from "@/api/gamma/client";
+} from "../../../src/api/gamma/error-handler";
+import { GammaApiException } from "../../../src/api/gamma/client";
 
 describe("classifyError", () => {
   describe("GammaApiException classification", () => {
