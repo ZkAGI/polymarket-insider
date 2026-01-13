@@ -87,3 +87,41 @@ export {
   createInMemoryStorage,
   createSubscriptionManager,
 } from "./storage";
+
+// Service Worker utilities (client-side only)
+export {
+  // Types
+  type ServiceWorkerMessageType,
+  type ServiceWorkerMessageBase,
+  type GetVersionMessage,
+  type SkipWaitingMessage,
+  type ShowNotificationMessage,
+  type ServiceWorkerMessage,
+  type VersionResponse,
+  type NavigateMessage,
+  ServiceWorkerState,
+  type ServiceWorkerRegistrationResult,
+  type ServiceWorkerUpdateResult,
+  // Functions
+  isServiceWorkerSupported,
+  isPushSupported,
+  isNotificationSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  registerServiceWorker,
+  getServiceWorkerRegistration,
+  unregisterServiceWorker,
+  sendMessageToServiceWorker,
+  getServiceWorkerVersion,
+  checkForUpdates,
+  applyUpdate,
+  subscribeToPush,
+  getPushSubscription,
+  unsubscribeFromPush,
+  convertPushSubscription,
+  showNotification,
+  urlBase64ToUint8Array,
+  uint8ArrayToBase64Url,
+  onNavigateMessage,
+  waitForServiceWorkerReady,
+} from "./service-worker";

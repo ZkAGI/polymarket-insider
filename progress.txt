@@ -9755,3 +9755,85 @@ NOTES FOR NEXT SESSION:
 - Next feature: NOTIF-PUSH-002 (Push notification service worker)
 - Integration: Use PushClient.send() with stored subscriptions
 - For production: Set devMode: false and use real push endpoints
+
+---
+
+=== Session 2026-01-13 ===
+
+COMPLETED: NOTIF-PUSH-002 - Push notification service worker
+
+WHAT WAS IMPLEMENTED:
+1. Created public/sw.js - Service worker for push notifications
+   - Push event handler that receives and parses notification payloads
+   - Shows notifications with full customization support
+   - Handles notification clicks with URL navigation
+   - Supports action buttons and custom click handlers
+   - Version tracking and message handling
+
+2. Created src/notifications/push/service-worker.ts - TypeScript utilities
+   - Service worker registration and management
+   - Push subscription handling
+   - Navigation message handling
+   - Base64 URL encoding/decoding utilities
+   - Version checking and updates
+
+SERVICE WORKER FEATURES:
+- Push event handling with JSON payload parsing
+- Notification display with:
+  - Custom icons, badges, images
+  - Action buttons
+  - Vibration patterns
+  - Silent mode support
+  - Require interaction option
+  - Tag-based grouping
+  - Renotify support
+  - Directional text (ltr/rtl)
+  - Timestamp display
+- Notification click handling:
+  - Opens URLs from notification data
+  - Action-specific handlers (view_alert, view_market, view_wallet, dismiss, settings)
+  - Window focus/navigation
+  - Multi-window support
+- Message handling (GET_VERSION, SKIP_WAITING, SHOW_NOTIFICATION)
+- Auto-skip waiting on install
+- Clients.claim() on activate
+
+TYPESCRIPT UTILITIES:
+- registerServiceWorker(path, scope) - Register with lifecycle tracking
+- getServiceWorkerRegistration() - Get current registration
+- unregisterServiceWorker() - Unregister cleanly
+- sendMessageToServiceWorker(message) - Communicate with SW
+- getServiceWorkerVersion() - Get SW version
+- checkForUpdates() - Check for new SW version
+- applyUpdate() - Skip waiting and activate new SW
+- subscribeToPush(vapidKey) - Subscribe to push notifications
+- getPushSubscription() - Get current subscription
+- unsubscribeFromPush() - Unsubscribe
+- convertPushSubscription() - Convert browser subscription to internal format
+- showNotification(payload) - Show notification via SW
+- onNavigateMessage(callback) - Handle navigation from SW
+- waitForServiceWorkerReady(timeout) - Wait for SW activation
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 64 tests passing (tests/notifications/push/service-worker.test.ts)
+  - Feature detection tests
+  - Notification permission tests
+  - Service worker registration tests
+  - Message handling tests
+  - Push subscription tests
+  - Base64 encoding tests
+  - Notification options building tests
+  - Click handling tests
+
+FILES CREATED:
+- public/sw.js (Service worker, 275 lines)
+- src/notifications/push/service-worker.ts (TypeScript utilities, 470 lines)
+- tests/notifications/push/service-worker.test.ts (Unit tests, 1000 lines)
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-PUSH-002 complete and marked in prd.json
+- Service worker is registered automatically when subscribing to push
+- Next feature: NOTIF-CORE-001 (Notification queue system)
+- Integration: Import from src/notifications/push/service-worker.ts
+- For browser use: registerServiceWorker() then subscribeToPush()
