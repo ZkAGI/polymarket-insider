@@ -10404,3 +10404,101 @@ NOTES FOR NEXT SESSION:
 - Next feature to implement: Check prd.json for next highest priority with passes:false
 - Market outcome predictor integrates with insider probability predictor via insiderProbability field
 - Training improves model weights based on historical prediction accuracy
+
+================================================================================
+FEATURE: AI-PRED-004 - Model performance dashboard
+================================================================================
+STATUS: COMPLETE
+COMPLETED: 2026-01-13
+
+IMPLEMENTATION:
+Created comprehensive model performance dashboard that aggregates metrics from all AI models.
+
+FILES CREATED:
+1. src/ai/model-performance-dashboard.ts
+   - ModelPerformanceDashboard class with EventEmitter pattern
+   - Types: ModelType, AlertSeverity, DashboardTimeWindow
+   - Interfaces: ModelPerformanceMetrics, AccuracyDataPoint, AccuracyTrend,
+     PerformanceAlert, DashboardSummary, PerformanceChartData, DashboardConfig
+   - Integration with InsiderProbabilityPredictor, MarketOutcomePredictor,
+     SignalEffectivenessTracker
+   - Caching with configurable TTL
+   - Auto-refresh capability
+   - Alert generation on performance drops
+   - Chart data generation for visualization
+
+2. app/components/ai/ModelPerformanceDashboard.tsx
+   - React component for dashboard visualization
+   - Sub-components: HealthBadge, TrendIndicator, StatCard, ModelCard, AlertCard
+   - Time window selector
+   - Integration with LineChart and BarChart components
+   - Loading and empty states
+   - Responsive layout with Tailwind CSS
+
+3. tests/ai/model-performance-dashboard.test.ts
+   - 78 unit tests covering all service functionality
+
+4. tests/e2e/model-performance-dashboard.e2e.test.ts
+   - 60 E2E tests covering full integration flows
+
+KEY FEATURES:
+- Metrics collection from all AI models (InsiderPredictor, MarketPredictor, SignalTracker)
+- Performance metrics: accuracy, precision, recall, F1 score, Brier score, AUC-ROC
+- Confusion matrix tracking (TP, TN, FP, FN)
+- Accuracy trends over time with rolling averages
+- Health score calculation (0-100)
+- Alert system with severity levels (INFO, WARNING, CRITICAL)
+- Configurable thresholds for warnings and alerts
+- Time window analysis (1h, 24h, 7d, 30d, all-time)
+- Chart data generation for model comparison, accuracy over time, confusion matrix
+- Data export functionality
+- Statistics tracking
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 78 tests passing (tests/ai/model-performance-dashboard.test.ts)
+- E2E tests: 60 tests passing (tests/e2e/model-performance-dashboard.e2e.test.ts)
+
+USAGE EXAMPLE:
+  import {
+    createModelPerformanceDashboard,
+    ModelType,
+    DashboardTimeWindow
+  } from "@/ai";
+
+  const dashboard = createModelPerformanceDashboard({
+    cacheEnabled: true,
+    cacheTtlMs: 60000,
+    alertingEnabled: true,
+    accuracyWarningThreshold: 0.55,
+  });
+
+  // Register AI models
+  dashboard.registerInsiderPredictor(insiderPredictor);
+  dashboard.registerMarketPredictor(marketPredictor);
+  dashboard.registerSignalTracker(signalTracker);
+
+  // Get dashboard summary
+  const summary = dashboard.getDashboardSummary();
+  console.log(summary.overallHealth);    // "HEALTHY" | "WARNING" | "CRITICAL"
+  console.log(summary.healthScore);      // 0-100
+  console.log(summary.averageAccuracy);  // Model average accuracy
+
+  // Get accuracy trends
+  const trends = dashboard.getAllAccuracyTrends();
+
+  // Get chart data for visualization
+  const comparisonChart = dashboard.getAccuracyComparisonChart();
+  const healthGauge = dashboard.getHealthGaugeChart();
+
+  // Get alerts
+  const alerts = dashboard.getAlerts();
+
+  // Export all data
+  const exported = dashboard.exportData();
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PRED-004 complete and marked in prd.json
+- Next feature to implement: Check prd.json for next highest priority with passes:false
+- Dashboard provides centralized view of all AI model performance
+- Alerts trigger on performance drops below configurable thresholds
