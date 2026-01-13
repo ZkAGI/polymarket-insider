@@ -3264,7 +3264,8 @@
       "priority": 162,
       "name": "Signal effectiveness tracker",
       "description": "Track which signals historically predicted outcomes",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T23:10:00.000Z",
       "steps": [
         "Log signal occurrences",
         "Track subsequent outcomes",

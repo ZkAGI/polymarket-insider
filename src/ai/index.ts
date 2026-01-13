@@ -394,3 +394,60 @@ export type {
   MarketOutcomePredictorConfig,
   MarketOutcomePredictorEvents,
 } from "./market-outcome-predictor";
+
+// AI-PRED-003: Signal Effectiveness Tracker
+export {
+  // Enums
+  TrackedSignalType,
+  SignalPrediction,
+  SignalOutcomeStatus,
+  EffectivenessTimeWindow,
+  EffectivenessTier,
+
+  // Constants
+  DEFAULT_TRACKER_CONFIG,
+  SIGNAL_TYPE_DESCRIPTIONS,
+
+  // Classes
+  SignalEffectivenessTracker,
+
+  // Factory functions
+  createSignalEffectivenessTracker,
+  getSharedSignalEffectivenessTracker,
+  setSharedSignalEffectivenessTracker,
+  resetSharedSignalEffectivenessTracker,
+
+  // Utility functions
+  generateOccurrenceId,
+  getSignalTypeDescription as getTrackedSignalTypeDescription,
+  getEffectivenessTier,
+  getEffectivenessTierDescription,
+  getEffectivenessTierColor,
+  calculateLift,
+  calculateConfidenceInterval,
+  calculateF1Score,
+  getTimeWindowMs,
+  getTimeWindowCutoff,
+  formatAccuracy,
+  formatLift,
+  determineTrend,
+  isStatisticallySignificant,
+
+  // Mock data generators
+  createMockSignalOccurrence,
+  createMockSignalOccurrenceBatch,
+  createMockOccurrencesWithAccuracy,
+} from "./signal-effectiveness-tracker";
+
+export type {
+  SignalOccurrence,
+  SignalEffectivenessMetrics,
+  CategoryEffectivenessMetrics,
+  SignalRanking,
+  HistoricalEffectivenessPoint,
+  HistoricalEffectivenessTrend,
+  BatchOutcomeUpdateResult,
+  SignalComparisonResult,
+  SignalEffectivenessTrackerConfig,
+  SignalEffectivenessTrackerEvents,
+} from "./signal-effectiveness-tracker";
