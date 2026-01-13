@@ -50,3 +50,45 @@ export type {
   TrainingJobStatus,
   PipelineEvents,
 } from "./anomaly-detection-training";
+
+// AI-PAT-002: Real-time Anomaly Scoring
+export {
+  // Enums
+  AnomalyRiskLevel,
+
+  // Constants
+  DEFAULT_SCORING_CONFIG,
+
+  // Classes
+  RealtimeAnomalyScorer,
+
+  // Factory functions
+  createRealtimeAnomalyScorer,
+  getSharedRealtimeAnomalyScorer,
+  setSharedRealtimeAnomalyScorer,
+  resetSharedRealtimeAnomalyScorer,
+
+  // Utility functions
+  getRiskLevelDescription,
+  getRiskLevelColor,
+  formatAnomalyScore,
+  shouldTriggerAlert,
+  createMockTrade,
+  createMockWalletContext,
+  createMockMarketContext,
+} from "./realtime-anomaly-scoring";
+
+export type {
+  TradeData,
+  WalletContext,
+  MarketContext,
+  AnomalyScoreResult,
+  ContributingFactor,
+  BatchScoringResult,
+  ScoreDistribution,
+  RealtimeScoringConfig,
+  RiskThresholds,
+  CacheConfig,
+  FeatureExtractionConfig,
+  ScoringEvents,
+} from "./realtime-anomaly-scoring";

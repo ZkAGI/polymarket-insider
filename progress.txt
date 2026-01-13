@@ -10040,3 +10040,56 @@ NOTES FOR NEXT SESSION:
 - Import from src/ai/index.ts
 - Usage: getSharedAnomalyDetectionTrainingPipeline(), pipeline.createDataset(), pipeline.addSample(), pipeline.train()
 - Next feature: AI-PAT-002 (Real-time anomaly scoring)
+
+=============================================================================
+AI-PAT-002: Real-time Anomaly Scoring
+Completed: 2026-01-13
+=============================================================================
+
+IMPLEMENTATION:
+Created src/ai/realtime-anomaly-scoring.ts with RealtimeAnomalyScorer class:
+- Model loading and management (load, unload, set default)
+- Feature extraction from trade data with wallet and market context
+- Real-time inference using trained anomaly detection models
+- Risk level calculation (NONE, LOW, MEDIUM, HIGH, CRITICAL)
+- Confidence scoring based on feature availability
+- Contributing factors analysis for each score
+- Score caching with configurable TTL and max size
+- Batch scoring for multiple trades
+- Event emission (trade_scored, anomaly_detected, batch_scored, cache_hit/miss)
+- Statistics tracking (scoring count, anomaly rate, cache hit rate)
+- Utility functions: getRiskLevelDescription, getRiskLevelColor, formatAnomalyScore
+
+KEY FEATURES:
+- Integrates with AnomalyDetectionTrainingPipeline from AI-PAT-001
+- Supports wallet context with 22 behavioral features
+- Supports market context (category, liquidity, niche/political markers)
+- Configurable risk thresholds
+- Automatic model loading on first score
+- Incremental wallet context updates from trade history
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 64 tests passing (tests/ai/realtime-anomaly-scoring.test.ts)
+- E2E tests: 29 tests passing (tests/ai/realtime-anomaly-scoring.e2e.test.ts)
+- Total AI tests: 173 tests passing
+
+EXPORTS ADDED TO src/ai/index.ts:
+- AnomalyRiskLevel enum
+- DEFAULT_SCORING_CONFIG
+- RealtimeAnomalyScorer class
+- Factory functions: createRealtimeAnomalyScorer, getSharedRealtimeAnomalyScorer
+- Type exports: TradeData, WalletContext, MarketContext, AnomalyScoreResult
+
+USAGE EXAMPLE:
+  const scorer = createRealtimeAnomalyScorer();
+  scorer.setPipeline(pipeline);
+  scorer.setDefaultModel(trainedModelId);
+  const result = scorer.scoreTrade(trade);
+  console.log(result.score, result.riskLevel);
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PAT-002 complete and marked in prd.json
+- Next features to implement: AI-PAT-003 (Wallet clustering algorithm)
+- The scorer caches results by default - call clearCache() to reset
+- Use batch scoring for large trade sets: scoreTradesBatch(trades)

@@ -3140,7 +3140,9 @@
       "priority": 156,
       "name": "Real-time anomaly scoring",
       "description": "Score incoming trades for anomaly probability",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T21:22:00Z",
+      "notes": "Implemented RealtimeAnomalyScorer class with model loading, feature extraction from trades/wallet/market context, real-time inference, risk level calculation, caching, batch scoring, and event emission. 64 unit tests and 29 E2E tests pass.",
       "steps": [
         "Load trained model",
         "Extract features from trade",
