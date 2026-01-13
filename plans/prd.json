@@ -3361,100 +3361,643 @@
         "manual_verification": "Review test coverage"
       }
     },
-    {
-      "id": "TEST-API-002",
+     {
+      "id": "ENV-001",
       "priority": 167,
-      "name": "CLOB API client unit tests",
-      "description": "Unit tests for CLOB API client methods",
+      "name": "Validate and load environment configuration",
+      "description": "Ensure all env vars are loaded and validated on startup",
       "passes": true,
-      "completed_at": "2026-01-14T01:05:00Z",
+      "completed_at": "2026-01-14T01:50:00Z",
+      "notes": "Implemented comprehensive env validation in config/env.ts with URL validation for GAMMA_API_URL, CLOB_API_URL, CLOB_WS_URL (WebSocket). Added TELEGRAM_BOT_TOKEN format validation, TELEGRAM_ADMIN_IDS as comma-separated number list. Includes logConfig() for redacted logging, validateEnv() for validation results, and initializeEnv() for startup initialization. 41 unit tests and 11 E2E tests pass.",
       "steps": [
-        "Mock CLOB responses",
-        "Test each client method",
-        "Test authentication",
-        "Test error scenarios"
+        "Update config/env.ts to validate all required vars",
+        "Add GAMMA_API_URL, CLOB_API_URL, CLOB_WS_URL validation",
+        "Add POLYGON_RPC_URL validation with connection test",
+        "Add TELEGRAM_BOT_TOKEN validation",
+        "Add TELEGRAM_ADMIN_IDS as comma-separated list",
+        "Throw clear error if any required var missing",
+        "Log loaded config (redacted secrets) on startup"
       ],
       "test_instructions": {
-        "unit": "Run CLOB API tests",
-        "typecheck": null,
-        "e2e": null,
-        "manual_verification": "Review test coverage"
+        "unit": "Test validation with missing vars",
+        "e2e": "App starts with valid .env",
+        "manual_verification": "See config logged on startup"
       }
     },
     {
-      "id": "TEST-API-003",
+      "id": "TG-DB-001",
       "priority": 168,
-      "name": "WebSocket connection tests",
-      "description": "Tests for WebSocket connection handling",
+      "name": "Telegram subscribers database table",
+      "description": "Database table to store all bot subscribers (users and groups)",
       "passes": false,
       "steps": [
-        "Mock WebSocket server",
-        "Test connection lifecycle",
-        "Test reconnection logic",
-        "Test message handling"
+        "Add TelegramSubscriber model to prisma/schema.prisma",
+        "Fields: id mod, chatId (BigInt unique), chatType (enum: PRIVATE/GROUP/SUPERGROUP/CHANNEL)",
+        "Fields: username (optional), firstName (optional), title (optional for groups)",
+        "Fields: isActive (boolean default true), alertPreferences (Json)",
+        "Fields: createdAt (DateTime), updatedAt (DateTime)",
+        "Add index on chatId and isActive",
+        "Run npx prisma db push"
       ],
       "test_instructions": {
-        "unit": "Run WebSocket tests",
-        "typecheck": null,
-        "e2e": null,
-        "manual_verification": "Review connection scenarios"
+        "unit": "Test model CRUD operations",
+        "e2e": "Insert and query subscribers",
+        "manual_verification": "Check table exists in database"
       }
     },
     {
-      "id": "TEST-API-004",
+      "id": "TG-BOT-001",
       "priority": 169,
-      "name": "API error handling tests",
-      "description": "Tests for API error handling and retry logic",
+      "name": "Telegram bot initialization with grammy",
+      "description": "Set up Telegram bot using grammy library",
       "passes": false,
       "steps": [
-        "Simulate various errors",
-        "Test retry behavior",
-        "Test backoff timing",
-        "Test error reporting"
+        "Install grammy: npm install grammy",
+        "Create src/telegram/bot.ts",
+        "Initialize Bot with TELEGRAM_BOT_TOKEN",
+        "Add error handler for bot errors",
+        "Export bot instance and start/stop functions",
+        "Use polling for dev, webhook option for production"
       ],
       "test_instructions": {
-        "unit": "Run error handling tests",
-        "typecheck": null,
-        "e2e": null,
-        "manual_verification": "Verify error recovery"
+        "unit": "Test bot initialization",
+        "e2e": "Bot connects to Telegram API",
+        "manual_verification": "See bot online in Telegram"
       }
     },
     {
-      "id": "TEST-API-005",
+      "id": "TG-BOT-002",
       "priority": 170,
-      "name": "Rate limiter tests",
-      "description": "Tests for rate limiting functionality",
+      "name": "Auto-register users on /start command",
+      "description": "Automatically save user to database when they send /start",
       "passes": false,
       "steps": [
-        "Test token bucket",
-        "Test request queuing",
-        "Test limit enforcement",
-        "Test concurrent requests"
+        "Create /start command handler",
+        "Extract: ctx.chat.id, ctx.chat.type, ctx.from.username, ctx.from.first_name",
+        "Check if subscriber exists in database by chatId",
+        "If new: create TelegramSubscriber with default alertPreferences",
+        "If exists but inactive: set isActive = true",
+        "Send welcome message with bot capabilities",
+        "Log registration event"
       ],
       "test_instructions": {
-        "unit": "Run rate limiter tests",
-        "typecheck": null,
-        "e2e": null,
-        "manual_verification": "Verify rate limiting"
+        "unit": "Test registration logic",
+        "e2e": "Send /start, verify database entry created",
+        "manual_verification": "New user sends /start, appears in DB"
       }
     },
     {
-      "id": "TEST-API-006",
+      "id": "TG-BOT-003",
       "priority": 171,
-      "name": "API integration tests",
-      "description": "Integration tests with mocked API responses",
+      "name": "Auto-register groups when bot added",
+      "description": "Automatically register group when bot is added to it",
       "passes": false,
       "steps": [
-        "Set up mock server",
-        "Test end-to-end flows",
-        "Test data transformation",
-        "Test caching behavior"
+        "Listen for 'my_chat_member' event using bot.on('my_chat_member')",
+        "Check if new_chat_member.status is 'member' or 'administrator'",
+        "Extract group: chat.id, chat.type, chat.title",
+        "Create TelegramSubscriber for group with chatType GROUP/SUPERGROUP",
+        "Send welcome message to group",
+        "If bot removed (status 'left'/'kicked'), set isActive = false"
+      ],
+      "test_instructions": {
+        "unit": "Test group detection",
+        "e2e": "Add bot to group, verify registration",
+        "manual_verification": "Add to test group, see in DB"
+      }
+    },
+    {
+      "id": "TG-BOT-004",
+      "priority": 172,
+      "name": "Unsubscribe with /stop command",
+      "description": "Allow users to stop receiving alerts",
+      "passes": false,
+      "steps": [
+        "Create /stop command handler",
+        "Find subscriber by ctx.chat.id",
+        "Set isActive = false (don't delete, allow resubscribe)",
+        "Send confirmation: 'You will no longer receive alerts. Send /start to resubscribe.'",
+        "Log unsubscribe event"
+      ],
+      "test_instructions": {
+        "unit": "Test unsubscribe logic",
+        "e2e": "Send /stop, verify isActive = false",
+        "manual_verification": "Stop, then verify no alerts received"
+      }
+    },
+    {
+      "id": "TG-BOT-005",
+      "priority": 173,
+      "name": "Alert preferences with /settings command",
+      "description": "Let users configure which alerts they receive",
+      "passes": false,
+      "steps": [
+        "Create /settings command handler",
+        "Show inline keyboard with current preferences",
+        "Options: Whale Trades (on/off), Fresh Wallets (on/off), Min Trade Size ($1K/$10K/$50K/$100K), Severity (All/High+Critical/Critical only)",
+        "Handle callback queries to update preferences",
+        "Update alertPreferences JSON in database",
+        "Confirm changes with updated settings display"
+      ],
+      "test_instructions": {
+        "unit": "Test preference updates",
+        "e2e": "Change settings, verify saved",
+        "manual_verification": "Settings filter alerts correctly"
+      }
+    },
+    {
+      "id": "TG-BOT-006",
+      "priority": 174,
+      "name": "Status and help commands",
+      "description": "Informational commands for users",
+      "passes": false,
+      "steps": [
+        "Create /help command - list all commands with descriptions",
+        "Create /status command - show bot status, your subscription status, alerts received today",
+        "Create /stats command (admin only) - show total subscribers, alerts sent, system health",
+        "Check TELEGRAM_ADMIN_IDS for admin commands",
+        "Format responses with Telegram markdown"
+      ],
+      "test_instructions": {
+        "unit": "Test command responses",
+        "e2e": "Run each command",
+        "manual_verification": "Verify helpful responses"
+      }
+    },
+    {
+      "id": "TG-BROADCAST-001",
+      "priority": 175,
+      "name": "Alert broadcaster service",
+      "description": "Broadcast alerts to all active subscribers",
+      "passes": false,
+      "steps": [
+        "Create src/telegram/broadcaster.ts",
+        "Create broadcastAlert(alert: Alert) function",
+        "Query all TelegramSubscribers where isActive = true",
+        "For each subscriber: check if alert matches their alertPreferences",
+        "Format message using existing Telegram formatter",
+        "Send with rate limiting (max 30 messages/sec for Telegram)",
+        "Return delivery stats: sent, skipped, failed"
+      ],
+      "test_instructions": {
+        "unit": "Test broadcast logic and filtering",
+        "e2e": "Broadcast test alert to subscribers",
+        "manual_verification": "Multiple users receive alert"
+      }
+    },
+    {
+      "id": "TG-BROADCAST-002",
+      "priority": 176,
+      "name": "Handle blocked users gracefully",
+      "description": "Deactivate users who block the bot",
+      "passes": false,
+      "steps": [
+        "In broadcaster, catch errors when sending",
+        "If error code 403 (Forbidden/blocked): set isActive = false",
+        "If error code 400 (chat not found): set isActive = false",
+        "Log deactivation with reason",
+        "Don't retry failed sends to blocked users",
+        "Add periodic cleanup job for long-inactive subscribers (optional)"
+      ],
+      "test_instructions": {
+        "unit": "Test error handling",
+        "e2e": "Simulate block, verify deactivation",
+        "manual_verification": "Block bot, check DB updated"
+      }
+    },
+    {
+      "id": "TG-BROADCAST-003",
+      "priority": 177,
+      "name": "Admin broadcast command",
+      "description": "Allow admins to send announcements",
+      "passes": false,
+      "steps": [
+        "Create /broadcast <message> command (admin only)",
+        "Verify sender is in TELEGRAM_ADMIN_IDS",
+        "Send message to all active subscribers",
+        "Report: 'Sent to X subscribers, Y failed'",
+        "Create /test command to send test alert to yourself only"
+      ],
+      "test_instructions": {
+        "unit": "Test admin verification",
+        "e2e": "Admin broadcasts message",
+        "manual_verification": "All subscribers receive"
+      }
+    },
+    {
+      "id": "API-LIVE-001",
+      "priority": 178,
+      "name": "Market sync background service",
+      "description": "Periodically fetch and store live market data",
+      "passes": false,
+      "steps": [
+        "Create src/services/market-sync.ts",
+        "Create MarketSyncService class with start/stop methods",
+        "On start: fetch all active markets from Gamma API",
+        "Store/update markets in database using Prisma upsert",
+        "Calculate volume change since last sync",
+        "Emit 'market:updated' event for significant changes",
+        "Run every 5 minutes using setInterval",
+        "Log sync stats: markets synced, new markets, volume changes"
+      ],
+      "test_instructions": {
+        "unit": "Test sync logic",
+        "e2e": "Run sync, verify DB updated",
+        "manual_verification": "Check fresh market data in DB"
+      }
+    },
+    {
+      "id": "API-LIVE-002",
+      "priority": 179,
+      "name": "Live trade stream WebSocket processor",
+      "description": "Connect to Polymarket WebSocket and process trades in real-time",
+      "passes": false,
+      "steps": [
+        "Create src/services/trade-stream.ts",
+        "Use existing WebSocketManager to connect to CLOB_WS_URL",
+        "Subscribe to trade events for all/watched markets",
+        "On trade message: parse trade data (wallet, market, size, price, side)",
+        "Store trade in database",
+        "Emit 'trade:new' event with trade data",
+        "Handle reconnection automatically",
+        "Log trade stream stats periodically"
+      ],
+      "test_instructions": {
+        "unit": "Test trade parsing",
+        "e2e": "Connect, receive live trades",
+        "manual_verification": "See trades logging in console"
+      }
+    },
+    {
+      "id": "API-LIVE-003",
+      "priority": 180,
+      "name": "Real-time wallet profiler",
+      "description": "Profile wallets as trades come in",
+      "passes": false,
+      "steps": [
+        "Create src/services/wallet-profiler.ts",
+        "Listen for 'trade:new' events",
+        "Check if wallet exists in database",
+        "If new wallet: fetch on-chain data (age, tx count, funding source)",
+        "Use existing detection modules to calculate suspicion score",
+        "Store/update wallet profile in database",
+        "Emit 'wallet:profiled' event for new/updated wallets",
+        "Cache recent profiles to avoid redundant lookups"
+      ],
+      "test_instructions": {
+        "unit": "Test profiling logic",
+        "e2e": "New trade creates wallet profile",
+        "manual_verification": "Check wallet profiles in DB"
+      }
+    },
+    {
+      "id": "API-LIVE-004",
+      "priority": 181,
+      "name": "Real-time alert generator",
+      "description": "Generate alerts from detection signals and broadcast",
+      "passes": false,
+      "steps": [
+        "Create src/services/alert-generator.ts",
+        "Listen for 'trade:new' and 'wallet:profiled' events",
+        "Run detection algorithms: fresh wallet, whale trade, volume spike, etc.",
+        "If detection triggers: create Alert in database",
+        "Calculate severity (CRITICAL/HIGH/MEDIUM/LOW/INFO)",
+        "Call Telegram broadcaster to send alert",
+        "Emit 'alert:created' event for UI updates",
+        "Deduplicate similar alerts within time window"
+      ],
+      "test_instructions": {
+        "unit": "Test alert generation logic",
+        "e2e": "Whale trade triggers alert",
+        "manual_verification": "See alert in DB and Telegram"
+      }
+    },
+    {
+      "id": "UI-API-001",
+      "priority": 182,
+      "name": "Dashboard stats API endpoint",
+      "description": "API endpoint for dashboard statistics",
+      "passes": false,
+      "steps": [
+        "Create app/api/dashboard/stats/route.ts",
+        "Query database for: total alerts (24h), critical alerts, suspicious wallets count, hot markets count, total volume (24h), whale trades count",
+        "Calculate trends vs previous period",
+        "Return JSON: { alerts, criticalAlerts, suspiciousWallets, hotMarkets, volume24h, whaleTrades, trends }",
+        "Add caching with 30 second TTL"
+      ],
+      "test_instructions": {
+        "unit": "Test stats queries",
+        "e2e": "GET /api/dashboard/stats returns data",
+        "manual_verification": "curl endpoint, verify response"
+      }
+    },
+    {
+      "id": "UI-API-002",
+      "priority": 183,
+      "name": "Dashboard alerts API endpoint",
+      "description": "API endpoint for recent alerts",
+      "passes": false,
+      "steps": [
+        "Create app/api/dashboard/alerts/route.ts",
+        "Accept query params: limit (default 20), severity, type, since",
+        "Query alerts from database with filters",
+        "Include related market and wallet data",
+        "Return JSON array of alerts",
+        "Add pagination support"
+      ],
+      "test_instructions": {
+        "unit": "Test alert queries",
+        "e2e": "GET /api/dashboard/alerts returns alerts",
+        "manual_verification": "curl with filters"
+      }
+    },
+    {
+      "id": "UI-API-003",
+      "priority": 184,
+      "name": "Dashboard whales API endpoint",
+      "description": "API endpoint for top suspicious wallets",
+      "passes": false,
+      "steps": [
+        "Create app/api/dashboard/whales/route.ts",
+        "Query wallets ordered by suspicionScore DESC",
+        "Accept limit param (default 10)",
+        "Include: address, suspicionScore, flags, totalVolume, tradeCount, lastActive",
+        "Return JSON array of wallet summaries"
+      ],
+      "test_instructions": {
+        "unit": "Test wallet queries",
+        "e2e": "GET /api/dashboard/whales returns wallets",
+        "manual_verification": "Verify ordering correct"
+      }
+    },
+    {
+      "id": "UI-API-004",
+      "priority": 185,
+      "name": "Dashboard markets API endpoint",
+      "description": "API endpoint for hot markets",
+      "passes": false,
+      "steps": [
+        "Create app/api/dashboard/markets/route.ts",
+        "Query markets with most alerts/activity in last 24h",
+        "Include: id, question, volume, alertCount, topAlertType",
+        "Accept limit and category params",
+        "Return JSON array of market summaries"
+      ],
+      "test_instructions": {
+        "unit": "Test market queries",
+        "e2e": "GET /api/dashboard/markets returns markets",
+        "manual_verification": "Verify hot markets accurate"
+      }
+    },
+    {
+      "id": "UI-API-005",
+      "priority": 186,
+      "name": "Connect dashboard widgets to real APIs",
+      "description": "Replace mock data in UI with real API calls",
+      "passes": false,
+      "steps": [
+        "Install SWR: npm install swr",
+        "Create src/hooks/useDashboardData.ts with SWR hooks",
+        "Update QuickStatsSummaryBar to use useStats() hook",
+        "Update AlertFeedWidget to use useAlerts() hook",
+        "Update TopSuspiciousWalletsWidget to use useWhales() hook",
+        "Update HotMarketsWidget to use useMarkets() hook",
+        "Add loading skeletons during fetch",
+        "Add error states with retry button",
+        "Set refresh interval to 30 seconds"
+      ],
+      "test_instructions": {
+        "unit": "Test hooks",
+        "e2e": "Dashboard shows real data",
+        "manual_verification": "Compare UI with database"
+      }
+    },
+    {
+      "id": "UI-API-006",
+      "priority": 187,
+      "name": "Wallet page API endpoint",
+      "description": "API for wallet detail page",
+      "passes": false,
+      "steps": [
+        "Create app/api/wallet/[address]/route.ts",
+        "Fetch wallet profile from database",
+        "Fetch wallet trades with pagination",
+        "Calculate P&L from trades",
+        "Return complete wallet data with trades"
+      ],
+      "test_instructions": {
+        "unit": "Test wallet API",
+        "e2e": "Load wallet page shows real data",
+        "manual_verification": "Verify data matches chain"
+      }
+    },
+    {
+      "id": "UI-API-007",
+      "priority": 188,
+      "name": "Market page API endpoint",
+      "description": "API for market detail page",
+      "passes": false,
+      "steps": [
+        "Create app/api/market/[id]/route.ts",
+        "Fetch market from database or Gamma API",
+        "Fetch price history for chart",
+        "Fetch volume history for chart",
+        "Fetch recent trades for this market",
+        "Return complete market data"
+      ],
+      "test_instructions": {
+        "unit": "Test market API",
+        "e2e": "Load market page shows real data",
+        "manual_verification": "Compare with Polymarket.com"
+      }
+    },
+    {
+      "id": "UI-WS-001",
+      "priority": 189,
+      "name": "Dashboard real-time WebSocket updates",
+      "description": "Push live updates to dashboard without refresh",
+      "passes": false,
+      "steps": [
+        "Create app/api/ws/route.ts WebSocket endpoint (or use socket.io)",
+        "Emit 'alert:new' when alert created",
+        "Emit 'trade:whale' when whale trade detected",
+        "Emit 'stats:update' when stats change significantly",
+        "Create useDashboardWebSocket() hook in frontend",
+        "Update widgets in real-time when events received",
+        "Show 'LIVE' indicator when WebSocket connected"
+      ],
+      "test_instructions": {
+        "unit": "Test WebSocket events",
+        "e2e": "Dashboard updates without refresh",
+        "manual_verification": "Watch live updates appear"
+      }
+    },
+    {
+      "id": "STARTUP-001",
+      "priority": 190,
+      "name": "Application startup orchestrator",
+      "description": "Start all services in correct order on app launch",
+      "passes": false,
+      "steps": [
+        "Create src/services/startup.ts",
+        "Export startAllServices() and stopAllServices() functions",
+        "Order: 1) Validate env, 2) Connect DB, 3) Start market sync, 4) Start trade stream, 5) Start wallet profiler, 6) Start alert generator, 7) Start Telegram bot",
+        "Log status of each service startup",
+        "If any critical service fails, log error and exit",
+        "Call startAllServices() in app initialization (instrumentation.ts or custom server)"
+      ],
+      "test_instructions": {
+        "unit": "Test startup sequence",
+        "e2e": "All services start on npm run dev",
+        "manual_verification": "See startup logs"
+      }
+    },
+    {
+      "id": "STARTUP-002",
+      "priority": 191,
+      "name": "Health check API endpoint",
+      "description": "Endpoint to check all services health",
+      "passes": false,
+      "steps": [
+        "Create app/api/health/route.ts",
+        "Check database connection with simple query",
+        "Check WebSocket connection status",
+        "Check Telegram bot status",
+        "Check market sync last run time",
+        "Return JSON: { status: 'healthy'|'degraded'|'unhealthy', services: {...} }",
+        "Return 200 if healthy, 503 if unhealthy"
+      ],
+      "test_instructions": {
+        "unit": "Test health checks",
+        "e2e": "GET /api/health returns status",
+        "manual_verification": "curl /api/health"
+      }
+    },
+    {
+      "id": "STARTUP-003",
+      "priority": 192,
+      "name": "Graceful shutdown handler",
+      "description": "Clean shutdown of all services",
+      "passes": false,
+      "steps": [
+        "Add SIGTERM and SIGINT handlers in startup.ts",
+        "On signal: call stopAllServices()",
+        "Close WebSocket connections",
+        "Stop Telegram bot polling",
+        "Close database connection",
+        "Log 'Shutdown complete'",
+        "Exit process with code 0"
+      ],
+      "test_instructions": {
+        "unit": "Test shutdown handlers",
+        "e2e": "Ctrl+C cleanly stops app",
+        "manual_verification": "No orphan processes"
+      }
+    },
+    {
+      "id": "DEPLOY-001",
+      "priority": 193,
+      "name": "Docker compose for local development",
+      "description": "Docker setup for easy local development",
+      "passes": false,
+      "steps": [
+        "Create docker-compose.yml",
+        "Add postgres:15 service with volume for data persistence",
+        "Add redis:7 service (optional, for caching)",
+        "Add app service that builds from Dockerfile",
+        "Configure environment variables from .env",
+        "Expose port 3000",
+        "Add healthcheck for each service"
       ],
       "test_instructions": {
         "unit": null,
-        "typecheck": null,
-        "e2e": "Run integration tests",
-        "manual_verification": "Review integration coverage"
+        "e2e": "docker-compose up starts everything",
+        "manual_verification": "App accessible at localhost:3000"
+      }
+    },
+    {
+      "id": "DEPLOY-002",
+      "priority": 194,
+      "name": "Production Dockerfile",
+      "description": "Optimized Dockerfile for production",
+      "passes": false,
+      "steps": [
+        "Create Dockerfile with multi-stage build",
+        "Stage 1: Install dependencies",
+        "Stage 2: Build Next.js app",
+        "Stage 3: Production image with only necessary files",
+        "Use node:20-alpine as base",
+        "Set NODE_ENV=production",
+        "Run as non-root user",
+        "Expose port 3000"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "e2e": "docker build succeeds",
+        "manual_verification": "Image runs correctly"
+      }
+    },
+    {
+      "id": "MONITOR-001",
+      "priority": 195,
+      "name": "Structured logging with pino",
+      "description": "Add structured logging throughout app",
+      "passes": false,
+      "steps": [
+        "Install pino: npm install pino pino-pretty",
+        "Create src/utils/logger.ts with configured pino logger",
+        "Set log level from LOG_LEVEL env var",
+        "Use pino-pretty in development for readable logs",
+        "Add request logging middleware",
+        "Replace all console.log with logger.info/error/debug",
+        "Include context (service name, request id) in logs"
+      ],
+      "test_instructions": {
+        "unit": "Test logger configuration",
+        "e2e": "Logs appear in correct format",
+        "manual_verification": "Review log output"
+      }
+    },
+    {
+      "id": "MONITOR-002",
+      "priority": 196,
+      "name": "Metrics endpoint",
+      "description": "Expose application metrics",
+      "passes": false,
+      "steps": [
+        "Create app/api/metrics/route.ts",
+        "Track: trades processed count, alerts generated count, API response times, WebSocket message rate, active subscribers count",
+        "Store metrics in memory with periodic reset",
+        "Return JSON or Prometheus format",
+        "Add metrics collection in services"
+      ],
+      "test_instructions": {
+        "unit": "Test metric collection",
+        "e2e": "GET /api/metrics returns data",
+        "manual_verification": "Verify metric values"
+      }
+    },
+    {
+      "id": "FINAL-001",
+      "priority": 197,
+      "name": "End-to-end integration test",
+      "description": "Verify entire system works together",
+      "passes": false,
+      "steps": [
+        "Create tests/e2e/full-integration.test.ts",
+        "Start all services",
+        "Verify market sync populates database",
+        "Verify trade stream receives live trades",
+        "Trigger test alert via admin command",
+        "Verify alert appears in database",
+        "Verify alert appears in dashboard API",
+        "Verify Telegram notification received",
+        "Document test results"
+      ],
+      "test_instructions": {
+        "unit": null,
+        "e2e": "Run full integration test",
+        "manual_verification": "Walk through entire flow manually"
       }
     },
     {

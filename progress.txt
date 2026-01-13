@@ -10837,3 +10837,46 @@ NOTES FOR NEXT SESSION:
 - Next feature to implement: Check prd.json for next highest priority with passes:false
 - Remaining features: TEST-API-003 (WebSocket tests), TEST-API-004 (API error handling tests), 
   TEST-API-005 (Rate limiter tests), TEST-API-006 (API integration tests)
+
+=== Session 2026-01-14 (continued) ===
+
+COMPLETED: ENV-001 - Validate and load environment configuration
+
+Summary:
+- Updated config/env.ts with comprehensive environment variable validation
+- Added new environment variables:
+  - GAMMA_API_URL: Validated HTTP/HTTPS URL (default: https://gamma-api.polymarket.com)
+  - CLOB_API_URL: Validated HTTP/HTTPS URL (default: https://clob.polymarket.com)
+  - CLOB_WS_URL: Validated WebSocket URL (default: wss://ws-subscriptions-clob.polymarket.com/ws/market)
+  - TELEGRAM_ADMIN_IDS: Comma-separated list of admin user IDs
+- Added URL validation functions (isValidUrl, isValidWsUrl)
+- Added Telegram bot token format validation (bot_id:secret pattern)
+- Implemented utility functions:
+  - getEnvVarAsList: Parse comma-separated string lists
+  - getEnvVarAsNumberList: Parse comma-separated number lists
+  - redactSecret: Redact sensitive values for logging
+- Added logConfig() function to log all config with redacted secrets
+- Added validateEnv() function to validate configuration and return warnings/errors
+- Added initializeEnv() function to initialize and validate on startup
+- Updated .env.example with all new variables and documentation
+
+Files Modified:
+- config/env.ts: Complete rewrite with validation
+- .env.example: Updated with new variables
+
+Files Created:
+- tests/config/env.test.ts: 41 unit tests
+- tests/e2e/env-validation.e2e.test.ts: 11 E2E tests
+
+Verification:
+- TypeScript typecheck (pnpm typecheck): PASSED
+- Unit tests (tests/config/env.test.ts): 41 tests PASSED
+- E2E tests (tests/e2e/env-validation.e2e.test.ts): 11 tests PASSED
+- Browser smoke test: PASSED
+
+NOTES FOR NEXT SESSION:
+- ENV-001 complete and marked in prd.json
+- Next feature to implement: TG-DB-001 (Telegram subscribers database table)
+- The initializeEnv() function can be called in the app startup to log configuration
+- validateEnv() returns { valid, errors, warnings } for programmatic checks
+
