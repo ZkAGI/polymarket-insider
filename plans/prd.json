@@ -3244,7 +3244,8 @@
       "priority": 161,
       "name": "Market outcome predictor",
       "description": "Predict market outcomes based on insider signals",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T22:52:00Z",
       "steps": [
         "Collect signal history",
         "Train outcome predictor",

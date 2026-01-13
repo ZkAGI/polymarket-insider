@@ -335,3 +335,62 @@ export type {
   InsiderPredictorConfig,
   InsiderPredictorEvents,
 } from "./insider-probability-predictor";
+
+// AI-PRED-002: Market Outcome Predictor
+export {
+  // Enums
+  PredictedOutcome,
+  OutcomeConfidenceLevel,
+  SignalType,
+  SignalDirection,
+  MarketPredictionStatus,
+  TrainingStatus,
+
+  // Constants
+  DEFAULT_MODEL_WEIGHTS,
+  DEFAULT_OUTCOME_PREDICTOR_CONFIG,
+  OUTCOME_CONFIDENCE_THRESHOLDS,
+  SIGNAL_TYPE_WEIGHTS,
+
+  // Classes
+  MarketOutcomePredictor,
+
+  // Factory functions
+  createMarketOutcomePredictor,
+  getSharedMarketOutcomePredictor,
+  setSharedMarketOutcomePredictor,
+  resetSharedMarketOutcomePredictor,
+
+  // Utility functions
+  getOutcomeDescription,
+  getOutcomeColor,
+  getOutcomeConfidenceDescription,
+  getOutcomeConfidenceColor,
+  getSignalTypeDescription,
+  getSignalDirectionDescription,
+  formatOutcomeProbability,
+  getTrainingStatusDescription,
+
+  // Mock data generators
+  createMockMarketSignal,
+  createMockSignalsForMarket,
+  createMockSignalAggregation,
+  createMockHistoricalOutcome,
+  createMockOutcomePrediction,
+  createMockHistoricalOutcomeBatch,
+} from "./market-outcome-predictor";
+
+export type {
+  MarketSignal,
+  SignalAggregation,
+  HistoricalMarketOutcome,
+  OutcomeFeatureVector,
+  OutcomeModelWeights,
+  OutcomePredictionResult,
+  PredictionFactor,
+  BatchOutcomePredictionResult,
+  OutcomeModelMetrics,
+  TrainingSample as OutcomeTrainingSample,
+  MarketOutcomePredictorConfig,
+  MarketOutcomePredictorEvents,
+} from "./market-outcome-predictor";

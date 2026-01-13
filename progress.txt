@@ -10312,3 +10312,95 @@ NOTES FOR NEXT SESSION:
 - Next feature to implement: Check prd.json for next highest priority with passes:false
 - Insider probability predictor integrates with wallet clustering for network analysis
 - Calibration methods can be tuned based on historical data accuracy
+
+================================================================================
+FEATURE: AI-PRED-002 - Market Outcome Predictor
+COMPLETED: 2026-01-13
+================================================================================
+
+IMPLEMENTATION:
+- Created src/ai/market-outcome-predictor.ts (~1700 lines)
+- Updated src/ai/index.ts with all exports
+
+ENUMS DEFINED:
+- PredictedOutcome (YES, NO, UNCERTAIN) - Market outcome prediction
+- OutcomeConfidenceLevel (VERY_LOW, LOW, MEDIUM, HIGH, VERY_HIGH) - Prediction confidence
+- SignalType (10 types: INSIDER_TRADE, WHALE_TRADE, VOLUME_SPIKE, FRESH_WALLET, etc.)
+- SignalDirection (BULLISH, BEARISH, NEUTRAL) - Signal directional bias
+- MarketPredictionStatus (PENDING, VERIFIED, EXPIRED) - Prediction lifecycle
+- TrainingStatus (NOT_TRAINED, TRAINING, TRAINED, FAILED) - Model training state
+
+TYPES DEFINED:
+- MarketSignal interface (marketId, type, direction, strength, confidence, optional fields)
+- SignalAggregation interface (totals, breakdowns, averages, time-weighted score)
+- HistoricalMarketOutcome interface (for training)
+- OutcomeFeatureVector interface (bullishRatio, avgStrength, maxStrength, etc.)
+- OutcomeModelWeights interface (feature weights + bias + prior)
+- OutcomePredictionResult interface (prediction, probability, confidence, explanation, factors)
+- MarketOutcomePredictorConfig interface (thresholds, decay, cache settings)
+
+KEY FEATURES:
+- Signal collection and storage by market ID with age-based filtering
+- Signal aggregation with type breakdown and time-weighted scoring
+- Feature extraction for prediction model
+- Probability prediction with sigmoid calibration
+- Confidence level determination based on signal count and aggregation
+- Key factors and explanation generation
+- Prediction caching with TTL
+- Prediction verification and accuracy tracking
+- Model training via gradient descent with regularization
+- Historical outcome storage for training data
+- Batch prediction for multiple markets
+- Comprehensive metrics (accuracy, precision, recall, F1, Brier score)
+- Event emission for all lifecycle events
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 80 tests passing (tests/ai/market-outcome-predictor.test.ts)
+- E2E tests: 33 tests passing (tests/ai/market-outcome-predictor.e2e.test.ts)
+
+USAGE EXAMPLE:
+  import {
+    createMarketOutcomePredictor,
+    SignalType,
+    SignalDirection
+  } from "@/ai";
+
+  const predictor = createMarketOutcomePredictor({
+    minSignalsForPrediction: 3,
+    signalDecayHalfLifeHours: 24,
+  });
+
+  // Record signals for a market
+  predictor.recordSignal({
+    marketId: "election_2026",
+    type: SignalType.INSIDER_TRADE,
+    direction: SignalDirection.BULLISH,
+    strength: 0.85,
+    confidence: 0.9,
+    walletAddress: "0x...",
+    tradeSizeUsd: 50000,
+    insiderProbability: 0.75,
+    timestamp: new Date(),
+  });
+
+  // Make prediction
+  const prediction = predictor.predict("election_2026", 0.6, 24);
+  console.log(prediction.predictedOutcome);  // YES, NO, or UNCERTAIN
+  console.log(prediction.yesProbability);     // 0-1 probability
+  console.log(prediction.confidence);         // Confidence level
+  console.log(prediction.explanation);        // Human-readable explanation
+  console.log(prediction.keyFactors);         // Contributing factors
+
+  // Verify after market resolution
+  predictor.verifyPrediction(prediction.predictionId, "YES");
+
+  // Train model with historical data
+  predictor.addHistoricalOutcome(historicalOutcome);
+  predictor.train(100);  // 100 iterations
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PRED-002 complete and marked in prd.json
+- Next feature to implement: Check prd.json for next highest priority with passes:false
+- Market outcome predictor integrates with insider probability predictor via insiderProbability field
+- Training improves model weights based on historical prediction accuracy
