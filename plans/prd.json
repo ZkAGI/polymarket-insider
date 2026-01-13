@@ -2645,7 +2645,9 @@
       "priority": 132,
       "name": "Market detail page",
       "description": "Detailed page for individual market",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T13:45:00Z",
+      "notes": "Implemented complete market detail page with: MarketDetailHeader (question, status badges, category badge, volume/liquidity display, created/end dates, description, market ID), CurrentOddsDisplay (outcome probabilities with bars, share prices, 24h change indicators, sorted by probability), MarketInfoSection (status, time remaining, resolution source, last updated, Polymarket link, copy market ID/URL buttons). Full dark mode support, responsive design (mobile/tablet/desktop), TypeScript types verified clean. Unit tests and E2E tests written. All components properly structured in app/market/[id]/ directory.",
       "steps": [
         "Create market page",
         "Show market info",
