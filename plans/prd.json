@@ -2896,7 +2896,8 @@
       "priority": 144,
       "name": "Telegram bot setup",
       "description": "Create and configure Telegram bot",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T11:45:00Z",
       "steps": [
         "Create bot with BotFather",
         "Get bot token",

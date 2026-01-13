@@ -9312,3 +9312,100 @@ NOTES FOR NEXT SESSION:
   * NOTIF-TG-001 (priority 144): Telegram bot setup
   * NOTIF-TG-002 (priority 145): Telegram message formatting
   * Or other notification channels (Discord, Web Push)
+
+---
+
+SESSION: Telegram Bot Setup (NOTIF-TG-001)
+DATE: 2026-01-13
+
+FEATURE COMPLETE: NOTIF-TG-001 - Telegram bot setup
+
+IMPLEMENTATION SUMMARY:
+Created a comprehensive Telegram bot client for sending notifications and handling bot interactions. The implementation follows the same patterns as the email notification system.
+
+KEY FILES CREATED:
+
+1. src/notifications/telegram/types.ts
+   - TelegramParseMode enum (HTML, Markdown, MarkdownV2)
+   - TelegramMessageStatus enum (PENDING, SENT, DELIVERED, FAILED)
+   - TelegramChatType enum (PRIVATE, GROUP, SUPERGROUP, CHANNEL)
+   - TelegramBotConfig interface
+   - TelegramMessage, TelegramSendResult interfaces
+   - TelegramApiResponse, TelegramUser, TelegramChat types
+   - TelegramUpdate, TelegramCallbackQuery for polling
+   - TelegramBotCommand for menu commands
+   - Event and handler types
+   - Helper functions: isValidBotToken, isValidChatId, escapeMarkdownV2, escapeHtml, formatChatId
+
+2. src/notifications/telegram/client.ts
+   - TelegramClient class with full bot functionality
+   - TelegramClientError for error handling
+   - Rate limiter for API calls (30 msg/sec default)
+   - Message sending with retry logic
+   - Batch message sending
+   - Bot commands (setCommands, deleteCommands)
+   - Callback query handling
+   - Polling support for updates
+   - Event system (message:sending, message:sent, message:failed, etc.)
+   - Command handlers and callback handlers
+   - Development mode (logs instead of sending)
+   - Singleton pattern with getTelegramClient
+   - Factory functions: createTelegramClient, resetTelegramClient
+
+3. src/notifications/telegram/index.ts
+   - Re-exports all types, classes, and functions
+
+4. tests/notifications/telegram/types.test.ts
+   - 36 unit tests for type validation and helper functions
+   - Tests for isValidBotToken, isValidChatId
+   - Tests for escapeMarkdownV2, escapeHtml, formatChatId
+   - Tests for enums
+
+5. tests/notifications/telegram/client.test.ts
+   - 51 unit tests for TelegramClient
+   - Constructor validation
+   - Message sending (dev mode and production mode)
+   - Batch sending
+   - Event handling
+   - Command handling
+   - Polling state
+   - Singleton pattern
+   - Error handling
+
+6. scripts/telegram-e2e-test.mjs
+   - E2E test script for Telegram module
+   - Tests all major functionality
+   - Verifies module exports
+
+KEY FEATURES:
+- Full Telegram Bot API integration
+- Message formatting with HTML/Markdown support
+- Inline keyboard support for buttons
+- Rate limiting to respect Telegram limits
+- Retry logic with exponential backoff
+- Development mode for local testing
+- Event-driven architecture
+- Command and callback handlers
+- Polling support for real-time updates
+- Token masking for security
+
+CONFIGURATION:
+- botToken: Bot token from BotFather
+- defaultParseMode: HTML (default)
+- devMode: auto-detect based on NODE_ENV
+- rateLimit: 30 messages/second
+- maxRetries: 3
+- retryDelay: 1000ms
+- timeout: 30000ms
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 87 tests passing
+- E2E test: All 12 test categories passing
+- Browser smoke test: PASS
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-TG-001 complete and marked in prd.json
+- Telegram client ready for use
+- Next feature: NOTIF-TG-002 (Telegram alert message formatter)
+- Dependencies: None - can be implemented independently
