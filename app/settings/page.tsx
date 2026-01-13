@@ -298,6 +298,45 @@ export default function SettingsPage() {
           </div>
         </SettingsSection>
 
+        <SettingsSection title="SMS Notifications">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-gray-700 dark:text-gray-300">Enable SMS notifications</label>
+              <input
+                type="checkbox"
+                checked={settings.notifications.sms.enabled}
+                onChange={(e) =>
+                  updateSettings('notifications', {
+                    sms: { ...settings.notifications.sms, enabled: e.target.checked },
+                  })
+                }
+                className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                data-testid="sms-enabled-checkbox"
+              />
+            </div>
+            {settings.notifications.sms.enabled && (
+              <div className="space-y-2">
+                <label className="block text-sm text-gray-700 dark:text-gray-300">Phone number</label>
+                <input
+                  type="tel"
+                  value={settings.notifications.sms.phoneNumber}
+                  onChange={(e) =>
+                    updateSettings('notifications', {
+                      sms: { ...settings.notifications.sms, phoneNumber: e.target.value },
+                    })
+                  }
+                  placeholder="+1234567890"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  data-testid="sms-phone-input"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Include country code (e.g., +1 for US)
+                </p>
+              </div>
+            )}
+          </div>
+        </SettingsSection>
+
         <SettingsSection title="Notification Frequency">
           <div className="space-y-2">
             <label className="block text-sm text-gray-700 dark:text-gray-300">How often to receive notifications</label>

@@ -207,6 +207,66 @@ describe('Settings Page E2E Tests', () => {
       expect(checked).toBe(false); // Default is disabled
     }, 30000);
 
+    it('should display SMS notification toggle', async () => {
+      const checkbox = await page.$('[data-testid="sms-enabled-checkbox"]');
+      expect(checkbox).toBeTruthy();
+
+      const checked = await page.evaluate((el) => (el as HTMLInputElement)?.checked, checkbox);
+      expect(checked).toBe(false); // Default is disabled
+    }, 30000);
+
+    it('should toggle SMS notifications', async () => {
+      const checkbox = await page.$('[data-testid="sms-enabled-checkbox"]');
+      await checkbox?.click();
+
+      const checked = await page.evaluate((el) => (el as HTMLInputElement)?.checked, checkbox);
+      expect(checked).toBe(true);
+    }, 30000);
+
+    it('should show phone number input when SMS is enabled', async () => {
+      const checkbox = await page.$('[data-testid="sms-enabled-checkbox"]');
+      await checkbox?.click();
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const input = await page.$('[data-testid="sms-phone-input"]');
+      expect(input).toBeTruthy();
+    }, 30000);
+
+    it('should hide phone number input when SMS is disabled', async () => {
+      // First enable it
+      const checkbox = await page.$('[data-testid="sms-enabled-checkbox"]');
+      await checkbox?.click();
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Verify input is visible
+      let input = await page.$('[data-testid="sms-phone-input"]');
+      expect(input).toBeTruthy();
+
+      // Disable it again
+      await checkbox?.click();
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Verify input is hidden
+      input = await page.$('[data-testid="sms-phone-input"]');
+      expect(input).toBeFalsy();
+    }, 30000);
+
+    it('should update SMS phone number', async () => {
+      const checkbox = await page.$('[data-testid="sms-enabled-checkbox"]');
+      await checkbox?.click();
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const input = await page.$('[data-testid="sms-phone-input"]');
+      await input?.type('+15551234567');
+
+      const value = await page.evaluate((el) => (el as HTMLInputElement)?.value, input);
+      expect(value).toBe('+15551234567');
+    }, 30000);
+
     it('should display frequency selector', async () => {
       const select = await page.$('[data-testid="frequency-select"]');
       expect(select).toBeTruthy();
