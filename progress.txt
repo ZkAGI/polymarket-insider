@@ -9409,3 +9409,80 @@ NOTES FOR NEXT SESSION:
 - Telegram client ready for use
 - Next feature: NOTIF-TG-002 (Telegram alert message formatter)
 - Dependencies: None - can be implemented independently
+
+---
+
+SESSION: Telegram Alert Message Formatter (NOTIF-TG-002)
+DATE: 2026-01-13
+
+FEATURE COMPLETE: NOTIF-TG-002 - Telegram alert message formatter
+
+IMPLEMENTATION SUMMARY:
+Created a comprehensive alert message formatter for Telegram that converts alert data into well-formatted Telegram messages with inline action buttons.
+
+KEY FILES CREATED/MODIFIED:
+
+1. src/notifications/telegram/alert-formatter.ts
+   - AlertSeverity and AlertType type definitions
+   - TelegramAlertData interface for alert data
+   - TelegramAlertOptions for customization
+   - formatAlertMessageHtml() - HTML formatted messages
+   - formatAlertMessagePlain() - Plain text messages
+   - createAlertButtons() - Inline keyboard buttons
+   - formatTelegramAlert() - Complete alert formatting
+   - createAlertMessage() - Ready-to-send TelegramMessage
+   - formatAlertSummary() - Multi-alert summary
+   - createAlertSummaryMessage() - Ready-to-send summary
+   - Helper functions: getSeverityEmoji, getAlertTypeEmoji, getAlertTypeLabel
+   - validateAlertData() - Data validation
+
+2. src/notifications/telegram/index.ts
+   - Updated to export all alert formatter types and functions
+
+3. tests/notifications/telegram/alert-formatter.test.ts
+   - 35 unit tests covering all formatting functions
+   - Tests for HTML and plain text formatting
+   - Tests for button creation
+   - Tests for summary generation
+   - Tests for validation
+
+4. scripts/telegram-e2e-test.mjs
+   - Extended with alert formatter E2E tests
+
+KEY FEATURES:
+- HTML and plain text message formatting
+- Severity indicators with color-coded emojis (🔴 🟠 🟡 🟢 🔵)
+- Alert type icons (🐋 📈 🔍 🆕 etc.)
+- Inline action buttons:
+  * View Details - Link to alert page
+  * Dashboard - Link to dashboard
+  * View Market - Polymarket link
+  * View Wallet - Polygonscan link
+  * Acknowledge - Callback button
+  * Mute Similar - Callback button
+- Wallet address truncation (0x1234...5678)
+- Currency and percentage formatting
+- Message length limits (4096 chars max)
+- Multi-alert summary generation
+- Data validation
+
+ALERT TYPES SUPPORTED:
+- whale_trade, price_movement, insider_activity
+- fresh_wallet, wallet_reactivation, coordinated_activity
+- unusual_pattern, market_resolved, new_market
+- suspicious_funding, sanctioned_activity, system
+
+SEVERITY LEVELS:
+- critical, high, medium, low, info
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 122 tests passing (36 types + 51 client + 35 formatter)
+- E2E test: All 17 test categories passing
+- Browser smoke test: PASS
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-TG-002 complete and marked in prd.json
+- Alert formatter ready for use with TelegramClient
+- Next feature: NOTIF-TG-003 (Telegram instant notifications)
+- Integration: Use createAlertMessage() with TelegramClient.sendMessage()

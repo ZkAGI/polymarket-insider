@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * E2E test for Telegram bot setup
+ * E2E test for Telegram bot setup and alert formatting
  * Tests that the Telegram module can be imported and used correctly
  */
 
@@ -22,6 +22,17 @@ async function runTelegramE2ETest() {
       escapeMarkdownV2,
       escapeHtml,
       formatChatId,
+      // Alert formatter
+      formatTelegramAlert,
+      createAlertMessage,
+      formatAlertSummary,
+      createAlertButtons,
+      getSeverityEmoji,
+      getAlertTypeEmoji,
+      getAlertTypeLabel,
+      validateAlertData,
+      ALERT_TYPE_CONFIG,
+      SEVERITY_CONFIG,
     } = await import("../src/notifications/telegram/index.ts");
 
     console.log("1. Module imports successful");
@@ -220,6 +231,125 @@ async function runTelegramE2ETest() {
       throw new Error("TelegramClientError properties not set correctly");
     }
     console.log("   - TelegramClientError: OK");
+
+    // === ALERT FORMATTER TESTS ===
+    console.log("\n=== Alert Formatter Tests ===\n");
+
+    // Test alert data structure
+    console.log("13. Testing alert formatter...");
+    const sampleAlert = {
+      alertId: "e2e-test-123",
+      alertType: "whale_trade",
+      severity: "high",
+      title: "E2E Test Alert",
+      message: "This is a test alert for E2E testing.",
+      timestamp: new Date(),
+      walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
+      marketId: "test-market",
+      marketTitle: "Test Market Title",
+      tradeSize: 50000,
+      priceChange: 5.5,
+      suspicionScore: 75,
+      actionUrl: "https://example.com/alert",
+      dashboardUrl: "https://example.com/dashboard",
+    };
+
+    // Test formatTelegramAlert
+    const formatted = formatTelegramAlert(sampleAlert);
+    if (!formatted.text || !formatted.text.includes("E2E Test Alert")) {
+      throw new Error("formatTelegramAlert should include alert title");
+    }
+    if (!formatted.text.includes("HIGH")) {
+      throw new Error("formatTelegramAlert should include severity");
+    }
+    if (!formatted.text.includes("Whale Trade")) {
+      throw new Error("formatTelegramAlert should include alert type");
+    }
+    console.log("   - formatTelegramAlert: OK");
+
+    // Test createAlertMessage
+    const alertMessage = createAlertMessage(123456789, sampleAlert);
+    if (alertMessage.chatId !== 123456789) {
+      throw new Error("createAlertMessage should set correct chatId");
+    }
+    if (!alertMessage.text.includes("E2E Test Alert")) {
+      throw new Error("createAlertMessage should include alert content");
+    }
+    if (!alertMessage.options?.inlineKeyboard) {
+      throw new Error("createAlertMessage should include inline keyboard");
+    }
+    console.log("   - createAlertMessage: OK");
+
+    // Test createAlertButtons
+    const buttons = createAlertButtons(sampleAlert);
+    if (!buttons.buttons || buttons.buttons.length === 0) {
+      throw new Error("createAlertButtons should create buttons");
+    }
+    const allButtons = buttons.buttons.flat();
+    if (!allButtons.some(b => b.text.includes("View Details"))) {
+      throw new Error("createAlertButtons should include View Details button");
+    }
+    if (!allButtons.some(b => b.text.includes("Acknowledge"))) {
+      throw new Error("createAlertButtons should include Acknowledge button");
+    }
+    console.log("   - createAlertButtons: OK");
+
+    // Test formatAlertSummary
+    const alerts = [sampleAlert, { ...sampleAlert, severity: "critical", alertType: "insider_activity" }];
+    const summary = formatAlertSummary(alerts);
+    if (!summary.includes("Alert Summary")) {
+      throw new Error("formatAlertSummary should include title");
+    }
+    if (!summary.includes("2 alerts")) {
+      throw new Error("formatAlertSummary should show alert count");
+    }
+    console.log("   - formatAlertSummary: OK");
+
+    // Test helper functions
+    console.log("14. Testing alert helper functions...");
+    if (getSeverityEmoji("critical") !== "🔴") {
+      throw new Error("getSeverityEmoji should return correct emoji");
+    }
+    if (getAlertTypeEmoji("whale_trade") !== "🐋") {
+      throw new Error("getAlertTypeEmoji should return correct emoji");
+    }
+    if (getAlertTypeLabel("whale_trade") !== "Whale Trade") {
+      throw new Error("getAlertTypeLabel should return correct label");
+    }
+    console.log("   - Helper functions: OK");
+
+    // Test validateAlertData
+    console.log("15. Testing alert validation...");
+    const validationErrors = validateAlertData(sampleAlert);
+    if (validationErrors.length !== 0) {
+      throw new Error("validateAlertData should return no errors for valid data");
+    }
+    const invalidAlert = { ...sampleAlert, alertId: "", alertType: "invalid" };
+    const invalidErrors = validateAlertData(invalidAlert);
+    if (invalidErrors.length === 0) {
+      throw new Error("validateAlertData should return errors for invalid data");
+    }
+    console.log("   - Validation: OK");
+
+    // Test ALERT_TYPE_CONFIG
+    console.log("16. Testing alert type config...");
+    const alertTypes = ["whale_trade", "price_movement", "insider_activity", "fresh_wallet"];
+    for (const type of alertTypes) {
+      if (!ALERT_TYPE_CONFIG[type]) {
+        throw new Error(`ALERT_TYPE_CONFIG missing config for ${type}`);
+      }
+    }
+    console.log("   - ALERT_TYPE_CONFIG: OK");
+
+    // Test SEVERITY_CONFIG
+    console.log("17. Testing severity config...");
+    const severities = ["critical", "high", "medium", "low", "info"];
+    for (const severity of severities) {
+      if (!SEVERITY_CONFIG[severity]) {
+        throw new Error(`SEVERITY_CONFIG missing config for ${severity}`);
+      }
+    }
+    console.log("   - SEVERITY_CONFIG: OK");
 
     console.log("\n✅ All Telegram E2E tests passed!");
     return true;

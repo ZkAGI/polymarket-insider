@@ -44,3 +44,27 @@ export {
   createTelegramClient,
   resetTelegramClient,
 } from "./client";
+
+// Alert Formatter
+export {
+  type AlertSeverity,
+  type AlertType,
+  type TelegramAlertData,
+  type TelegramAlertOptions,
+  type FormattedTelegramAlert,
+  type AlertTypeConfig,
+  type SeverityConfig,
+  ALERT_TYPE_CONFIG,
+  SEVERITY_CONFIG,
+  formatAlertMessageHtml,
+  formatAlertMessagePlain,
+  createAlertButtons,
+  formatTelegramAlert,
+  createAlertMessage,
+  formatAlertSummary,
+  createAlertSummaryMessage,
+  getSeverityEmoji,
+  getAlertTypeEmoji,
+  getAlertTypeLabel,
+  validateAlertData,
+} from "./alert-formatter";
