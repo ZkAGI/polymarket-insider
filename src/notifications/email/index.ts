@@ -39,3 +39,40 @@ export {
   createEmailClient,
   resetEmailClient,
 } from './client';
+
+// Export alert email template types
+export type {
+  AlertSeverity,
+  AlertType,
+  AlertTemplateData,
+  AlertEmailOptions,
+  RenderedEmail,
+  SeverityColors,
+  AlertTypeConfig,
+} from './templates';
+
+// Export alert email template functions
+export {
+  // Constants
+  SEVERITY_COLORS,
+  ALERT_TYPE_CONFIG,
+  // Rendering functions
+  renderAlertEmail,
+  generateAlertHtml,
+  generateAlertPlainText,
+  generateSubject,
+  createAlertEmailMessage,
+  // Utility functions
+  formatEmailDate,
+  formatCurrency,
+  formatPercentage,
+  truncateAddress,
+  escapeHtml,
+  getSeverityLabel,
+  getSeverityColors,
+  getAlertTypeConfig,
+  // Validation
+  validateAlertTemplateData,
+  // Preview (development)
+  getAlertEmailPreviewHtml,
+} from './templates';
