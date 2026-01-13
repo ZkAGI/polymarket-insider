@@ -10,6 +10,30 @@ export {
   QueueProcessorStatus,
 } from "./types";
 
+// Deduplication
+export {
+  NotificationDeduplicator,
+  getDeduplicator,
+  resetDeduplicator,
+  setDeduplicator,
+  isDuplicate,
+  checkAndRecordNotification,
+  recordNotification,
+  createDedupKeyFromInput,
+  generateDedupKey,
+  DEFAULT_DEDUP_CONFIG,
+} from "./deduplication";
+
+export type {
+  DeduplicationConfig,
+  DedupEntry,
+  DedupCheckResult,
+  DedupStats,
+  DedupEventType,
+  DedupEvent,
+  DedupEventHandler,
+} from "./deduplication";
+
 // Types - Interfaces and type aliases
 export type {
   BaseNotificationPayload,

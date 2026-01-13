@@ -9902,3 +9902,39 @@ NOTES FOR NEXT SESSION:
 - Import from src/notifications/core/index.ts
 - Usage: getNotificationQueue(), queue.addEmail(), queue.start()
 - Next feature: NOTIF-CORE-002 (Notification deduplication)
+
+=== Session 2026-01-13 (continued) ===
+
+COMPLETED: NOTIF-CORE-002 - Notification deduplication
+- Implemented comprehensive notification deduplication system to prevent duplicate alerts
+
+FILES CREATED:
+- src/notifications/core/deduplication.ts (550 lines)
+  - NotificationDeduplicator class with full lifecycle management
+  - generateDedupKey() - Content-based key generation for each channel type
+  - Configurable per-channel deduplication windows
+  - In-memory cache with TTL and automatic cleanup
+  - Event emission (duplicate_blocked, entry_added, entry_expired, etc.)
+  - Statistics tracking (hit rate, duplicates blocked, etc.)
+  - Singleton management functions
+
+- tests/notifications/core/deduplication.test.ts (65 unit tests)
+- tests/notifications/core/deduplication.e2e.test.ts (20 E2E tests)
+
+KEY FEATURES:
+- Content-based deduplication key generation (channel, correlation ID, identifiers, title/body hashes)
+- Per-channel deduplication windows: EMAIL 1hr, TELEGRAM/DISCORD 5min, PUSH 2min, SMS 1hr
+- Memory management: max 10,000 entries, auto cleanup, LRU eviction
+- Monitoring: events, statistics API, per-channel breakdown
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 65 tests passing
+- E2E tests: 20 tests passing
+- All notification/core tests: 227 tests passing
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-CORE-002 complete and marked in prd.json
+- Import from src/notifications/core/index.ts
+- Next feature: NOTIF-CORE-003 (Notification rate limiting)
+
