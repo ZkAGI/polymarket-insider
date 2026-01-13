@@ -2,11 +2,16 @@
 
 import { LineChart, LineChartDataPoint, LineChartSeries } from '@/app/components/charts/LineChart';
 import { BarChart, BarChartDataPoint, BarChartSeries } from '@/app/components/charts/BarChart';
+import { ChartTimeRangeSelector, useChartTimeRange } from '@/app/components/charts/ChartTimeRangeSelector';
 
 /**
  * Demo page for Chart components
  */
 export default function ChartsDemo() {
+  // Time range state for demo
+  const { selectedRange, customRange, handleRangeChange, handleCustomRangeChange } =
+    useChartTimeRange('1M');
+
   // Single series demo data
   const singleSeriesData: LineChartDataPoint[] = Array.from({ length: 30 }, (_, i) => ({
     x: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000),
@@ -146,6 +151,126 @@ export default function ChartsDemo() {
         </h1>
 
         <div className="space-y-8">
+          {/* Time Range Selector Section */}
+          <section className="space-y-8">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4 border-b-2 border-gray-300 dark:border-gray-700 pb-2">
+              Time Range Selector
+            </h2>
+
+            {/* Basic Time Range Selector */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                Basic Time Range Selector
+              </h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <ChartTimeRangeSelector
+                  selectedRange={selectedRange}
+                  onRangeChange={handleRangeChange}
+                  availableRanges={['1D', '1W', '1M', '3M', '6M', 'ALL']}
+                />
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                  Selected Range: <span className="font-bold">{selectedRange}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* With Custom Range */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                With Custom Range Option
+              </h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <ChartTimeRangeSelector
+                  selectedRange={selectedRange}
+                  onRangeChange={handleRangeChange}
+                  customRange={customRange}
+                  onCustomRangeChange={handleCustomRangeChange}
+                  availableRanges={['1H', '1D', '1W', '1M', '3M', '6M', '1Y', 'ALL']}
+                  enableCustomRange={true}
+                />
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                  {customRange ? (
+                    <>
+                      Custom Range: {customRange.start.toLocaleDateString()} -{' '}
+                      {customRange.end.toLocaleDateString()}
+                    </>
+                  ) : (
+                    <>
+                      Selected Range: <span className="font-bold">{selectedRange}</span>
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Different Sizes */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                Different Sizes
+              </h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Small:</p>
+                  <ChartTimeRangeSelector
+                    selectedRange={selectedRange}
+                    onRangeChange={handleRangeChange}
+                    availableRanges={['1D', '1W', '1M', '3M', 'ALL']}
+                    size="sm"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Medium (default):</p>
+                  <ChartTimeRangeSelector
+                    selectedRange={selectedRange}
+                    onRangeChange={handleRangeChange}
+                    availableRanges={['1D', '1W', '1M', '3M', 'ALL']}
+                    size="md"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Large:</p>
+                  <ChartTimeRangeSelector
+                    selectedRange={selectedRange}
+                    onRangeChange={handleRangeChange}
+                    availableRanges={['1D', '1W', '1M', '3M', 'ALL']}
+                    size="lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Integrated with Chart */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                Integrated with Chart
+              </h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Price Chart with Time Range Filter
+                  </h4>
+                  <ChartTimeRangeSelector
+                    selectedRange={selectedRange}
+                    onRangeChange={handleRangeChange}
+                    availableRanges={['1D', '1W', '1M', '3M', '6M', 'ALL']}
+                  />
+                </div>
+                <LineChart
+                  data={singleSeriesData}
+                  title="Filtered Price Data"
+                  height={300}
+                  showGrid={true}
+                  showXAxis={true}
+                  showYAxis={true}
+                  formatYAxis={(value) => `$${value.toFixed(0)}`}
+                />
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Chart updates based on selected range: {selectedRange}
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* Bar Charts Section */}
           <section className="space-y-8">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4 border-b-2 border-gray-300 dark:border-gray-700 pb-2">

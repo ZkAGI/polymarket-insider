@@ -451,7 +451,7 @@ describe('WalletTradingHistoryTable', () => {
 
     it('should use red for NO outcome', () => {
       const outcome: 'YES' | 'NO' = 'NO';
-      const colorClass = outcome === 'YES' ? 'green' : 'red';
+      const colorClass = outcome === 'NO' ? 'red' : 'green';
       expect(colorClass).toBe('red');
     });
 
@@ -463,7 +463,7 @@ describe('WalletTradingHistoryTable', () => {
 
     it('should use purple for SELL side', () => {
       const side: 'BUY' | 'SELL' = 'SELL';
-      const colorClass = side === 'BUY' ? 'blue' : 'purple';
+      const colorClass = side === 'SELL' ? 'purple' : 'blue';
       expect(colorClass).toBe('purple');
     });
 

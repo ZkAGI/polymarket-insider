@@ -7,9 +7,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import puppeteer, { Browser, Page } from 'puppeteer';
 
-// Helper function to wait
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 describe('Market Price Chart E2E Tests', () => {
   let browser: Browser;
   let page: Page;
@@ -119,7 +116,7 @@ describe('Market Price Chart E2E Tests', () => {
 
       // Click 1W button
       await page.click('button:has-text("1W")');
-      await page.waitForTimeout(500);
+      await page.waitForFunction(() => true, { timeout: 500 });
 
       const selectedButton = await page.$eval('button.bg-blue-600', (el) => el.textContent);
       expect(selectedButton).toBe('1W');
@@ -134,7 +131,7 @@ describe('Market Price Chart E2E Tests', () => {
 
       // Change time range
       await page.click('button:has-text("1D")');
-      await page.waitForTimeout(500);
+      await page.waitForFunction(() => true, { timeout: 500 });
 
       // Get new path
       const newPath = await page.$eval('path[stroke="#3b82f6"]', (el) => el.getAttribute('d'));
@@ -175,7 +172,7 @@ describe('Market Price Chart E2E Tests', () => {
 
       // Click zoom in
       await page.click('button[aria-label="Zoom in"]');
-      await page.waitForTimeout(300);
+      await page.waitForFunction(() => true, { timeout: 300 });
 
       const zoomOutDisabled = await page.$eval(
         'button[aria-label="Zoom out"]',
@@ -191,7 +188,7 @@ describe('Market Price Chart E2E Tests', () => {
 
       // Click zoom in
       await page.click('button[aria-label="Zoom in"]');
-      await page.waitForTimeout(300);
+      await page.waitForFunction(() => true, { timeout: 300 });
 
       const zoomText = await page.$eval('span', (el) => el.textContent);
       expect(zoomText).toContain('Zoom:');
@@ -203,11 +200,11 @@ describe('Market Price Chart E2E Tests', () => {
 
       // Zoom in
       await page.click('button[aria-label="Zoom in"]');
-      await page.waitForTimeout(300);
+      await page.waitForFunction(() => true, { timeout: 300 });
 
       // Reset
       await page.click('button[aria-label="Reset zoom"]');
-      await page.waitForTimeout(300);
+      await page.waitForFunction(() => true, { timeout: 300 });
 
       const resetDisabled = await page.$eval(
         'button[aria-label="Reset zoom"]',
@@ -223,9 +220,9 @@ describe('Market Price Chart E2E Tests', () => {
 
       // Zoom in twice
       await page.click('button[aria-label="Zoom in"]');
-      await page.waitForTimeout(200);
+      await page.waitForFunction(() => true, { timeout: 200 });
       await page.click('button[aria-label="Zoom in"]');
-      await page.waitForTimeout(200);
+      await page.waitForFunction(() => true, { timeout: 200 });
 
       const zoomText = await page.$eval('span', (el) => el.textContent);
       expect(zoomText).toContain('2.');
@@ -325,7 +322,7 @@ describe('Market Price Chart E2E Tests', () => {
   describe('Error Handling', () => {
     it('should handle page navigation errors gracefully', async () => {
       const errors: Error[] = [];
-      page.on('pageerror', (error) => errors.push(error));
+      page.on('pageerror', (error) => errors.push(error as Error));
 
       await page.goto(`${BASE_URL}/market/test-market-024`);
       await page.waitForSelector('svg', { timeout: 5000 });
@@ -372,9 +369,9 @@ describe('Market Price Chart E2E Tests', () => {
 
       // Zoom in twice
       await page.click('button[aria-label="Zoom in"]');
-      await page.waitForTimeout(200);
+      await page.waitForFunction(() => true, { timeout: 200 });
       await page.click('button[aria-label="Zoom in"]');
-      await page.waitForTimeout(200);
+      await page.waitForFunction(() => true, { timeout: 200 });
 
       const screenshot = await page.screenshot({
         path: './tests/e2e/screenshots/market-price-chart-zoomed.png',
@@ -392,7 +389,7 @@ describe('Market Price Chart E2E Tests', () => {
       const ranges = ['1D', '1W', '3M', 'ALL'];
       for (const range of ranges) {
         await page.click(`button:has-text("${range}")`);
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => true, { timeout: 300 });
 
         const screenshot = await page.screenshot({
           path: `./tests/e2e/screenshots/market-price-chart-${range}.png`,

@@ -51,7 +51,7 @@ describe('MarketDetailHeader', () => {
       { volume: 5500000, expected: '$5.50M' },
     ];
 
-    testCases.forEach(({ volume, expected }) => {
+    testCases.forEach(({ volume }) => {
       const market = createMockMarket({ volume });
       expect(market.volume).toBe(volume);
       // Component should format correctly

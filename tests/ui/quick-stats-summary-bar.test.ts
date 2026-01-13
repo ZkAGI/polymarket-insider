@@ -43,7 +43,7 @@ describe('statTypeConfig', () => {
   });
 
   it('should have correct structure for each stat type', () => {
-    Object.entries(statTypeConfig).forEach(([type, config]) => {
+    Object.entries(statTypeConfig).forEach(([, config]) => {
       expect(config).toHaveProperty('label');
       expect(config).toHaveProperty('icon');
       expect(config).toHaveProperty('color');
@@ -139,7 +139,7 @@ describe('trendConfig', () => {
   });
 
   it('should have correct structure for each direction', () => {
-    Object.entries(trendConfig).forEach(([direction, config]) => {
+    Object.entries(trendConfig).forEach(([, config]) => {
       expect(config).toHaveProperty('icon');
       expect(config).toHaveProperty('color');
       expect(config).toHaveProperty('label');

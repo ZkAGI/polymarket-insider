@@ -9022,3 +9022,61 @@ COMPLETED: UI-CHART-001 - Line chart component
 - Component ready to use throughout application via '@/app/components/charts'
 - Next features: UI-CHART-002 (Bar chart) and UI-CHART-003 (Time range selector)
 
+
+=== Session 2026-01-13 (Chart Time Range Selector) ===
+
+COMPLETED: UI-CHART-003 - Chart time range selector
+- Implemented comprehensive ChartTimeRangeSelector component at app/components/charts/ChartTimeRangeSelector.tsx
+- Component features:
+  * Preset time ranges: 1H, 1D, 1W, 1M, 3M, 6M, 1Y, ALL
+  * Optional custom date range picker
+  * Multiple size variants (sm, md, lg)
+  * Configurable available ranges
+  * Dark mode support
+  * Responsive design
+  * Full keyboard accessibility
+
+- Helper functions implemented:
+  * timeRangeToMs() - Convert time range to milliseconds
+  * timeRangeToDays() - Convert time range to days
+  * getCutoffDate() - Get cutoff date for a time range
+  * filterDataByTimeRange() - Filter data points by time range
+  * useChartTimeRange() - React hook for managing time range state
+
+- Integrated into demo page at /demo/charts with multiple examples:
+  * Basic time range selector
+  * With custom range option
+  * Different size variants
+  * Integrated with LineChart showing filtered data
+
+TESTS VERIFIED:
+- Unit tests: 43 tests passing (tests/ui/charts/ChartTimeRangeSelector.test.tsx)
+  * Component rendering
+  * Range selection
+  * Custom range handling
+  * Different sizes
+  * Hook functionality
+  * Helper function logic
+
+- E2E tests: 10 tests passing (tests/e2e/chart-time-range-selector-demo.e2e.test.ts)
+  * Demo page loads correctly
+  * All time range buttons present
+  * Default selection (1M)
+  * Selection changes on click
+  * Different size variants render
+  * Custom range button when enabled
+  * Chart integration
+  * No console errors
+  * Responsive behavior
+  * Selected range text display
+
+- TypeScript: No type errors, full type safety
+- Manual verification: Tested in browser at http://localhost:3000/demo/charts
+
+NOTES FOR NEXT SESSION:
+- Feature UI-CHART-003 complete and marked in prd.json
+- Component exported from app/components/charts/index.ts
+- Ready for integration into market and wallet detail pages
+- Next features could be:
+  * Integrate time range selector into existing chart pages
+  * Or continue with other pending UI features

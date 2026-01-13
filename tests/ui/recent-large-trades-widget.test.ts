@@ -4,7 +4,7 @@
  *
  * Tests trade display, ranking, interaction, and helper functions.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   LargeTrade,
   TradeDirection,

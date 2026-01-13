@@ -2813,7 +2813,9 @@
       "priority": 140,
       "name": "Chart time range selector",
       "description": "Common time range selector for charts (1H, 24H, 7D, etc.)",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T15:17:00Z",
+      "notes": "Implemented comprehensive ChartTimeRangeSelector component with preset ranges (1H, 1D, 1W, 1M, 3M, 6M, 1Y, ALL), optional custom date range picker, multiple size variants (sm/md/lg), helper functions (timeRangeToMs, timeRangeToDays, getCutoffDate, filterDataByTimeRange), and useChartTimeRange hook. Integrated into demo page at /demo/charts with multiple examples. All 43 unit tests and 10 E2E tests pass. Component supports dark mode, responsive design, and full keyboard accessibility.",
       "steps": [
         "Create range selector",
         "Define preset ranges",

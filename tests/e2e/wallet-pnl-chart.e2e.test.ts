@@ -141,7 +141,10 @@ describe('Wallet P&L Chart E2E Tests', () => {
       });
 
       if (oneMonthButton) {
-        await oneMonthButton.asElement()?.click();
+        const element = oneMonthButton.asElement() as any;
+        if (element) {
+          await element.click();
+        }
         await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for state update
 
         // Check if 1M button is now active
@@ -297,7 +300,7 @@ describe('Wallet P&L Chart E2E Tests', () => {
       const errors: Error[] = [];
 
       page.on('pageerror', (error) => {
-        errors.push(error);
+        errors.push(error as Error);
       });
 
       page.on('console', (msg) => {

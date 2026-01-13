@@ -98,7 +98,6 @@ describe('Alert Detail Modal E2E Tests', () => {
       await openFirstAlertModal();
 
       // Click on backdrop (outside modal content)
-      const modal = await page.$('[data-testid="alert-detail-modal"]');
       await page.evaluate(() => {
         const backdrop = document.querySelector('[data-testid="alert-detail-modal"]');
         if (backdrop) {
@@ -671,7 +670,7 @@ describe('Alert Detail Modal E2E Tests', () => {
       expect(alertItems.length).toBeGreaterThan(0);
 
       // Open first alert
-      await alertItems[0].click();
+      await alertItems[0]?.click();
       await page.waitForSelector('[data-testid="alert-detail-modal"]', { timeout: 5000 });
 
       const firstTitle = await page.evaluate(() => {
@@ -688,7 +687,7 @@ describe('Alert Detail Modal E2E Tests', () => {
 
       // Open second alert if exists
       if (alertItems.length > 1) {
-        await alertItems[1].click();
+        await alertItems[1]?.click();
         await page.waitForSelector('[data-testid="alert-detail-modal"]', { timeout: 5000 });
 
         const secondTitle = await page.evaluate(() => {
