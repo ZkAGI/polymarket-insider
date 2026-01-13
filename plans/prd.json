@@ -2956,7 +2956,7 @@
       "priority": 147,
       "name": "Discord webhook setup",
       "description": "Configure Discord webhook for notifications",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Create Discord webhook",
         "Store webhook URL",
@@ -2968,7 +2968,8 @@
         "typecheck": "Verify types",
         "e2e": "Send test message",
         "manual_verification": "Check Discord channel"
-      }
+      },
+      "completed_at": "2026-01-13"
     },
     {
       "id": "NOTIF-DC-002",
