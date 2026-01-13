@@ -2997,7 +2997,8 @@
       "priority": 149,
       "name": "Web push notification setup",
       "description": "Configure web push notifications",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T19:15:00Z",
       "steps": [
         "Generate VAPID keys",
         "Create push service",

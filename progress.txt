@@ -9648,3 +9648,110 @@ NOTES FOR NEXT SESSION:
   2. Embed formatter for rich embeds
 - Next feature: Check prd.json for next priority with passes:false
 - Integration: Use createAlertMessage() with DiscordClient.sendMessage()
+
+---
+
+## Session: NOTIF-PUSH-001 - Web Push Notification Setup
+Date: 2026-01-13
+
+COMPLETED: NOTIF-PUSH-001 - Web push notification setup
+
+FILES CREATED:
+1. src/notifications/push/types.ts (NEW - ~550 lines)
+   - Complete type definitions for Web Push system
+   - Enums: PushNotificationStatus, PushSubscriptionState, PushUrgency
+   - Interfaces: VapidKeys, PushServiceConfig, PushSubscription, PushSubscriptionRecord
+   - Interfaces: PushNotificationPayload, PushSendResult, PushBatchResult
+   - Event types: PushEventType, PushEvent, PushEventHandler
+   - Validation functions for keys, subscriptions, payloads
+   - Utility functions: generateSubscriptionId, truncatePayload, calculateTtlByUrgency
+
+2. src/notifications/push/vapid.ts (NEW - ~300 lines)
+   - VAPID key generation using P-256 elliptic curve
+   - Base64url encode/decode functions
+   - JWT creation for VAPID authorization headers
+   - Environment variable loading for VAPID keys
+   - Singleton pattern for key storage
+   - VapidError class for error handling
+
+3. src/notifications/push/client.ts (NEW - ~350 lines)
+   - PushClient class for sending notifications
+   - Web Push protocol implementation (RFC 8030)
+   - VAPID authentication headers
+   - Dev mode for testing without actual sends
+   - Batch sending with concurrency control
+   - Event emission system for lifecycle events
+   - Statistics tracking (sent, failed, expired)
+   - Singleton pattern with getPushClient/resetPushClient
+
+4. src/notifications/push/storage.ts (NEW - ~320 lines)
+   - InMemoryPushStorage class for subscription storage
+   - Index management for endpoint and userId lookups
+   - PushSubscriptionManager for high-level operations
+   - Cleanup functionality for expired subscriptions
+   - Singleton pattern with getSubscriptionManager
+
+5. src/notifications/push/index.ts (NEW)
+   - Module exports for all push notification functionality
+
+6. tests/notifications/push/types.test.ts (NEW - 66 tests)
+7. tests/notifications/push/vapid.test.ts (NEW - 37 tests)
+8. tests/notifications/push/client.test.ts (NEW - 37 tests)
+9. tests/notifications/push/storage.test.ts (NEW - 60 tests)
+10. tests/notifications/push/e2e.test.ts (NEW - 27 tests)
+
+11. .env.example (MODIFIED)
+    - Added VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
+
+KEY FEATURES:
+
+VAPID KEY MANAGEMENT:
+- generateVapidKeys(subject) - Generate P-256 key pair
+- createVapidKeys(publicKey, privateKey, subject) - Create from strings
+- loadVapidKeysFromEnv() - Load from environment variables
+- validateVapidKeys() - Validate key format
+- getVapidKeys()/setVapidKeys()/resetVapidKeys() - Singleton pattern
+- isValidVapidPublicKey()/isValidVapidPrivateKey() - Format validation
+
+PUSH CLIENT:
+- new PushClient(config) - Create client with VAPID keys
+- send(subscription, payload, options?) - Send single notification
+- sendBatch(subscriptions, payload, options?) - Send to multiple
+- getStats() - Get sent/failed/expired counts
+- resetStats() - Reset statistics
+- getPublicKey() - Get public key for client subscription
+- isDevMode() - Check if in dev mode
+- on/off event handlers for lifecycle events
+
+EVENT TYPES:
+- service:started, service:stopped
+- notification:sending, notification:sent, notification:failed
+- subscription:expired
+
+SUBSCRIPTION STORAGE:
+- InMemoryPushStorage: save, get, update, delete, getByEndpoint, getByUserId
+- PushSubscriptionManager: subscribe, unsubscribe, getSubscription
+- Automatic ID generation and index management
+- Cleanup for expired subscriptions
+
+PAYLOAD HANDLING:
+- Title and body required
+- Optional: icon, badge, image, tag, data, actions, requireInteraction
+- Auto-truncation: title (100 chars), body (500 chars)
+- Urgency levels: very-low, low, normal, high
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 227 tests passing
+  - types.test.ts: 66 tests
+  - vapid.test.ts: 37 tests
+  - client.test.ts: 37 tests
+  - storage.test.ts: 60 tests
+  - e2e.test.ts: 27 tests
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-PUSH-001 complete and marked in prd.json
+- Web Push infrastructure ready for browser integration
+- Next feature: NOTIF-PUSH-002 (Push notification service worker)
+- Integration: Use PushClient.send() with stored subscriptions
+- For production: Set devMode: false and use real push endpoints
