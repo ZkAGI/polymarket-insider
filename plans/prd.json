@@ -3455,7 +3455,8 @@
       "priority": 171,
       "name": "Auto-register groups when bot added",
       "description": "Automatically register group when bot is added to it",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T02:45:00Z",
       "steps": [
         "Listen for 'my_chat_member' event using bot.on('my_chat_member')",
         "Check if new_chat_member.status is 'member' or 'administrator'",

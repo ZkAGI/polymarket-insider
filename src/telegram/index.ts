@@ -21,5 +21,12 @@ export {
   createStartCommandHandler,
   registerUserFromContext,
   getWelcomeMessage,
+  handleMyChatMember,
+  createMyChatMemberHandler,
+  getGroupWelcomeMessage,
+  getGroupFarewellMessage,
+  isBotMember,
+  isBotRemoved,
   type RegistrationResult,
+  type GroupMembershipResult,
 } from "./commands";

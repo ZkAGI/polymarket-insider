@@ -255,3 +255,229 @@ export function createStartCommandHandler(
 ): (ctx: Context) => Promise<void> {
   return (ctx: Context) => handleStartCommand(ctx, subscriberService);
 }
+
+/**
+ * Result of a group registration or removal attempt
+ */
+export interface GroupMembershipResult {
+  success: boolean;
+  action: "registered" | "deactivated" | "reactivated" | "none";
+  chatId?: bigint;
+  chatTitle?: string;
+  error?: string;
+}
+
+/**
+ * Welcome message for groups when bot is added
+ */
+export function getGroupWelcomeMessage(groupTitle: string): string {
+  return `Hello, ${groupTitle}! 🐋
+
+I'm the Polymarket Whale Tracker bot. I'll send alerts about:
+
+• 🔔 Large whale trades
+• 🕵️ Potential insider trading patterns
+• 📊 Suspicious wallet activity
+
+Use /settings to configure which alerts this group receives.
+Use /help for more commands.
+
+Happy trading!`;
+}
+
+/**
+ * Farewell message when bot is removed (logged, not sent)
+ */
+export function getGroupFarewellMessage(groupTitle: string): string {
+  return `Bot was removed from group: ${groupTitle}`;
+}
+
+/**
+ * Check if the status indicates the bot is a member of the chat
+ */
+export function isBotMember(status: string): boolean {
+  return status === "member" || status === "administrator";
+}
+
+/**
+ * Check if the status indicates the bot was removed from the chat
+ */
+export function isBotRemoved(status: string): boolean {
+  return status === "left" || status === "kicked";
+}
+
+/**
+ * Handle my_chat_member update for group registration/deregistration
+ *
+ * This is called when the bot's membership status changes in a chat.
+ * - When added to a group (member/administrator): Register the group
+ * - When removed from a group (left/kicked): Deactivate the group subscription
+ */
+export async function handleMyChatMember(
+  ctx: Context,
+  subscriberService: TelegramSubscriberService = telegramSubscriberService
+): Promise<GroupMembershipResult> {
+  const update = ctx.update;
+
+  // Ensure we have the my_chat_member update
+  if (!("my_chat_member" in update) || !update.my_chat_member) {
+    return {
+      success: false,
+      action: "none",
+      error: "Not a my_chat_member update",
+    };
+  }
+
+  const chatMember = update.my_chat_member;
+  const chat = chatMember.chat;
+  const newStatus = chatMember.new_chat_member.status;
+  const oldStatus = chatMember.old_chat_member.status;
+
+  // Only handle groups and supergroups
+  if (chat.type !== "group" && chat.type !== "supergroup") {
+    return {
+      success: true,
+      action: "none",
+    };
+  }
+
+  const chatId = BigInt(chat.id);
+  const chatTitle = chat.title || "Unknown Group";
+  const chatType = mapChatType(chat.type);
+
+  try {
+    // Bot was added to the group
+    if (!isBotMember(oldStatus) && isBotMember(newStatus)) {
+      // Check if group already exists in database
+      const existingSubscriber = await subscriberService.findByChatId(chatId);
+
+      if (existingSubscriber) {
+        // Reactivate if it was previously deactivated
+        if (!existingSubscriber.isActive) {
+          await subscriberService.activate(chatId);
+          await subscriberService.updateByChatId(chatId, {
+            title: chatTitle,
+          });
+
+          console.log(
+            `[TG-BOT] Reactivated group: chatId=${chatId}, title="${chatTitle}"`
+          );
+
+          // Send welcome message
+          await ctx.api.sendMessage(chat.id, getGroupWelcomeMessage(chatTitle));
+
+          return {
+            success: true,
+            action: "reactivated",
+            chatId,
+            chatTitle,
+          };
+        }
+
+        // Already active, just update title
+        await subscriberService.updateByChatId(chatId, {
+          title: chatTitle,
+        });
+
+        return {
+          success: true,
+          action: "none",
+          chatId,
+          chatTitle,
+        };
+      }
+
+      // Create new group subscription
+      const input: CreateSubscriberInput = {
+        chatId,
+        chatType,
+        title: chatTitle,
+        isActive: true,
+        isAdmin: false,
+        alertPreferences: {
+          whaleAlerts: true,
+          insiderAlerts: true,
+          marketResolutionAlerts: false,
+          priceMovementAlerts: false,
+          minTradeValue: 10000, // Default $10,000 minimum
+          watchedMarkets: [],
+          watchedWallets: [],
+        },
+      };
+
+      await subscriberService.create(input);
+
+      console.log(
+        `[TG-BOT] New group registered: chatId=${chatId}, title="${chatTitle}", type=${chatType}`
+      );
+
+      // Send welcome message
+      await ctx.api.sendMessage(chat.id, getGroupWelcomeMessage(chatTitle));
+
+      return {
+        success: true,
+        action: "registered",
+        chatId,
+        chatTitle,
+      };
+    }
+
+    // Bot was removed from the group
+    if (isBotMember(oldStatus) && isBotRemoved(newStatus)) {
+      const existingSubscriber = await subscriberService.findByChatId(chatId);
+
+      if (existingSubscriber && existingSubscriber.isActive) {
+        await subscriberService.deactivate(chatId, "Bot was removed from group");
+
+        console.log(
+          `[TG-BOT] Group deactivated: chatId=${chatId}, title="${chatTitle}"`
+        );
+
+        return {
+          success: true,
+          action: "deactivated",
+          chatId,
+          chatTitle,
+        };
+      }
+
+      return {
+        success: true,
+        action: "none",
+        chatId,
+        chatTitle,
+      };
+    }
+
+    // No relevant status change
+    return {
+      success: true,
+      action: "none",
+      chatId,
+      chatTitle,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error(`[TG-BOT] Group membership error:`, error);
+
+    return {
+      success: false,
+      action: "none",
+      chatId,
+      chatTitle,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Create the my_chat_member handler
+ *
+ * Factory function that returns a handler with injected dependencies
+ */
+export function createMyChatMemberHandler(
+  subscriberService: TelegramSubscriberService = telegramSubscriberService
+): (ctx: Context) => Promise<GroupMembershipResult> {
+  return (ctx: Context) => handleMyChatMember(ctx, subscriberService);
+}

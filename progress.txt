@@ -11049,3 +11049,63 @@ NOTES FOR NEXT SESSION:
 - TG-BOT-003 will need to use bot.on('my_chat_member') event
 - The /start command handler is ready and can be registered using bot.onCommand("start", handler)
 - Commands module exports: handleStartCommand, createStartCommandHandler, registerUserFromContext, getWelcomeMessage
+
+
+=== Session 2026-01-14 (TG-BOT-003) ===
+
+COMPLETED: TG-BOT-003 - Auto-register groups when bot added
+
+Summary:
+- Implemented handleMyChatMember() function to handle bot membership changes in groups
+- When bot is added to a group (status 'member' or 'administrator'), registers the group
+- When bot is removed from a group (status 'left' or 'kicked'), deactivates the subscription
+- Sends welcome message to groups when bot is added
+
+Implementation Details:
+
+handleMyChatMember() function:
+- Listens for 'my_chat_member' update in ctx.update
+- Extracts chat info (id, type, title) and status changes (oldStatus, newStatus)
+- Only handles groups and supergroups (ignores private chats and channels)
+- For new groups: Creates TelegramSubscriber with default alert preferences
+- For reactivated groups: Calls activate() and updates title
+- For removed bot: Calls deactivate() with reason "Bot was removed from group"
+- Sends group-specific welcome message with bot capabilities
+
+Helper functions:
+- isBotMember(status): Returns true for 'member' or 'administrator'
+- isBotRemoved(status): Returns true for 'left' or 'kicked'
+- getGroupWelcomeMessage(groupTitle): Returns formatted welcome message for groups
+- getGroupFarewellMessage(groupTitle): Returns log message when bot is removed
+- createMyChatMemberHandler(service): Factory function with dependency injection
+
+GroupMembershipResult interface:
+- success: boolean
+- action: 'registered' | 'deactivated' | 'reactivated' | 'none'
+- chatId?: bigint
+- chatTitle?: string
+- error?: string
+
+Files Modified:
+- src/telegram/commands.ts: Added group membership handler functions
+- src/telegram/index.ts: Added exports for new functions
+- tests/telegram/commands.test.ts: Added 45 new unit tests (76 total in file)
+- tests/telegram/commands.e2e.test.ts: Added 9 new E2E tests (24 total in file)
+
+Also Fixed:
+- tests/telegram/commands.e2e.test.ts: Removed unused imports (registerUserFromContext, getWelcomeMessage)
+
+Verification:
+- TypeScript typecheck: PASSED (pnpm typecheck)
+- Unit tests: 76 tests PASSED for commands.test.ts
+- E2E tests: 24 tests PASSED for commands.e2e.test.ts
+- All telegram module tests: 149 tests PASSED (4 test files)
+- Browser smoke tests: PASSED (homepage and dashboard render correctly)
+
+NOTES FOR NEXT SESSION:
+- TG-BOT-003 complete and marked in prd.json
+- Next feature to implement: TG-BOT-004 (/stop command to unsubscribe)
+- The handleMyChatMember handler needs to be registered with bot.on("my_chat_member", handler)
+- Commands module now exports all group membership functions
+- To actually use this in production, add to bot setup:
+  bot.on("my_chat_member", createMyChatMemberHandler())

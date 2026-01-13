@@ -8,10 +8,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import puppeteer, { Browser, Page } from "puppeteer";
 import type { Context } from "grammy";
 import {
-  registerUserFromContext,
   handleStartCommand,
   createStartCommandHandler,
-  getWelcomeMessage,
+  handleMyChatMember,
+  createMyChatMemberHandler,
+  getGroupWelcomeMessage,
 } from "../../src/telegram/commands";
 import {
   TelegramSubscriberService,
@@ -447,5 +448,300 @@ describe("Browser E2E Tests - Dashboard and Homepage", () => {
 
     const screenshot = await page.screenshot({ encoding: "base64" });
     expect(screenshot).toBeTruthy();
+  });
+});
+
+// ============= E2E Tests for TG-BOT-003: Group membership handler =============
+
+/**
+ * Create a mock context for my_chat_member update
+ */
+function createMyChatMemberContext(overrides?: {
+  chatId?: number;
+  chatType?: "group" | "supergroup" | "private" | "channel";
+  chatTitle?: string;
+  oldStatus?: string;
+  newStatus?: string;
+  noMyChatMember?: boolean;
+}): Context {
+  const update = overrides?.noMyChatMember
+    ? { update_id: 12345 }
+    : {
+        update_id: 12345,
+        my_chat_member: {
+          chat: {
+            id: overrides?.chatId ?? -1001234567890,
+            type: overrides?.chatType ?? "supergroup",
+            title: overrides?.chatTitle ?? "Test Group",
+          },
+          from: {
+            id: 999888777,
+            is_bot: false,
+            first_name: "Admin",
+          },
+          date: Date.now(),
+          old_chat_member: {
+            user: {
+              id: 123456,
+              is_bot: true,
+              first_name: "Bot",
+            },
+            status: overrides?.oldStatus ?? "left",
+          },
+          new_chat_member: {
+            user: {
+              id: 123456,
+              is_bot: true,
+              first_name: "Bot",
+            },
+            status: overrides?.newStatus ?? "member",
+          },
+        },
+      };
+
+  return {
+    update,
+    api: {
+      sendMessage: vi.fn().mockResolvedValue({ message_id: 1 }),
+    },
+  } as unknown as Context;
+}
+
+describe("Group Membership E2E Tests", () => {
+  describe("Full Group Registration Flow", () => {
+    let mockService: TelegramSubscriberService;
+
+    beforeEach(() => {
+      mockService = createMockSubscriberService();
+      vi.clearAllMocks();
+    });
+
+    it("should complete full flow when bot is added to new group", async () => {
+      const ctx = createMyChatMemberContext({
+        chatId: -1001112223334,
+        chatType: "supergroup",
+        chatTitle: "Polymarket Whales",
+        oldStatus: "left",
+        newStatus: "member",
+      });
+
+      const newSubscriber = createMockSubscriber({
+        chatId: BigInt(-1001112223334),
+        chatType: TelegramChatType.SUPERGROUP,
+        title: "Polymarket Whales",
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+      vi.mocked(mockService.create).mockResolvedValue(newSubscriber);
+
+      const result = await handleMyChatMember(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.action).toBe("registered");
+      expect(result.chatTitle).toBe("Polymarket Whales");
+
+      // Verify database operations
+      expect(mockService.findByChatId).toHaveBeenCalledWith(BigInt(-1001112223334));
+      expect(mockService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chatId: BigInt(-1001112223334),
+          chatType: TelegramChatType.SUPERGROUP,
+          title: "Polymarket Whales",
+          isActive: true,
+          alertPreferences: expect.objectContaining({
+            whaleAlerts: true,
+            insiderAlerts: true,
+          }),
+        })
+      );
+
+      // Verify welcome message sent
+      expect(ctx.api.sendMessage).toHaveBeenCalledWith(
+        -1001112223334,
+        expect.stringContaining("Polymarket Whales")
+      );
+    });
+
+    it("should complete full flow when bot is added as administrator", async () => {
+      const ctx = createMyChatMemberContext({
+        chatId: -1002223334445,
+        chatType: "group",
+        chatTitle: "Admin Group",
+        oldStatus: "left",
+        newStatus: "administrator",
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+      vi.mocked(mockService.create).mockResolvedValue(
+        createMockSubscriber({
+          chatId: BigInt(-1002223334445),
+          chatType: TelegramChatType.GROUP,
+        })
+      );
+
+      const result = await handleMyChatMember(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.action).toBe("registered");
+      expect(mockService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chatType: TelegramChatType.GROUP,
+        })
+      );
+    });
+
+    it("should complete full reactivation flow when bot is re-added to group", async () => {
+      const ctx = createMyChatMemberContext({
+        chatId: -1003334445556,
+        chatTitle: "Returning Group",
+        oldStatus: "kicked",
+        newStatus: "member",
+      });
+
+      const inactiveSubscriber = createMockSubscriber({
+        chatId: BigInt(-1003334445556),
+        chatType: TelegramChatType.SUPERGROUP,
+        isActive: false,
+        deactivationReason: "Bot was removed from group",
+      });
+
+      const reactivatedSubscriber = createMockSubscriber({
+        chatId: BigInt(-1003334445556),
+        isActive: true,
+        deactivationReason: null,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(inactiveSubscriber);
+      vi.mocked(mockService.activate).mockResolvedValue(reactivatedSubscriber);
+      vi.mocked(mockService.updateByChatId).mockResolvedValue(reactivatedSubscriber);
+
+      const result = await handleMyChatMember(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.action).toBe("reactivated");
+      expect(mockService.activate).toHaveBeenCalledWith(BigInt(-1003334445556));
+      expect(mockService.updateByChatId).toHaveBeenCalledWith(
+        BigInt(-1003334445556),
+        expect.objectContaining({ title: "Returning Group" })
+      );
+      expect(ctx.api.sendMessage).toHaveBeenCalled();
+    });
+
+    it("should complete full deactivation flow when bot is removed", async () => {
+      const ctx = createMyChatMemberContext({
+        chatId: -1004445556667,
+        chatTitle: "Leaving Group",
+        oldStatus: "member",
+        newStatus: "left",
+      });
+
+      const activeSubscriber = createMockSubscriber({
+        chatId: BigInt(-1004445556667),
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(activeSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue(
+        createMockSubscriber({ isActive: false })
+      );
+
+      const result = await handleMyChatMember(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.action).toBe("deactivated");
+      expect(mockService.deactivate).toHaveBeenCalledWith(
+        BigInt(-1004445556667),
+        "Bot was removed from group"
+      );
+    });
+
+    it("should complete full deactivation flow when bot is kicked", async () => {
+      const ctx = createMyChatMemberContext({
+        chatId: -1005556667778,
+        chatTitle: "Kicked Group",
+        oldStatus: "administrator",
+        newStatus: "kicked",
+      });
+
+      const activeSubscriber = createMockSubscriber({
+        chatId: BigInt(-1005556667778),
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(activeSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue(
+        createMockSubscriber({ isActive: false })
+      );
+
+      const result = await handleMyChatMember(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.action).toBe("deactivated");
+    });
+
+    it("should handle error during group registration gracefully", async () => {
+      const ctx = createMyChatMemberContext({
+        chatId: -1006667778889,
+        chatTitle: "Error Group",
+        oldStatus: "left",
+        newStatus: "member",
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+      vi.mocked(mockService.create).mockRejectedValue(
+        new Error("Database connection lost")
+      );
+
+      const result = await handleMyChatMember(ctx, mockService);
+
+      expect(result.success).toBe(false);
+      expect(result.action).toBe("none");
+      expect(result.error).toBe("Database connection lost");
+      expect(result.chatTitle).toBe("Error Group");
+    });
+  });
+
+  describe("Group Membership Handler Factory", () => {
+    it("should create working handler with custom service", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMyChatMemberContext({
+        chatId: -1007778889990,
+        chatTitle: "Factory Test Group",
+        oldStatus: "left",
+        newStatus: "member",
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+      vi.mocked(mockService.create).mockResolvedValue(createMockSubscriber());
+
+      const handler = createMyChatMemberHandler(mockService);
+      const result = await handler(ctx);
+
+      expect(result.success).toBe(true);
+      expect(result.action).toBe("registered");
+      expect(mockService.findByChatId).toHaveBeenCalled();
+      expect(mockService.create).toHaveBeenCalled();
+    });
+  });
+
+  describe("Group Welcome Message Verification", () => {
+    it("should include all required information in group welcome message", () => {
+      const message = getGroupWelcomeMessage("Test Trading Group");
+
+      // Verify group name is included
+      expect(message).toContain("Test Trading Group");
+
+      // Verify bot features are mentioned
+      expect(message).toContain("whale trades");
+      expect(message).toContain("insider trading");
+      expect(message).toContain("wallet activity");
+
+      // Verify commands are mentioned
+      expect(message).toContain("/settings");
+      expect(message).toContain("/help");
+
+      // Verify emoji is present
+      expect(message).toContain("🐋");
+    });
   });
 });
