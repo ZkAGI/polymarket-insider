@@ -101,3 +101,31 @@ export {
 } from "./queue";
 
 export type { NotificationQueueConfig } from "./queue";
+
+// Rate Limiter
+export {
+  NotificationRateLimiter,
+  getRateLimiter,
+  resetRateLimiter,
+  setRateLimiter,
+  isNotificationRateLimited,
+  checkNotificationRateLimit,
+  checkQueueInputRateLimit,
+  getRateLimiterStats,
+  extractRecipientId,
+  generateRateLimitKey,
+  DEFAULT_RATE_LIMITER_CONFIG,
+  RateLimitKeyType,
+} from "./rate-limiter";
+
+export type {
+  RateLimitRule,
+  RateLimiterConfig,
+  TokenBucket,
+  RateLimitResult,
+  AggregateRateLimitResult,
+  RateLimiterStats,
+  RateLimiterEventType,
+  RateLimiterEvent,
+  RateLimiterEventHandler,
+} from "./rate-limiter";
