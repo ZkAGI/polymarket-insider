@@ -10245,3 +10245,70 @@ NOTES FOR NEXT SESSION:
 - Market context analyzer can be used to enrich alert context
 - Simulated content fetching - in production, connect to actual news/social APIs
 
+=== 2026-01-13: AI-PRED-001 - Insider Probability Predictor ===
+
+COMPLETED: Insider Probability Predictor (src/ai/insider-probability-predictor.ts)
+
+IMPLEMENTATION:
+- Created InsiderProbabilityPredictor class for multi-signal insider probability prediction
+- 21 feature definitions across 6 signal categories
+- Multiple probability calibration methods for accuracy improvement
+- Prediction verification system with accuracy tracking over time
+- Configurable caching with TTL and max size
+
+KEY TYPES:
+- InsiderConfidenceLevel enum (VERY_HIGH, HIGH, MEDIUM, LOW, VERY_LOW)
+- InsiderSignalCategory enum (WALLET_BEHAVIOR, TIMING, MARKET_SELECTION, TRADING_PATTERN, PERFORMANCE, NETWORK)
+- PredictionStatus enum (PENDING, VERIFIED_CORRECT, VERIFIED_INCORRECT, EXPIRED, INCONCLUSIVE)
+- CalibrationMethod enum (PLATT_SCALING, ISOTONIC_REGRESSION, BETA_CALIBRATION, TEMPERATURE_SCALING, NONE)
+- InsiderFeatureDefinition interface (name, category, weight, extractor, description)
+- InsiderPrediction interface (walletAddress, probability, calibratedProbability, confidence, features, signals)
+- PredictionVerification interface (predictionId, actualOutcome, accuracy metrics)
+
+KEY FEATURES:
+- Feature extraction from wallet behavior data (avg trade size, timing patterns, market selection, etc.)
+- Six signal categories for comprehensive insider detection
+- Probability calibration using Platt scaling, isotonic regression, beta calibration, temperature scaling
+- Prediction verification to track accuracy (precision, recall, F1 score, Brier score, AUC)
+- Batch processing for multiple wallets with event emission
+- Caching system with configurable TTL and max entries
+- Event emission for prediction lifecycle (started, completed, verified, batch events)
+- Factory functions and singleton pattern for shared instances
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 83 tests passing (tests/ai/insider-probability-predictor.test.ts)
+- E2E tests: 48 tests passing (tests/ai/insider-probability-predictor.e2e.test.ts)
+- Total AI tests: 683 passing
+
+USAGE EXAMPLE:
+  import { createInsiderProbabilityPredictor, CalibrationMethod } from "@/ai";
+
+  const predictor = createInsiderProbabilityPredictor({
+    calibrationMethod: CalibrationMethod.PLATT_SCALING,
+    cacheConfig: { maxSize: 1000, ttlMs: 300000 }
+  });
+
+  const walletData = {
+    address: "0x...",
+    avgTradeSize: 50000,
+    tradeCount: 25,
+    avgTimeBetweenTrades: 3600000,
+    uniqueMarketsTraded: 8,
+    winRate: 0.72,
+    avgTradeHour: 14,
+    profitLossRatio: 2.5,
+    // ... more fields
+  };
+
+  const prediction = predictor.predict(walletData);
+  console.log(prediction.probability);        // Raw probability (0-1)
+  console.log(prediction.calibratedProbability); // Calibrated probability
+  console.log(prediction.confidence);         // Confidence level
+  console.log(prediction.signals);            // Contributing signal categories
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PRED-001 complete and marked in prd.json
+- Next feature to implement: Check prd.json for next highest priority with passes:false
+- Insider probability predictor integrates with wallet clustering for network analysis
+- Calibration methods can be tuned based on historical data accuracy

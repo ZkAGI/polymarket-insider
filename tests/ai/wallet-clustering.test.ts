@@ -777,7 +777,8 @@ describe("WalletClustering", () => {
 
       const result = await clustering.cluster(vectors);
 
-      expect(result.processingTimeMs).toBeGreaterThan(0);
+      // Processing time can be 0ms on very fast executions, just ensure it's non-negative
+      expect(result.processingTimeMs).toBeGreaterThanOrEqual(0);
     });
   });
 

@@ -270,3 +270,68 @@ export type {
   MarketContextAnalyzerConfig,
   MarketContextAnalyzerEvents,
 } from "./market-context-analyzer";
+
+// AI-PRED-001: Insider Probability Predictor
+export {
+  // Enums
+  InsiderConfidenceLevel,
+  InsiderSignalCategory,
+  PredictionStatus,
+  CalibrationMethod,
+
+  // Constants
+  DEFAULT_INSIDER_FEATURES,
+  DEFAULT_PREDICTOR_CONFIG,
+  CONFIDENCE_THRESHOLDS,
+
+  // Classes
+  InsiderProbabilityPredictor,
+
+  // Factory functions
+  createInsiderProbabilityPredictor,
+  getSharedInsiderProbabilityPredictor,
+  setSharedInsiderProbabilityPredictor,
+  resetSharedInsiderProbabilityPredictor,
+
+  // Utility functions
+  getConfidenceLevelDescription,
+  getConfidenceLevelColor,
+  getSignalCategoryDescription,
+  formatProbability,
+  getProbabilityLevelDescription,
+  getProbabilityLevelColor,
+  getCalibrationMethodDescription,
+
+  // Mock data generators
+  createMockWalletActivityData,
+  createMockWalletBehaviorFeatures,
+  createMockTimingFeatures,
+  createMockMarketSelectionFeatures,
+  createMockTradingPatternFeatures,
+  createMockPerformanceFeatures,
+  createMockNetworkFeatures,
+  createMockInsiderFeatureSet,
+  createMockInsiderFeatureSetBatch,
+  createSuspiciousMockFeatureSet,
+  createNormalMockFeatureSet,
+} from "./insider-probability-predictor";
+
+export type {
+  InsiderFeatureDefinition,
+  WalletActivityData,
+  WalletBehaviorFeatures,
+  TimingFeatures,
+  MarketSelectionFeatures,
+  TradingPatternFeatures,
+  PerformanceFeatures,
+  NetworkFeatures,
+  InsiderFeatureSet,
+  SignalContribution,
+  InsiderPredictionResult,
+  BatchPredictionResult,
+  ProbabilityDistribution,
+  CalibrationParameters,
+  ModelAccuracyMetrics,
+  InsiderPredictorConfig,
+  InsiderPredictorEvents,
+} from "./insider-probability-predictor";
