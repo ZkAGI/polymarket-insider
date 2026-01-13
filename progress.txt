@@ -9486,3 +9486,84 @@ NOTES FOR NEXT SESSION:
 - Alert formatter ready for use with TelegramClient
 - Next feature: NOTIF-TG-003 (Telegram instant notifications)
 - Integration: Use createAlertMessage() with TelegramClient.sendMessage()
+
+---
+
+## Session: NOTIF-TG-003 - Telegram Instant Notifications
+Date: 2026-01-13
+
+COMPLETED: NOTIF-TG-003 - Telegram instant notifications
+
+FILES CREATED/MODIFIED:
+1. src/notifications/telegram/notification-service.ts (NEW)
+   - TelegramNotificationService class
+   - High-level notification delivery management
+   - Recipient filtering and priority handling
+   - Delivery tracking and history
+   - Event system for monitoring
+   - Statistics tracking
+
+2. src/notifications/telegram/index.ts
+   - Updated to export notification service types and functions
+
+3. tests/notifications/telegram/notification-service.test.ts (NEW)
+   - 61 unit tests for notification service
+   - Tests for recipient filtering
+   - Tests for priority levels
+   - Tests for muted types
+   - Tests for batch sending
+   - Tests for delivery history
+   - Tests for statistics
+
+4. scripts/telegram-e2e-test.mjs
+   - Extended with notification service E2E tests (9 new tests)
+
+KEY FEATURES:
+- sendAlert() - Send to single recipient with filtering
+- sendAlertToMany() - Batch send with concurrency control
+- sendAlertSummary() - Send summary of multiple alerts
+- Priority-based filtering:
+  * urgent: only critical
+  * high: critical + high
+  * normal: critical + high + medium
+  * low: all severities
+- Recipient configuration:
+  * enabled/disabled toggle
+  * minPriority setting
+  * allowedTypes filter
+  * mutedTypes filter
+  * Custom format options
+- Delivery tracking:
+  * Per-alert delivery history
+  * Success/failure/skipped counts
+  * Statistics with success rate
+- Event system:
+  * notification:sending
+  * notification:sent
+  * notification:failed
+  * notification:skipped
+  * batch:started
+  * batch:completed
+- Helper functions:
+  * sendInstantAlert() - One-liner for single send
+  * sendInstantAlertToMany() - One-liner for batch send
+
+SINGLETON PATTERN:
+- getNotificationService() - Get/create singleton
+- createNotificationService() - Create new instance
+- resetNotificationService() - Reset singleton for testing
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 183 tests passing (36 types + 51 client + 35 formatter + 61 service)
+- E2E test: All 26 test categories passing
+- Browser smoke test: PASS
+
+NOTES FOR NEXT SESSION:
+- Feature NOTIF-TG-003 complete and marked in prd.json
+- Full Telegram notification pipeline ready:
+  1. TelegramClient for low-level API
+  2. Alert formatter for message formatting
+  3. NotificationService for high-level delivery
+- Next feature: Check prd.json for next priority with passes:false
+- Integration ready for alert system

@@ -2936,7 +2936,7 @@
       "priority": 146,
       "name": "Telegram instant notifications",
       "description": "Send instant alerts via Telegram",
-      "passes": false,
+      "passes": true,
       "steps": [
         "Create send function",
         "Handle rate limits",
@@ -2948,7 +2948,8 @@
         "typecheck": "Verify types",
         "e2e": "Trigger instant alert",
         "manual_verification": "Receive notification"
-      }
+      },
+      "completed_at": "2026-01-13"
     },
     {
       "id": "NOTIF-DC-001",

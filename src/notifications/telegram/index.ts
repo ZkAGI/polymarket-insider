@@ -68,3 +68,21 @@ export {
   getAlertTypeLabel,
   validateAlertData,
 } from "./alert-formatter";
+
+// Notification Service
+export {
+  type NotificationPriority,
+  type NotificationRecipient,
+  type NotificationDeliveryResult,
+  type BatchNotificationResult,
+  type NotificationServiceConfig,
+  type NotificationServiceEventType,
+  type NotificationServiceEvent,
+  type NotificationServiceEventHandler,
+  TelegramNotificationService,
+  getNotificationService,
+  createNotificationService,
+  resetNotificationService,
+  sendInstantAlert,
+  sendInstantAlertToMany,
+} from "./notification-service";

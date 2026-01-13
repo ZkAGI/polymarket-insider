@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * E2E test for Telegram bot setup and alert formatting
+ * E2E test for Telegram bot setup, alert formatting, and notification service
  * Tests that the Telegram module can be imported and used correctly
  */
 
@@ -33,6 +33,13 @@ async function runTelegramE2ETest() {
       validateAlertData,
       ALERT_TYPE_CONFIG,
       SEVERITY_CONFIG,
+      // Notification Service
+      TelegramNotificationService,
+      createNotificationService,
+      getNotificationService,
+      resetNotificationService,
+      sendInstantAlert,
+      sendInstantAlertToMany,
     } = await import("../src/notifications/telegram/index.ts");
 
     console.log("1. Module imports successful");
@@ -350,6 +357,174 @@ async function runTelegramE2ETest() {
       }
     }
     console.log("   - SEVERITY_CONFIG: OK");
+
+    // === NOTIFICATION SERVICE TESTS ===
+    console.log("\n=== Notification Service Tests ===\n");
+
+    // Test notification service creation
+    console.log("18. Testing notification service creation...");
+    resetNotificationService();
+    const notificationService = createNotificationService({
+      client: createTelegramClient({ botToken: "test-token", devMode: true }),
+    });
+    if (!(notificationService instanceof TelegramNotificationService)) {
+      throw new Error("createNotificationService should return TelegramNotificationService");
+    }
+    console.log("   - Service creation: OK");
+
+    // Test sendAlert
+    console.log("19. Testing sendAlert...");
+    const alertData = {
+      alertId: "e2e-notif-test-123",
+      alertType: "whale_trade",
+      severity: "high",
+      title: "E2E Notification Test",
+      message: "Testing notification service send.",
+      timestamp: new Date(),
+      walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
+      tradeSize: 100000,
+    };
+    const sendResult = await notificationService.sendAlert(
+      { chatId: 123456789, name: "Test User" },
+      alertData
+    );
+    if (!sendResult.success) {
+      throw new Error("sendAlert should succeed");
+    }
+    if (!sendResult.messageId) {
+      throw new Error("sendAlert should return messageId");
+    }
+    console.log("   - sendAlert: OK");
+
+    // Test recipient filtering - disabled
+    console.log("20. Testing recipient filtering...");
+    const disabledResult = await notificationService.sendAlert(
+      { chatId: 123, enabled: false },
+      alertData
+    );
+    if (!disabledResult.skipped || disabledResult.skipReason !== "Recipient disabled") {
+      throw new Error("Disabled recipient should be skipped");
+    }
+    console.log("   - Disabled recipient skip: OK");
+
+    // Test priority filtering
+    const urgentOnlyResult = await notificationService.sendAlert(
+      { chatId: 123, minPriority: "urgent" },
+      { ...alertData, severity: "medium" }
+    );
+    if (!urgentOnlyResult.skipped) {
+      throw new Error("Medium severity should be skipped for urgent priority");
+    }
+    console.log("   - Priority filtering: OK");
+
+    // Test muted types
+    const mutedResult = await notificationService.sendAlert(
+      { chatId: 123, mutedTypes: ["whale_trade"] },
+      alertData
+    );
+    if (!mutedResult.skipped || !mutedResult.skipReason.includes("muted")) {
+      throw new Error("Muted type should be skipped");
+    }
+    console.log("   - Muted types: OK");
+
+    // Test sendAlertToMany
+    console.log("21. Testing sendAlertToMany...");
+    const notifBatchResult = await notificationService.sendAlertToMany(
+      [
+        { chatId: 1, name: "User 1" },
+        { chatId: 2, name: "User 2" },
+        { chatId: 3, name: "User 3", enabled: false },
+      ],
+      alertData
+    );
+    if (notifBatchResult.total !== 3) {
+      throw new Error("Batch total should be 3");
+    }
+    if (notifBatchResult.delivered !== 2) {
+      throw new Error("Batch delivered should be 2");
+    }
+    if (notifBatchResult.skipped !== 1) {
+      throw new Error("Batch skipped should be 1");
+    }
+    console.log("   - sendAlertToMany: OK");
+
+    // Test delivery history
+    console.log("22. Testing delivery history...");
+    const historyResult = notificationService.getDeliveryResult(alertData.alertId);
+    if (!historyResult || historyResult.delivered !== 2) {
+      throw new Error("Delivery history should be stored");
+    }
+    const allHistory = notificationService.getDeliveryHistory();
+    if (allHistory.length === 0) {
+      throw new Error("getDeliveryHistory should return entries");
+    }
+    console.log("   - Delivery history: OK");
+
+    // Test statistics
+    console.log("23. Testing statistics...");
+    const notifStats = notificationService.getStats();
+    if (notifStats.totalSent < 1) {
+      throw new Error("Stats should track sent notifications");
+    }
+    if (notifStats.totalSkipped < 1) {
+      throw new Error("Stats should track skipped notifications");
+    }
+    if (typeof notifStats.successRate !== "number") {
+      throw new Error("Stats should include success rate");
+    }
+    console.log("   - Statistics: OK");
+
+    // Test event handlers
+    console.log("24. Testing notification event handlers...");
+    let eventFired = false;
+    const unsubNotif = notificationService.on("notification:sent", () => {
+      eventFired = true;
+    });
+    await notificationService.sendAlert({ chatId: 999 }, alertData);
+    if (!eventFired) {
+      throw new Error("notification:sent event should fire");
+    }
+    unsubNotif();
+    console.log("   - Event handlers: OK");
+
+    // Test singleton pattern
+    console.log("25. Testing notification service singleton...");
+    resetNotificationService();
+    const notifSingleton1 = getNotificationService();
+    const notifSingleton2 = getNotificationService();
+    if (notifSingleton1 !== notifSingleton2) {
+      throw new Error("getNotificationService should return singleton");
+    }
+    console.log("   - Singleton pattern: OK");
+
+    // Test helper functions
+    console.log("26. Testing helper functions...");
+    resetNotificationService();
+    const helperResult = await sendInstantAlert(123456789, {
+      alertId: "helper-test",
+      alertType: "system",
+      severity: "medium",
+      title: "Helper Test",
+      message: "Testing helper function.",
+      timestamp: new Date(),
+    });
+    if (!helperResult.success) {
+      throw new Error("sendInstantAlert helper should work");
+    }
+    console.log("   - sendInstantAlert helper: OK");
+
+    const manyHelperResult = await sendInstantAlertToMany([1, 2, 3], {
+      alertId: "many-helper-test",
+      alertType: "system",
+      severity: "medium",
+      title: "Many Helper Test",
+      message: "Testing batch helper.",
+      timestamp: new Date(),
+    });
+    if (manyHelperResult.delivered !== 3) {
+      throw new Error(`sendInstantAlertToMany helper should work (got delivered=${manyHelperResult.delivered}, total=${manyHelperResult.total})`);
+    }
+    console.log("   - sendInstantAlertToMany helper: OK");
 
     console.log("\n✅ All Telegram E2E tests passed!");
     return true;
