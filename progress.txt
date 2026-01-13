@@ -8721,3 +8721,89 @@ NOTES FOR NEXT SESSION:
 - Timezone support available via optional timezone parameter on date functions
 - Custom date inputs use HTML5 date input type for native date picker
 - End date is automatically set to 23:59:59.999 for accurate range filtering
+
+====================
+
+FEATURE COMPLETED: UI-WALLET-001 - Wallet profile page
+
+DESCRIPTION:
+Implemented detailed wallet profile page at /wallet/[address] with comprehensive wallet information display.
+
+COMPONENTS CREATED:
+- WalletProfileHeader: Main header component with address, badges, metadata, and action buttons
+- SuspicionScoreDisplay: Circular gauge displaying suspicion score (0-100) with risk level and flags
+- ActivitySummaryWidget: Grid layout showing comprehensive trading statistics
+- index.ts: Barrel export file for all wallet profile components
+
+PAGE ROUTE:
+- /wallet/[address]/page.tsx: Dynamic route for wallet addresses with mock data generation
+
+KEY FEATURES IMPLEMENTED:
+
+WalletProfileHeader:
+- Full wallet address display with copy-to-clipboard functionality
+- Optional wallet label display
+- Wallet type badges (EOA, CONTRACT, EXCHANGE, DEFI, MARKET_MAKER, INSTITUTIONAL, BOT, UNKNOWN)
+- Status badges (Whale, Potential Insider, Fresh, Monitored, Flagged, Sanctioned)
+- Monitor and Flag toggle buttons with callbacks
+- Wallet created date display
+- Primary funding source display
+- Polygonscan explorer link
+- Optional notes section
+- Responsive layout (mobile/tablet/desktop)
+- Full dark mode support
+
+SuspicionScoreDisplay:
+- Circular progress gauge with SVG rendering
+- Score value (0-100) displayed prominently
+- Dynamic color gradient based on score level
+- Risk level indicator with 5 levels: CRITICAL (≥80), HIGH (≥60), MEDIUM (≥40), LOW (≥20), NONE (<20)
+- Risk level badge with icon and color coding
+- Risk flags section showing active flags:
+  * Whale Activity (🐋)
+  * Potential Insider (🎯)
+  * Fresh Wallet (✨)
+  * Manually Flagged (🚩)
+  * Sanctioned (⛔)
+- Active flags count display
+- "No active risk flags" message when applicable
+- Full dark mode support
+
+ActivitySummaryWidget:
+- Comprehensive trading statistics in responsive grid
+- Key metrics displayed:
+  * Total Volume (USD with M/K formatting)
+  * Total P&L (positive in green, negative in red)
+  * Win Rate (percentage with color coding)
+  * Trade Count (with on-chain tx count)
+  * Average Trade Size
+  * Max Trade Size
+  * First Trade Date
+  * Last Trade Date
+  * Wallet Age (in days)
+  * On-Chain Transaction Count
+- Summary footer with: Age, On-Chain Txs, Win Count, Loss Count
+- Handles null values gracefully (displays "N/A" or "Unknown")
+- Color-coded values (green for wins/profit, red for losses)
+- Full dark mode support
+- Responsive 2-3 column grid layout
+
+FILES CREATED/MODIFIED:
+- app/wallet/[address]/page.tsx (new - 280+ lines)
+- app/wallet/[address]/components/WalletProfileHeader.tsx (new - 290+ lines)
+- app/wallet/[address]/components/SuspicionScoreDisplay.tsx (new - 240+ lines)
+- app/wallet/[address]/components/ActivitySummaryWidget.tsx (new - 260+ lines)
+- app/wallet/[address]/components/index.ts (new - exports)
+- tests/ui/wallet-profile.test.ts (new - 19 unit tests, 400+ lines)
+- tests/e2e/wallet-profile.e2e.test.ts (new - 35 E2E tests, 430+ lines)
+- plans/prd.json (updated passes: true for UI-WALLET-001)
+
+TESTS: 19 unit tests + 35 E2E Puppeteer browser tests written and passing.
+
+NOTES FOR NEXT SESSION:
+- Next feature: UI-WALLET-002 (Wallet trading history table) at priority 130
+- Wallet profile page is fully functional with mock data
+- Ready to integrate with real API when backend is implemented
+- All TypeScript types are properly defined and exported
+- Dark mode tested and fully functional
+- Responsive design tested on mobile, tablet, and desktop viewports
