@@ -3120,7 +3120,8 @@
       "priority": 155,
       "name": "Anomaly detection model training pipeline",
       "description": "Pipeline to train anomaly detection models on historical data",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T21:12:00Z",
       "steps": [
         "Prepare training data",
         "Define model architecture",

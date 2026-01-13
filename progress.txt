@@ -9982,3 +9982,61 @@ NOTES FOR NEXT SESSION:
 - Usage: getNotificationRouter(), router.registerHandler(), router.route()
 - Next feature: AI-PAT-001 (Anomaly detection model training pipeline)
 
+
+
+=== Session 2026-01-13 (continued) ===
+
+COMPLETED: AI-PAT-001 - Anomaly detection model training pipeline
+- Implemented comprehensive anomaly detection model training pipeline using Isolation Forest algorithm
+
+FILES CREATED:
+- src/ai/anomaly-detection-training.ts (1500+ lines)
+  - AnomalyDetectionTrainingPipeline class with full training lifecycle
+  - Isolation Forest implementation with configurable parameters
+  - Feature extraction and engineering pipeline
+  - Data preparation with missing value handling (DEFAULT_VALUE, MEAN, MEDIAN, DROP)
+  - Multiple scaling methods (MIN_MAX, STANDARD, ROBUST, NONE)
+  - Cross-validation with configurable folds
+  - Model persistence (export/import JSON format)
+  - Batch inference capabilities
+  - Event emission for training progress monitoring
+  - Singleton management functions
+
+- src/ai/index.ts (53 lines)
+  - Module exports for all AI-related types, classes, and functions
+
+- tests/ai/anomaly-detection-training.test.ts (56 unit tests)
+  - Comprehensive coverage of all pipeline components
+  - Tests for construction, dataset management, data preparation
+  - Tests for model training, inference, and utilities
+
+- tests/ai/anomaly-detection-training.e2e.test.ts (24 E2E tests)
+  - Full training workflow tests
+  - Model export/import tests
+  - Batch inference tests
+  - Configuration variation tests
+
+KEY FEATURES:
+- 12 default feature definitions covering trading patterns:
+  - total_trades, avg_trade_size, max_trade_size, win_rate
+  - profit_loss_ratio, time_between_trades, market_diversity
+  - avg_position_duration, withdrawal_frequency, unique_markets_traded
+  - late_entry_ratio, contrarian_ratio
+- Isolation Forest algorithm with configurable trees (default: 100)
+- Contamination rate parameter for anomaly threshold
+- Cross-validation for model evaluation
+- Feature importance calculation
+- Confidence scoring for predictions
+- Training job status tracking with stages
+
+TESTS VERIFIED:
+- pnpm typecheck: PASS
+- Unit tests: 56 tests passing
+- E2E tests: 24 tests passing
+- Total AI tests: 80 tests passing
+
+NOTES FOR NEXT SESSION:
+- Feature AI-PAT-001 complete and marked in prd.json
+- Import from src/ai/index.ts
+- Usage: getSharedAnomalyDetectionTrainingPipeline(), pipeline.createDataset(), pipeline.addSample(), pipeline.train()
+- Next feature: AI-PAT-002 (Real-time anomaly scoring)
