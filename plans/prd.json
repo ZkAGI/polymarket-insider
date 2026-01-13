@@ -2687,7 +2687,9 @@
       "priority": 134,
       "name": "Market volume chart",
       "description": "Trading volume chart over time",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-13T08:40:00Z",
+      "notes": "Implemented MarketVolumeChart component with bar chart visualization, time range selector (1D/1W/1M/3M/6M/ALL), interactive tooltips, anomaly detection highlighting volume spikes (>2.5 std deviations), grid lines, responsive SVG design, and legend. Component integrated into market detail page. 32 unit tests and 41 E2E Puppeteer tests passing. Typecheck passes.",
       "steps": [
         "Create volume chart",
         "Plot volume bars",

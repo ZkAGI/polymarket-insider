@@ -8,10 +8,12 @@ import {
   CurrentOddsDisplay,
   MarketInfoSection,
   MarketPriceChart,
+  MarketVolumeChart,
   type MarketData,
   type MarketOutcomeData,
   type PriceDataPoint,
   type ChartEvent,
+  type VolumeDataPoint,
 } from './components';
 
 // Generate mock market data
@@ -227,6 +229,60 @@ function generateMockChartEvents(marketId: string, daysOfHistory: number = 180):
 }
 
 /**
+ * Generate mock volume history data for a market
+ */
+function generateMockVolumeHistory(marketId: string, daysOfHistory: number = 180): VolumeDataPoint[] {
+  const hash = marketId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const points: VolumeDataPoint[] = [];
+  const now = new Date();
+  const pointsPerDay = 24; // One point per hour
+  const totalPoints = daysOfHistory * pointsPerDay;
+
+  // Base volume level
+  const baseVolume = 50000 + (hash % 200000);
+
+  for (let i = 0; i < totalPoints; i++) {
+    const progress = i / totalPoints;
+    const timestamp = new Date(now.getTime() - (totalPoints - i) * 60 * 60 * 1000);
+
+    // Calculate volume with trend
+    let volume = baseVolume * (1 + progress * 0.3); // 30% growth trend
+
+    // Add daily cycle (higher during business hours)
+    const hour = timestamp.getHours();
+    const dailyCycle = hour >= 9 && hour <= 17 ? 1.3 : 0.7;
+    volume *= dailyCycle;
+
+    // Add sine wave for natural fluctuations
+    const sineWave = Math.sin(progress * Math.PI * 8 + hash) * 0.2;
+    volume *= (1 + sineWave);
+
+    // Add random noise
+    const noise = (Math.sin((i * 11 + hash) * 0.1) * 0.15) + (Math.sin((i * 17 + hash) * 0.05) * 0.1);
+    volume *= (1 + noise);
+
+    // Add occasional spikes (simulating volume surges)
+    if (i % 80 === hash % 80) {
+      volume *= 2 + (hash % 3); // 2x to 4x spike
+    }
+
+    // Ensure volume is positive
+    volume = Math.max(1000, volume);
+
+    // Calculate trade count (proportional to volume)
+    const tradeCount = Math.floor(volume / (500 + (hash % 1000)));
+
+    points.push({
+      timestamp,
+      volume,
+      tradeCount,
+    });
+  }
+
+  return points;
+}
+
+/**
  * Market Detail Page
  *
  * Detailed page for an individual prediction market.
@@ -355,6 +411,7 @@ export default function MarketDetailPage() {
     ? generateMockPriceHistory(market.id, primaryOutcome.id, primaryOutcome.probability)
     : [];
   const chartEvents = generateMockChartEvents(market.id);
+  const volumeHistory = generateMockVolumeHistory(market.id);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
@@ -383,7 +440,7 @@ export default function MarketDetailPage() {
             <MarketInfoSection market={market} />
           </div>
 
-          {/* Price history chart */}
+  {/* Price history chart */}
           {primaryOutcome && (
             <MarketPriceChart
               priceHistory={priceHistory}
@@ -395,6 +452,15 @@ export default function MarketDetailPage() {
               showGrid={true}
             />
           )}
+
+          {/* Volume chart */}
+          <MarketVolumeChart
+            volumeHistory={volumeHistory}
+            height={300}
+            showGrid={true}
+            highlightAnomalies={true}
+            anomalyThreshold={2.5}
+          />
         </div>
       </div>
     </div>
