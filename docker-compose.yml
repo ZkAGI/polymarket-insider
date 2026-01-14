@@ -1,0 +1,163 @@
+# Docker Compose for Local Development (DEPLOY-001)
+#
+# This file sets up the complete development environment including:
+# - PostgreSQL database with persistent storage
+# - Redis for caching (optional)
+# - The main application
+#
+# Usage:
+#   docker-compose up -d        # Start all services in background
+#   docker-compose up           # Start all services with logs
+#   docker-compose down         # Stop all services
+#   docker-compose down -v      # Stop and remove volumes
+#   docker-compose logs -f app  # Follow app logs
+#
+# The app will be available at http://localhost:3000
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: polymarket-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-polymarket}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-polymarket_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-polymarket_tracker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts can be added here
+      # - ./docker/init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-polymarket} -d ${POSTGRES_DB:-polymarket_tracker}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - polymarket-network
+
+  # Redis Cache (optional - for rate limiting and caching)
+  redis:
+    image: redis:7-alpine
+    container_name: polymarket-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - polymarket-network
+
+  # Main Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: polymarket-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-polymarket}:${POSTGRES_PASSWORD:-polymarket_dev}@postgres:5432/${POSTGRES_DB:-polymarket_tracker}
+      REDIS_URL: redis://redis:6379
+      # Polymarket APIs (use defaults from env.ts)
+      GAMMA_API_URL: ${GAMMA_API_URL:-https://gamma-api.polymarket.com}
+      CLOB_API_URL: ${CLOB_API_URL:-https://clob.polymarket.com}
+      CLOB_WS_URL: ${CLOB_WS_URL:-wss://ws-subscriptions-clob.polymarket.com/ws/market}
+      # Optional: Telegram bot
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_ADMIN_IDS: ${TELEGRAM_ADMIN_IDS:-}
+      # Optional: Discord webhook
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      # Optional: Polygon RPC
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-}
+      POLYGONSCAN_API_KEY: ${POLYGONSCAN_API_KEY:-}
+      # Detection settings
+      WHALE_THRESHOLD_USD: ${WHALE_THRESHOLD_USD:-10000}
+      INSIDER_DETECTION_ENABLED: ${INSIDER_DETECTION_ENABLED:-true}
+      # Background services
+      ENABLE_BACKGROUND_SERVICES: ${ENABLE_BACKGROUND_SERVICES:-true}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      # Mount source code for hot reloading
+      - .:/app
+      # Prevent overwriting node_modules
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health?simple=true"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - polymarket-network
+
+  # Database migrations (run once)
+  # Use: docker-compose run --rm migrate
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: polymarket-migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-polymarket}:${POSTGRES_PASSWORD:-polymarket_dev}@postgres:5432/${POSTGRES_DB:-polymarket_tracker}
+    command: npx prisma migrate deploy
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - polymarket-network
+    profiles:
+      - tools
+
+  # Prisma Studio for database management
+  # Use: docker-compose --profile tools up studio
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: polymarket-studio
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-polymarket}:${POSTGRES_PASSWORD:-polymarket_dev}@postgres:5432/${POSTGRES_DB:-polymarket_tracker}
+    command: npx prisma studio --port 5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - polymarket-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  polymarket-network:
+    driver: bridge

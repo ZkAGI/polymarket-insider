@@ -12315,3 +12315,52 @@ NOTES FOR NEXT SESSION:
 - Next features: DEPLOY-001 (Docker compose), DEPLOY-002 (Production Dockerfile)
 - Health endpoint ready for production monitoring/load balancers
 - Use ?simple=true for AWS/GCP health checks
+
+=== DEPLOY-001 & DEPLOY-002: Docker Setup ===
+Date: 2026-01-14
+
+FEATURE: Created complete Docker development and production setup
+
+DOCKER-COMPOSE.YML:
+- PostgreSQL 15 with health checks and persistent volume
+- Redis 7 for caching with health checks and persistent volume
+- Main app with hot reloading in development
+- Migration service for running Prisma migrations
+- Prisma Studio for database management
+- All services on shared network
+- Environment variables from .env file
+
+DOCKERFILE (Multi-stage):
+- Base stage: Common setup with node:20-alpine
+- Dependencies stage: Install all dependencies with pnpm
+- Development stage: Hot reloading, debug support
+- Builder stage: Build production Next.js app
+- Production stage: Minimal image, non-root user, standalone output
+
+FEATURES:
+- Hot reloading in development (source mounted as volume)
+- Standalone Next.js build for production (smaller image)
+- Non-root user in production for security
+- Health checks on all services
+- Profiles for optional tools (migration, studio)
+- Proper layer caching for faster builds
+
+FILES CREATED:
+- docker-compose.yml: Local development environment
+- Dockerfile: Multi-stage development/production
+- .dockerignore: Exclude unnecessary files from build
+
+FILES MODIFIED:
+- next.config.ts: Added output: "standalone" for Docker production builds
+
+USAGE:
+- Development: docker-compose up
+- Production build: docker build --target production -t polymarket-tracker:prod .
+- Run migrations: docker-compose run --rm migrate
+- Prisma Studio: docker-compose --profile tools up studio
+
+NOTES FOR NEXT SESSION:
+- DEPLOY-001 and DEPLOY-002 complete
+- Next features: MONITOR-001 (Structured logging with pino), MONITOR-002 (Metrics endpoint)
+- Manual testing of Docker setup recommended: docker-compose up
+- Production image should be tested with: docker build --target production -t polymarket-tracker:prod .
