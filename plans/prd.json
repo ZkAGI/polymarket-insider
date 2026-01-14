@@ -3740,7 +3740,9 @@
       "priority": 184,
       "name": "Dashboard whales API endpoint",
       "description": "API endpoint for top suspicious wallets",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T06:45:00Z",
+      "notes": "Implemented GET /api/dashboard/whales endpoint with: WalletSummary type (id, address, label, walletType, suspicionScore, riskLevel, totalVolume, tradeCount, winRate, totalPnl, avgTradeSize, maxTradeSize, firstTradeAt, lastTradeAt, walletAgeDays, flags); DashboardWhalesResponse type with wallets array, pagination, filters, generatedAt; query parameters (limit 1-50 default 10, offset, minScore 0-100, isWhale, isInsider, isFlagged); 15-second in-memory caching with cache key per filter combination; ordered by suspicionScore DESC then totalVolume DESC; Cache-Control and X-Cache headers. 39 unit tests pass, 47 E2E tests written (require database).",
       "steps": [
         "Create app/api/dashboard/whales/route.ts",
         "Query wallets ordered by suspicionScore DESC",

@@ -11897,3 +11897,76 @@ NOTES FOR NEXT SESSION:
 - Next feature to implement: UI-API-003 (Dashboard whales API endpoint)
 - Database not running during testing, but unit tests pass with mocking
 - E2E tests require running PostgreSQL database
+
+=== UI-API-003: Dashboard Whales API Endpoint ===
+Date: 2026-01-14
+
+FEATURE: Implemented GET /api/dashboard/whales endpoint for fetching paginated, filterable suspicious wallets.
+
+IMPLEMENTATION:
+- Created app/api/dashboard/whales/route.ts with comprehensive API endpoint
+
+RESPONSE STRUCTURE:
+- WalletSummary type:
+  - id, address, label, walletType, suspicionScore, riskLevel
+  - totalVolume, tradeCount, winRate, totalPnl
+  - avgTradeSize, maxTradeSize, firstTradeAt, lastTradeAt, walletAgeDays
+  - flags: { isWhale, isInsider, isFresh, isFlagged, isMonitored, isSanctioned }
+- DashboardWhalesResponse type:
+  - wallets: WalletSummary[]
+  - pagination: { offset, limit, total, hasMore }
+  - filters: { minScore, isWhale, isInsider, isFlagged }
+  - generatedAt: ISO timestamp
+
+QUERY PARAMETERS:
+- limit: Number of results (1-50, default 10)
+- offset: Pagination offset (default 0)
+- minScore: Minimum suspicion score (0-100)
+- isWhale: Filter by whale status (true/false)
+- isInsider: Filter by insider status (true/false)
+- isFlagged: Filter by flagged status (true/false)
+
+FEATURES:
+- 15-second in-memory caching with per-request cache keys
+- Cache headers (max-age=15, stale-while-revalidate=30)
+- X-Cache header (HIT/MISS)
+- Ordered by suspicionScore DESC, then totalVolume DESC
+- Invalid parameter values gracefully handled with defaults
+- All wallet flags included in response
+- Complete wallet stats including P&L and trade metrics
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 39 tests PASSED (tests/api/dashboard/whales.test.ts)
+- E2E tests: 47 tests written (tests/e2e/dashboard-whales-api.e2e.test.ts)
+  - Note: E2E tests require running PostgreSQL database
+
+Files Created:
+- app/api/dashboard/whales/route.ts
+- tests/api/dashboard/whales.test.ts
+- tests/e2e/dashboard-whales-api.e2e.test.ts
+
+Usage Example:
+```
+# Get top 10 suspicious wallets (default)
+GET /api/dashboard/whales
+
+# Get whale wallets with high suspicion score
+GET /api/dashboard/whales?minScore=80&isWhale=true
+
+# Get flagged wallets with pagination
+GET /api/dashboard/whales?isFlagged=true&limit=20&offset=40
+
+# Get insider candidates ordered by suspicion
+GET /api/dashboard/whales?isInsider=true&limit=50
+
+# Combine multiple filters
+GET /api/dashboard/whales?minScore=75&isWhale=true&isFlagged=true&limit=25
+```
+
+NOTES FOR NEXT SESSION:
+- UI-API-003 complete and marked in prd.json
+- Next feature to implement: UI-API-004 (Dashboard markets API endpoint)
+- Database not running during testing, but unit tests pass with mocking
+- E2E tests require running PostgreSQL database
+- API follows same patterns as stats and alerts endpoints
