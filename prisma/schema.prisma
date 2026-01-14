@@ -46,6 +46,9 @@ model Market {
   /// URL-friendly slug for the market
   slug            String    @unique
 
+  /// Event slug for Polymarket URLs (different from market slug)
+  eventSlug       String?
+
   /// Main question being predicted
   question        String
 

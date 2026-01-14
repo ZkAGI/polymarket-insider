@@ -2,6 +2,7 @@
 //  * Telegram Bot Command Handlers
 //  *
 //  * Implements command handlers for the Telegram bot including user registration.
+//  * IMPROVED VERSION with better UI, Polymarket links, and whale context.
 //  */
 
 // import { Context } from "grammy";
@@ -70,31 +71,37 @@
 // }
 
 // /**
-//  * Welcome message for new users
+//  * Welcome message for new users - IMPROVED
 //  */
 // export function getWelcomeMessage(isNew: boolean, displayName: string): string {
 //   const greeting = isNew
-//     ? `Welcome to Polymarket Whale Tracker, ${displayName}! 🐋`
-//     : `Welcome back, ${displayName}! 🐋`;
+//     ? `🐋 Welcome to PolyWhale, ${displayName}!`
+//     : `🐋 Welcome back, ${displayName}!`;
 
 //   return `${greeting}
 
-// I track insider and whale activity on Polymarket and send you real-time alerts.
+// Your real-time Polymarket intelligence platform.
 
-// What I can do:
-// • 🔔 Send alerts when whales make large trades
-// • 🕵️ Detect potential insider trading patterns
-// • 📊 Track suspicious wallet activity
-// • 🎯 Monitor specific markets you care about
+// ━━━━━━━━━━━━━━━━━━━━━━
 
-// Commands:
-// • /start - Subscribe to alerts
-// • /stop - Unsubscribe from alerts
-// • /settings - Configure alert preferences
-// • /status - Check your subscription status
-// • /help - Show this help message
+// 📊 *Commands:*
+// /markets - Hot markets by volume
+// /whales - Recent whale trades
+// /settings - Configure alerts
+// /help - All commands
 
-// You're now subscribed to receive alerts!`;
+// ━━━━━━━━━━━━━━━━━━━━━━
+
+// 📈 *What I Track:*
+// • 🐋 Whale trades ($10K+ positions)
+// • 🕵️ Insider trading patterns
+// • 📊 Suspicious wallet activity
+
+// ━━━━━━━━━━━━━━━━━━━━━━
+
+// ${isNew ? "✅ You're now subscribed to whale alerts!" : "✅ Your subscription is active!"}
+
+// _Powered by ZkAGI Digital Limited_`;
 // }
 
 // /**
@@ -244,7 +251,7 @@
 //   }
 
 //   const welcomeMessage = getWelcomeMessage(result.isNewUser, displayName);
-//   await ctx.reply(welcomeMessage);
+//   await ctx.reply(welcomeMessage, { parse_mode: "Markdown" });
 // }
 
 // /**
@@ -270,21 +277,30 @@
 // }
 
 // /**
-//  * Welcome message for groups when bot is added
+//  * Welcome message for groups when bot is added - IMPROVED
 //  */
 // export function getGroupWelcomeMessage(groupTitle: string): string {
-//   return `Hello, ${groupTitle}! 🐋
+//   return `🐋 *PolyWhale has joined ${groupTitle}!*
 
-// I'm the Polymarket Whale Tracker bot. I'll send alerts about:
+// ━━━━━━━━━━━━━━━━━━━━━━
 
-// • 🔔 Large whale trades
-// • 🕵️ Potential insider trading patterns
-// • 📊 Suspicious wallet activity
+// I'll send real-time alerts about:
 
-// Use /settings to configure which alerts this group receives.
-// Use /help for more commands.
+// 🐋 *Whale Trades* - Large positions ($10K+)
+// 🕵️ *Insider Patterns* - Suspicious activity
+// 📊 *Market Movements* - Volume spikes
 
-// Happy trading!`;
+// ━━━━━━━━━━━━━━━━━━━━━━
+
+// *Commands:*
+// /markets - Hot markets by volume
+// /whales - Recent whale trades
+// /settings - Configure group alerts
+// /help - All commands
+
+// ━━━━━━━━━━━━━━━━━━━━━━
+
+// _Powered by ZkAGI Digital Limited_`;
 // }
 
 // /**
@@ -366,7 +382,9 @@
 //           );
 
 //           // Send welcome message
-//           await ctx.api.sendMessage(chat.id, getGroupWelcomeMessage(chatTitle));
+//           await ctx.api.sendMessage(chat.id, getGroupWelcomeMessage(chatTitle), {
+//             parse_mode: "Markdown",
+//           });
 
 //           return {
 //             success: true,
@@ -414,7 +432,9 @@
 //       );
 
 //       // Send welcome message
-//       await ctx.api.sendMessage(chat.id, getGroupWelcomeMessage(chatTitle));
+//       await ctx.api.sendMessage(chat.id, getGroupWelcomeMessage(chatTitle), {
+//         parse_mode: "Markdown",
+//       });
 
 //       return {
 //         success: true,
@@ -500,10 +520,10 @@
 // export function getUnsubscribeMessage(displayName: string): string {
 //   return `Goodbye, ${displayName}! 👋
 
-// You have been unsubscribed from Polymarket Whale Tracker alerts.
+// You have been unsubscribed from PolyWhale alerts.
 
 // You will no longer receive notifications about:
-// • 🔔 Whale trades
+// • 🐋 Whale trades
 // • 🕵️ Insider activity patterns
 // • 📊 Suspicious wallet activity
 
@@ -1238,43 +1258,59 @@
 // }
 
 // // =============================================================================
-// // /help Command - Show all available commands
+// // /help Command - Show all available commands - IMPROVED
 // // =============================================================================
 
 // /**
 //  * Get the help message with all available commands
 //  */
 // export function getHelpMessage(): string {
-//   return `🐋 *Polymarket Whale Tracker* - Help
+//   return `🐋 *PolyWhale - Help Center*
 
-// *Available Commands:*
+// ━━━━━━━━━━━━━━━━━━━━━━
 
-// 📌 *Basic Commands:*
+// 📊 *Market Commands:*
+// /markets - View hot markets by volume
+// /whales - Recent whale trades (24h)
+
+// 🔔 *Alert Commands:*
 // /start - Subscribe to alerts
 // /stop - Unsubscribe from alerts
-// /status - Check your subscription status
+// /status - Check subscription status
 // /settings - Configure alert preferences
 // /help - Show this help message
 
-// 📊 *What I Track:*
-// • Large whale trades (configurable threshold)
-// • Potential insider trading patterns
-// • Suspicious wallet activity
-// • Market movements and resolutions
+// ━━━━━━━━━━━━━━━━━━━━━━
 
-// ⚙️ *Alert Settings:*
-// Use /settings to customize:
-// • Enable/disable whale alerts
-// • Enable/disable insider alerts
+// 📈 *What I Track:*
+
+// 🐋 *Whale Trades*
+// Large positions ($10K+) that may indicate smart money movements
+
+// 🕵️ *Insider Patterns*
+// Unusual timing, fresh wallets, concentrated bets before events
+
+// 📊 *Suspicious Activity*
+// New wallets making large trades, unusual market concentration
+
+// ━━━━━━━━━━━━━━━━━━━━━━
+
+// ⚙️ *Customize Alerts:*
+// Use /settings to:
 // • Set minimum trade size ($1K-$100K)
-// • Set alert severity level
+// • Enable/disable alert types
+// • Choose severity level
 
-// 💡 *Tips:*
-// • Use /settings to reduce noise
-// • Higher min trade size = fewer alerts
-// • "Critical only" severity = most important alerts
+// ━━━━━━━━━━━━━━━━━━━━━━
 
-// Need more help? Visit our documentation or contact support.`;
+// 🔗 *Links:*
+// • [Polymarket](https://polymarket.com)
+// • [PolygonScan](https://polygonscan.com)
+
+// ━━━━━━━━━━━━━━━━━━━━━━
+
+// _© ZkAGI Digital Limited_
+// _Not affiliated with Polymarket_`;
 // }
 
 // /**
@@ -1283,7 +1319,10 @@
 //  * Shows all available commands and their descriptions
 //  */
 // export async function handleHelpCommand(ctx: Context): Promise<void> {
-//   await ctx.reply(getHelpMessage(), { parse_mode: "Markdown" });
+//   await ctx.reply(getHelpMessage(), { 
+//     parse_mode: "Markdown",
+//     link_preview_options: { is_disabled: true },
+//   });
 // }
 
 // /**
@@ -1994,11 +2033,11 @@
 // }
 
 // // =============================================================================
-// // /whales Command - Show recent whale trades
+// // /whales Command - Show recent whale trades - IMPROVED
 // // =============================================================================
 
 // /**
-//  * Get the whales message with recent large trades
+//  * Get the whales message with recent large trades - IMPROVED with links and context
 //  */
 // export async function getWhalesMessage(): Promise<string> {
 //   try {
@@ -2015,43 +2054,67 @@
 //       orderBy: { usdValue: "desc" },
 //       take: 10,
 //       include: {
-//         market: { select: { question: true } },
-//         wallet: { select: { address: true } },
+//         market: { select: { question: true, slug: true } },
+//         wallet: { select: { address: true, tradeCount: true, isWhale: true } },
 //       },
 //     });
 
 //     await prisma.$disconnect();
 
 //     if (trades.length === 0) {
-//       return `🐋 *Recent Whale Trades*
+//       return `🐋 *Recent Whale Trades* (24h)
+
+// ━━━━━━━━━━━━━━━━━━━━━━
 
 // No whale trades (>$10K) in the last 24 hours.
 
-// Check back later or adjust your threshold in /settings.`;
+// 💡 Adjust threshold in /settings
+
+// _Updated: ${new Date().toLocaleTimeString()}_`;
 //     }
 
 //     let message = `🐋 *Recent Whale Trades* (24h)\n\n`;
 
 //     for (const trade of trades) {
-//       const size = trade.usdValue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-//       const walletAddr = (trade as any).wallet?.address || trade.walletId;
-//       const wallet = walletAddr.slice(0, 6) + "..." + walletAddr.slice(-4);
-//       const marketQuestion = (trade as any).market?.question || "Unknown Market";
-//       const marketDisplay = marketQuestion.slice(0, 40);
-//       const side = trade.side === "BUY" ? "🟢 BUY" : "🔴 SELL";
+//       const wallet = (trade as any).wallet;
+//       const market = (trade as any).market;
       
-//       message += `${side} *${size}*\n`;
-//       message += `└ ${marketDisplay}${marketQuestion.length > 40 ? "..." : ""}\n`;
-//       message += `└ Wallet: \`${wallet}\`\n\n`;
+//       // Severity emoji based on size
+//       const severity = trade.usdValue >= 100000 ? "🔴" : trade.usdValue >= 50000 ? "🟠" : trade.usdValue >= 25000 ? "🟡" : "🟢";
+//       const side = trade.side === "BUY" ? "🟢 BUY" : "🔴 SELL";
+//       const size = trade.usdValue >= 1000000 
+//         ? `$${(trade.usdValue / 1000000).toFixed(2)}M`
+//         : `$${(trade.usdValue / 1000).toFixed(1)}K`;
+      
+//       const walletAddr = wallet?.address || trade.walletId;
+//       const walletShort = `${walletAddr.slice(0, 6)}...${walletAddr.slice(-4)}`;
+//       const marketQuestion = market?.question || "Unknown Market";
+//       const marketDisplay = marketQuestion.length > 35 ? marketQuestion.slice(0, 35) + "..." : marketQuestion;
+//       const marketSlug = market?.slug || "";
+      
+//       // Use Polymarket search - extract key words from question
+//       const searchTerms = marketQuestion
+//         .replace(/\?/g, '')
+//         .slice(0, 40);
+//       const polymarketUrl = `https://polymarket.com/search?query=${encodeURIComponent(searchTerms)}`;
+      
+//       // Context badges
+//       const badges: string[] = [];
+//       if (wallet?.tradeCount && wallet.tradeCount < 10) badges.push("🆕");
+//       if (wallet?.isWhale) badges.push("🐋");
+//       const badgeStr = badges.length > 0 ? ` ${badges.join("")}` : "";
+      
+//       message += `${severity} ${side} *${size}*${badgeStr}\n`;
+//       message += `├ ${marketDisplay}\n`;
+//       message += `├ 👛 [${walletShort}](https://polygonscan.com/address/${walletAddr})\n`;
+//       message += `└ [View on Polymarket](${polymarketUrl})\n\n`;
 //     }
 
 //     message += `_Updated: ${new Date().toLocaleTimeString()}_`;
 //     return message;
 //   } catch (error) {
 //     console.error("[TG-BOT] Error fetching whales:", error);
-//     return `🐋 *Recent Whale Trades*
-
-// ⚠️ Error fetching whale trades. Please try again later.`;
+//     return `🐋 *Recent Whale Trades*\n\n⚠️ Error fetching trades. Try again later.`;
 //   }
 // }
 
@@ -2061,7 +2124,10 @@
 // export async function handleWhalesCommand(ctx: Context): Promise<void> {
 //   await ctx.reply("🔄 Fetching whale trades...");
 //   const message = await getWhalesMessage();
-//   await ctx.reply(message, { parse_mode: "Markdown" });
+//   await ctx.reply(message, { 
+//     parse_mode: "Markdown",
+//     link_preview_options: { is_disabled: true },
+//   });
 // }
 
 // /**
@@ -2072,11 +2138,11 @@
 // }
 
 // // =============================================================================
-// // /markets Command - Show hot markets
+// // /markets Command - Show hot markets - IMPROVED
 // // =============================================================================
 
 // /**
-//  * Get the markets message with trending markets
+//  * Get the markets message with trending markets - IMPROVED with links
 //  */
 // export async function getMarketsMessage(): Promise<string> {
 //   try {
@@ -2094,31 +2160,40 @@
 //     if (markets.length === 0) {
 //       return `📊 *Hot Markets*
 
+// ━━━━━━━━━━━━━━━━━━━━━━
+
 // No active markets found.
 
-// Markets will appear here once data is synced.`;
+// Markets will appear here once data is synced.
+
+// _Updated: ${new Date().toLocaleTimeString()}_`;
 //     }
 
-//     let message = `📊 *Hot Markets*\n\n`;
+//     let message = `📊 *Hot Markets by Volume*\n\n`;
 
 //     for (let i = 0; i < markets.length; i++) {
-//   const market = markets[i];
-//   if (!market) continue;
-  
-//   const question = market.question.slice(0, 45);
-//   const volume = market.volume?.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) || "$0";
-  
-//   message += `*${i + 1}.* ${question}${market.question.length > 45 ? "..." : ""}\n`;
-//   message += `   💰 Volume: ${volume}\n\n`;
-// }
+//       const market = markets[i];
+//       if (!market) continue;
+      
+//       const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+//       const question = market.question.length > 40 ? market.question.slice(0, 40) + "..." : market.question;
+//       const volume = market.volume >= 1000000 
+//         ? `$${(market.volume / 1000000).toFixed(2)}M`
+//         : `$${(market.volume / 1000).toFixed(0)}K`;
+      
+//       message += `${medal} ${question}\n`;
+//       message += `   💰 Volume: ${volume}\n`;
+      
+//       // Use search URL  
+//       const searchTerms = market.question.replace(/\?/g, '').slice(0, 40);
+//       message += `   🔗 [View Market](https://polymarket.com/search?query=${encodeURIComponent(searchTerms)})\n\n`;
+//     }
 
 //     message += `_Updated: ${new Date().toLocaleTimeString()}_`;
 //     return message;
 //   } catch (error) {
 //     console.error("[TG-BOT] Error fetching markets:", error);
-//     return `📊 *Hot Markets*
-
-// ⚠️ Error fetching markets. Please try again later.`;
+//     return `📊 *Hot Markets*\n\n⚠️ Error fetching markets. Try again later.`;
 //   }
 // }
 
@@ -2128,7 +2203,10 @@
 // export async function handleMarketsCommand(ctx: Context): Promise<void> {
 //   await ctx.reply("🔄 Fetching hot markets...");
 //   const message = await getMarketsMessage();
-//   await ctx.reply(message, { parse_mode: "Markdown" });
+//   await ctx.reply(message, { 
+//     parse_mode: "Markdown",
+//     link_preview_options: { is_disabled: true },
+//   });
 // }
 
 // /**
@@ -4194,7 +4272,7 @@ export async function getWhalesMessage(): Promise<string> {
       orderBy: { usdValue: "desc" },
       take: 10,
       include: {
-        market: { select: { question: true, slug: true } },
+        market: { select: { question: true, slug: true, eventSlug: true } },
         wallet: { select: { address: true, tradeCount: true, isWhale: true } },
       },
     });
@@ -4232,11 +4310,11 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
       const marketDisplay = marketQuestion.length > 35 ? marketQuestion.slice(0, 35) + "..." : marketQuestion;
       const marketSlug = market?.slug || "";
       
-      // Use Polymarket search - extract key words from question
-      const searchTerms = marketQuestion
-        .replace(/\?/g, '')
-        .slice(0, 40);
-      const polymarketUrl = `https://polymarket.com/search?query=${encodeURIComponent(searchTerms)}`;
+      // Use eventSlug for proper Polymarket URLs
+      const eventSlug = market?.eventSlug || market?.slug || "";
+      const polymarketUrl = eventSlug 
+        ? `https://polymarket.com/event/${eventSlug}`
+        : `https://polymarket.com/browse`;
       
       // Context badges
       const badges: string[] = [];
@@ -4293,6 +4371,12 @@ export async function getMarketsMessage(): Promise<string> {
       where: { active: true },
       orderBy: { volume: "desc" },
       take: 10,
+      select: {
+        question: true,
+        slug: true,
+        eventSlug: true,
+        volume: true,
+      },
     });
 
     await prisma.$disconnect();
@@ -4323,10 +4407,8 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
       
       message += `${medal} ${question}\n`;
       message += `   💰 Volume: ${volume}\n`;
-      
-      // Use search URL  
-      const searchTerms = market.question.replace(/\?/g, '').slice(0, 40);
-      message += `   🔗 [View Market](https://polymarket.com/search?query=${encodeURIComponent(searchTerms)})\n\n`;
+      const eventSlug = market.eventSlug || market.slug;
+      message += `   🔗 [View Market](https://polymarket.com/event/${eventSlug})\n\n`;
     }
 
     message += `_Updated: ${new Date().toLocaleTimeString()}_`;

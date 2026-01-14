@@ -263,6 +263,7 @@ export class TradePollingService extends EventEmitter {
           data: {
             id: marketId,
             slug: trade.slug || `market-${marketId.slice(0, 16)}`,
+            eventSlug: trade.eventSlug || null,
             question: trade.title || `Market ${marketId.slice(0, 16)}`,
             description: "",
             endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
@@ -276,7 +277,13 @@ export class TradePollingService extends EventEmitter {
             uniqueTraders: 0,
           },
         });
-      }
+      }else if (!market.eventSlug && trade.eventSlug) {
+        // Update existing market with eventSlug if missing
+        market = await this.prisma.market.update({
+          where: { id: market.id },
+          data: { eventSlug: trade.eventSlug },
+        });
+    }
 
       // Find or create outcome
       let outcome = await this.prisma.outcome.findFirst({
