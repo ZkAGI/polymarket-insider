@@ -3805,7 +3805,9 @@
       "priority": 187,
       "name": "Wallet page API endpoint",
       "description": "API for wallet detail page",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T12:30:00Z",
+      "notes": "Implemented comprehensive wallet detail API at GET /api/wallet/[address]. Features: wallet profile with metadata and flags, paginated trade history with sorting (timestamp/size/price/profitLoss), P&L calculation for resolved trades with cumulative history for charting, address validation, in-memory caching (30s TTL), cache headers. Query params: tradesLimit (1-100), tradesOffset, sortField, sortDirection. Returns: wallet profile, trades array with pagination, pnlHistory array. 32 unit tests and 32 E2E browser tests pass. TypeScript types verified clean.",
       "steps": [
         "Create app/api/wallet/[address]/route.ts",
         "Fetch wallet profile from database",

@@ -12089,3 +12089,58 @@ NOTES FOR NEXT SESSION:
 - Dashboard now fetches real data from all 4 API endpoints
 - Auto-refresh set to 30 seconds for all data sources
 - SWR handles caching and deduplication automatically
+
+=== UI-API-006: Wallet Page API Endpoint ===
+Date: 2026-01-14
+
+FEATURE: Implemented comprehensive wallet detail API endpoint.
+
+IMPLEMENTATION:
+- Created app/api/wallet/[address]/route.ts with GET handler
+- Validates wallet address format (42-character hex with 0x prefix)
+- Fetches wallet profile from database with all metadata and flags
+- Fetches paginated trade history with configurable sorting
+- Calculates P&L for resolved trades (profit/loss based on outcome winner)
+- Generates P&L history data points for charting (daily cumulative P&L)
+- In-memory caching with 30-second TTL and cache headers
+
+API ENDPOINT: GET /api/wallet/[address]
+
+QUERY PARAMETERS:
+- tradesLimit: Number of trades per page (1-100, default 25)
+- tradesOffset: Pagination offset for trades (default 0)
+- sortField: Sort field (timestamp, size, price, profitLoss) (default: timestamp)
+- sortDirection: Sort direction (asc, desc) (default: desc)
+
+RESPONSE STRUCTURE:
+- wallet: Complete wallet profile with metadata and flags
+- trades: Paginated trade history with sorting info
+- pnlHistory: Array of P&L data points for charting
+- generatedAt: ISO timestamp
+
+FEATURES:
+- Address validation (400 for invalid format)
+- 404 for non-existent wallets
+- 500 with error details for database errors
+- Cache-Control and X-Cache headers for successful responses
+- P&L calculation for resolved trades:
+  - BUY + winner = profit (value * (payout/price - 1))
+  - BUY + loser = loss (-value)
+  - SELL trades have inverse P&L
+
+FILES CREATED:
+- app/api/wallet/[address]/route.ts
+- tests/api/wallet/wallet-detail.test.ts
+- tests/e2e/wallet-detail-api.e2e.test.ts
+
+Test Results:
+- TypeScript typecheck: PASSED (no errors in wallet files)
+- Unit tests: 32 tests PASSED (tests/api/wallet/wallet-detail.test.ts)
+- E2E tests: 32 tests PASSED (tests/e2e/wallet-detail-api.e2e.test.ts)
+
+NOTES FOR NEXT SESSION:
+- UI-API-006 complete and marked in prd.json
+- Next feature to implement: UI-API-007 (Market page API endpoint)
+- API follows same patterns as dashboard endpoints
+- Database not running during E2E testing, tests handle 500 errors gracefully
+- Wallet page still uses mock data, can be updated to use this API
