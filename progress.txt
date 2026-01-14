@@ -11366,3 +11366,99 @@ NOTES FOR NEXT SESSION:
 - TG-BROADCAST-002 is partially done - shouldDeactivateOnError() and markBlocked()
   logic is already implemented in this feature
 
+================================================================================
+TG-BROADCAST-002: Handle blocked users gracefully
+Date: 2026-01-14
+================================================================================
+
+FEATURE COMPLETED: TG-BROADCAST-002
+
+Description:
+Implemented comprehensive blocked user handling for the Telegram broadcaster.
+When the bot fails to send a message due to a user blocking the bot, the chat
+not being found, or the bot being kicked, the subscriber is automatically
+marked as blocked with a specific reason and logged.
+
+Implementation Details:
+
+1. Extended Error Classification (src/telegram/broadcaster.ts):
+   - Added DeactivationReasonType enum: BLOCKED_BY_USER, CHAT_NOT_FOUND,
+     BOT_KICKED, USER_DEACTIVATED, INACTIVE_CLEANUP
+   - Added DeactivationInfo interface with reasonType and errorCode
+   - Reordered shouldDeactivateOnError() to check specific patterns first
+     (e.g., "user is deactivated" before generic "forbidden")
+
+2. Logging (src/telegram/broadcaster.ts):
+   - Added logDeactivation() function with structured log format:
+     [TG-BROADCAST] [timestamp] Subscriber deactivated: chatId=X, reason="...", type=..., error="..."
+   - Logs include ISO timestamp, chat ID, human-readable reason,
+     deactivation type, and original error message
+
+3. Database Methods (src/db/telegram-subscribers.ts):
+   - Added markBlockedWithReason(chatId, reason, reasonType): Marks blocked
+     with formatted reason "[TYPE] reason"
+   - Added cleanupInactiveSubscribers(inactiveDays): Finds and deactivates
+     subscribers who haven't received alerts in N days
+   - Added findInactiveSubscribers(inactiveDays): Preview mode for cleanup
+   - Added reactivate(chatId): Reactivate a previously blocked subscriber
+
+4. Cleanup Service (src/telegram/broadcaster.ts):
+   - Added SubscriberCleanupService class with:
+     * Configurable inactiveDays (default: 90), intervalMs (default: 24h)
+     * start()/stop() for periodic cleanup
+     * runCleanup() for manual cleanup
+     * previewCleanup() for dry-run
+     * getLastCleanupResult() for tracking
+     * updateConfig() for dynamic configuration
+   - Added createSubscriberCleanupService() factory function
+   - Added default subscriberCleanupService instance (disabled by default)
+
+5. Exports (src/telegram/index.ts):
+   - Added exports: logDeactivation, SubscriberCleanupService,
+     subscriberCleanupService, createSubscriberCleanupService
+   - Added type exports: DeactivationReasonType, DeactivationInfo,
+     CleanupConfig, CleanupResult
+
+Tests Added:
+
+Unit Tests (tests/telegram/broadcaster.test.ts):
+- logDeactivation logging format tests (4 tests)
+- shouldDeactivateOnError extended response tests (6 tests)
+- sendAlertToSubscriber blocked user handling tests (4 tests)
+- SubscriberCleanupService tests (13 tests):
+  * Creation and configuration
+  * runCleanup and result tracking
+  * previewCleanup without side effects
+  * start/stop lifecycle
+  * updateConfig dynamic updates
+
+E2E Tests (tests/telegram/broadcaster.e2e.test.ts):
+- Deactivation on broadcast errors (3 tests)
+- Subscriber cleanup service E2E (5 tests)
+- Error type classification comprehensive tests (15 error cases)
+- Logging integration tests (2 tests)
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Broadcaster unit tests: 114 tests PASSED
+- Broadcaster E2E tests: 33 tests PASSED
+- Total broadcaster tests: 147 tests PASSED
+
+Files Modified:
+- src/telegram/broadcaster.ts: Added deactivation types, logging, cleanup service
+- src/db/telegram-subscribers.ts: Added new methods for blocked user handling
+- src/telegram/index.ts: Added new exports
+- tests/telegram/broadcaster.test.ts: Added 27 new unit tests
+- tests/telegram/broadcaster.e2e.test.ts: Added 25 new E2E tests
+
+NOTES FOR NEXT SESSION:
+- TG-BROADCAST-002 complete and marked in prd.json
+- Next feature to implement: TG-BROADCAST-003 (Admin broadcast command)
+- The cleanup service is disabled by default but can be started with:
+  import { subscriberCleanupService } from './src/telegram';
+  subscriberCleanupService.updateConfig({ enabled: true });
+  subscriberCleanupService.start();
+- For manual cleanup:
+  const result = await subscriberCleanupService.runCleanup();
+  console.log(`Deactivated ${result.deactivatedCount} subscribers`);
+

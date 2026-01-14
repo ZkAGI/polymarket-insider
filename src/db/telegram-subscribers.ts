@@ -472,13 +472,112 @@ export class TelegramSubscriberService {
   /**
    * Mark subscriber as blocked (by user)
    */
-  async markBlocked(chatId: bigint): Promise<TelegramSubscriber> {
+  async markBlocked(chatId: bigint, reason?: string): Promise<TelegramSubscriber> {
     return this.prisma.telegramSubscriber.update({
       where: { chatId },
       data: {
         isBlocked: true,
         isActive: false,
-        deactivationReason: "User blocked the bot",
+        deactivationReason: reason ?? "User blocked the bot",
+      },
+    });
+  }
+
+  /**
+   * Mark subscriber as blocked with extended reason
+   * @param chatId - The chat ID to mark as blocked
+   * @param reason - Human readable reason for deactivation
+   * @param reasonType - Categorized reason type for filtering/reporting
+   */
+  async markBlockedWithReason(
+    chatId: bigint,
+    reason: string,
+    reasonType: string
+  ): Promise<TelegramSubscriber> {
+    return this.prisma.telegramSubscriber.update({
+      where: { chatId },
+      data: {
+        isBlocked: true,
+        isActive: false,
+        deactivationReason: `[${reasonType}] ${reason}`,
+      },
+    });
+  }
+
+  /**
+   * Clean up long-inactive subscribers
+   * Marks subscribers who haven't received alerts for a specified period as inactive
+   * @param inactiveDays - Number of days of inactivity before cleanup (default: 90)
+   * @returns Array of deactivated subscribers
+   */
+  async cleanupInactiveSubscribers(inactiveDays = 90): Promise<TelegramSubscriber[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - inactiveDays);
+
+    // Find subscribers who:
+    // 1. Are currently active and not blocked
+    // 2. Have received at least one alert (lastAlertAt is not null)
+    // 3. Last received an alert before the cutoff date
+    const inactiveSubscribers = await this.prisma.telegramSubscriber.findMany({
+      where: {
+        isActive: true,
+        isBlocked: false,
+        lastAlertAt: {
+          lt: cutoffDate,
+          not: null,
+        },
+      },
+    });
+
+    // Mark each as inactive
+    const deactivated: TelegramSubscriber[] = [];
+    for (const subscriber of inactiveSubscribers) {
+      const updated = await this.prisma.telegramSubscriber.update({
+        where: { chatId: subscriber.chatId },
+        data: {
+          isActive: false,
+          deactivationReason: `[INACTIVE_CLEANUP] No activity for ${inactiveDays} days`,
+        },
+      });
+      deactivated.push(updated);
+    }
+
+    return deactivated;
+  }
+
+  /**
+   * Find long-inactive subscribers without deactivating them
+   * Useful for preview/dry-run of cleanup
+   * @param inactiveDays - Number of days of inactivity (default: 90)
+   */
+  async findInactiveSubscribers(inactiveDays = 90): Promise<TelegramSubscriber[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - inactiveDays);
+
+    return this.prisma.telegramSubscriber.findMany({
+      where: {
+        isActive: true,
+        isBlocked: false,
+        lastAlertAt: {
+          lt: cutoffDate,
+          not: null,
+        },
+      },
+      orderBy: { lastAlertAt: "asc" },
+    });
+  }
+
+  /**
+   * Reactivate a previously blocked/deactivated subscriber
+   * Used when a user restarts the bot after being marked blocked
+   */
+  async reactivate(chatId: bigint): Promise<TelegramSubscriber> {
+    return this.prisma.telegramSubscriber.update({
+      where: { chatId },
+      data: {
+        isActive: true,
+        isBlocked: false,
+        deactivationReason: null,
       },
     });
   }

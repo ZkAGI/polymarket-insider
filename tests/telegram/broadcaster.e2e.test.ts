@@ -115,6 +115,7 @@ function createMockSubscriberService(): TelegramSubscriberService {
     findAdmins: vi.fn(),
     deactivate: vi.fn(),
     markBlocked: vi.fn(),
+    markBlockedWithReason: vi.fn(),
     incrementAlertsSent: vi.fn(),
     updateAlertPreferences: vi.fn(),
     updateMinSeverity: vi.fn(),
@@ -122,6 +123,9 @@ function createMockSubscriberService(): TelegramSubscriberService {
     getStats: vi.fn().mockResolvedValue({ total: 0, active: 0, blocked: 0, byType: {} }),
     isSubscribed: vi.fn(),
     isAdmin: vi.fn(),
+    cleanupInactiveSubscribers: vi.fn().mockResolvedValue([]),
+    findInactiveSubscribers: vi.fn().mockResolvedValue([]),
+    reactivate: vi.fn(),
   } as unknown as TelegramSubscriberService;
 }
 
@@ -228,7 +232,11 @@ describe("Telegram Broadcaster E2E Tests", () => {
       expect(result.sent).toBe(1);
       expect(result.failed).toBe(1);
       expect(result.deactivated).toBe(1);
-      expect(mockSubscriberService.markBlocked).toHaveBeenCalledWith(BigInt(222));
+      expect(mockSubscriberService.markBlockedWithReason).toHaveBeenCalledWith(
+        BigInt(222),
+        "User blocked the bot",
+        "BLOCKED_BY_USER"
+      );
     });
 
     it("should filter subscribers by severity preference", async () => {
@@ -654,6 +662,386 @@ describe("Telegram Broadcaster E2E Tests", () => {
         // Server might not be running in test environment
         console.log("Dashboard not accessible - server may not be running");
       }
+    });
+  });
+});
+
+// Import cleanup service for E2E tests
+import {
+  createSubscriberCleanupService,
+  logDeactivation,
+  shouldDeactivateOnError,
+} from "../../src/telegram/broadcaster";
+
+describe("TG-BROADCAST-002: Blocked User Handling E2E Tests", () => {
+  describe("Deactivation on Broadcast Errors", () => {
+    let mockBotClient: TelegramBotClient;
+    let mockSubscriberService: TelegramSubscriberService;
+    const originalConsoleLog = console.log;
+    let logOutput: string[] = [];
+
+    beforeEach(() => {
+      mockBotClient = createMockBotClient();
+      mockSubscriberService = createMockSubscriberService();
+      logOutput = [];
+      console.log = (...args: unknown[]) => {
+        logOutput.push(args.map(String).join(" "));
+      };
+      vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+      console.log = originalConsoleLog;
+    });
+
+    it("should deactivate multiple blocked users in a single broadcast", async () => {
+      const alert = createMockAlert();
+      const subscribers = [
+        createMockSubscriber({ chatId: BigInt(111), firstName: "Active1" }),
+        createMockSubscriber({ chatId: BigInt(222), firstName: "Blocked1" }),
+        createMockSubscriber({ chatId: BigInt(333), firstName: "Active2" }),
+        createMockSubscriber({ chatId: BigInt(444), firstName: "Blocked2" }),
+        createMockSubscriber({ chatId: BigInt(555), firstName: "Active3" }),
+      ];
+      vi.mocked(mockSubscriberService.findActive).mockResolvedValue(subscribers);
+
+      // Mix of success and blocked errors
+      vi.mocked(mockBotClient.sendMessage)
+        .mockResolvedValueOnce({ success: true, messageId: 1 })
+        .mockResolvedValueOnce({ success: false, error: "Forbidden: bot was blocked by the user" })
+        .mockResolvedValueOnce({ success: true, messageId: 2 })
+        .mockResolvedValueOnce({ success: false, error: "Bad Request: chat not found" })
+        .mockResolvedValueOnce({ success: true, messageId: 3 });
+
+      const result = await broadcastAlert(alert, {
+        botClient: mockBotClient,
+        subscriberService: mockSubscriberService,
+        sendDelay: 0,
+      });
+
+      // Verify broadcast results
+      expect(result.totalSubscribers).toBe(5);
+      expect(result.sent).toBe(3);
+      expect(result.failed).toBe(2);
+      expect(result.deactivated).toBe(2);
+
+      // Verify markBlockedWithReason was called for each blocked user
+      expect(mockSubscriberService.markBlockedWithReason).toHaveBeenCalledTimes(2);
+      expect(mockSubscriberService.markBlockedWithReason).toHaveBeenCalledWith(
+        BigInt(222),
+        "User blocked the bot",
+        "BLOCKED_BY_USER"
+      );
+      expect(mockSubscriberService.markBlockedWithReason).toHaveBeenCalledWith(
+        BigInt(444),
+        "Chat not found",
+        "CHAT_NOT_FOUND"
+      );
+
+      // Verify deactivation was logged for each
+      expect(logOutput.filter(log => log.includes("[TG-BROADCAST]")).length).toBe(2);
+      expect(logOutput.some(log => log.includes("chatId=222"))).toBe(true);
+      expect(logOutput.some(log => log.includes("chatId=444"))).toBe(true);
+    });
+
+    it("should correctly handle all error types in E2E scenario", async () => {
+      const alert = createMockAlert();
+      const subscribers = [
+        createMockSubscriber({ chatId: BigInt(1), firstName: "Blocked" }),
+        createMockSubscriber({ chatId: BigInt(2), firstName: "NotFound" }),
+        createMockSubscriber({ chatId: BigInt(3), firstName: "Kicked" }),
+        createMockSubscriber({ chatId: BigInt(4), firstName: "Deactivated" }),
+        createMockSubscriber({ chatId: BigInt(5), firstName: "NetworkError" }),
+        createMockSubscriber({ chatId: BigInt(6), firstName: "Success" }),
+      ];
+      vi.mocked(mockSubscriberService.findActive).mockResolvedValue(subscribers);
+
+      vi.mocked(mockBotClient.sendMessage)
+        .mockResolvedValueOnce({ success: false, error: "403 Forbidden: bot was blocked" })
+        .mockResolvedValueOnce({ success: false, error: "400 Bad Request: chat not found" })
+        .mockResolvedValueOnce({ success: false, error: "Forbidden: bot was kicked from the group" })
+        .mockResolvedValueOnce({ success: false, error: "Forbidden: user is deactivated" })
+        .mockResolvedValueOnce({ success: false, error: "Network timeout - retry later" })
+        .mockResolvedValueOnce({ success: true, messageId: 99 });
+
+      const result = await broadcastAlert(alert, {
+        botClient: mockBotClient,
+        subscriberService: mockSubscriberService,
+        sendDelay: 0,
+      });
+
+      // 4 should be deactivated (blocked, not found, kicked, deactivated)
+      // 1 failed but not deactivated (network error)
+      // 1 success
+      expect(result.sent).toBe(1);
+      expect(result.failed).toBe(5);
+      expect(result.deactivated).toBe(4);
+
+      // Verify 4 deactivation calls were made
+      expect(mockSubscriberService.markBlockedWithReason).toHaveBeenCalledTimes(4);
+    });
+
+    it("should not deactivate on transient errors", async () => {
+      const alert = createMockAlert();
+      const subscribers = [
+        createMockSubscriber({ chatId: BigInt(1) }),
+        createMockSubscriber({ chatId: BigInt(2) }),
+        createMockSubscriber({ chatId: BigInt(3) }),
+      ];
+      vi.mocked(mockSubscriberService.findActive).mockResolvedValue(subscribers);
+
+      // All transient errors - none should be deactivated
+      vi.mocked(mockBotClient.sendMessage)
+        .mockResolvedValueOnce({ success: false, error: "Network timeout" })
+        .mockResolvedValueOnce({ success: false, error: "Too Many Requests: retry after 30" })
+        .mockResolvedValueOnce({ success: false, error: "Internal Server Error" });
+
+      const result = await broadcastAlert(alert, {
+        botClient: mockBotClient,
+        subscriberService: mockSubscriberService,
+        sendDelay: 0,
+      });
+
+      expect(result.failed).toBe(3);
+      expect(result.deactivated).toBe(0);
+      expect(mockSubscriberService.markBlockedWithReason).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Subscriber Cleanup Service E2E", () => {
+    let mockSubscriberService: TelegramSubscriberService;
+    const originalConsoleLog = console.log;
+    let logOutput: string[] = [];
+
+    beforeEach(() => {
+      mockSubscriberService = createMockSubscriberService();
+      logOutput = [];
+      console.log = (...args: unknown[]) => {
+        logOutput.push(args.map(String).join(" "));
+      };
+      vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+      console.log = originalConsoleLog;
+    });
+
+    it("should run full cleanup cycle and log results", async () => {
+      // Setup: 3 inactive subscribers to clean up
+      const inactiveSubscribers = [
+        createMockSubscriber({
+          chatId: BigInt(100),
+          firstName: "Inactive1",
+          lastAlertAt: new Date("2025-09-01"), // ~4 months ago
+        }),
+        createMockSubscriber({
+          chatId: BigInt(200),
+          firstName: "Inactive2",
+          lastAlertAt: new Date("2025-08-15"), // ~5 months ago
+        }),
+        createMockSubscriber({
+          chatId: BigInt(300),
+          firstName: "Inactive3",
+          lastAlertAt: new Date("2025-07-01"), // ~6 months ago
+        }),
+      ];
+      vi.mocked(mockSubscriberService.cleanupInactiveSubscribers).mockResolvedValue(inactiveSubscribers);
+
+      const cleanupService = createSubscriberCleanupService(mockSubscriberService, {
+        inactiveDays: 90,
+      });
+
+      const result = await cleanupService.runCleanup();
+
+      // Verify result structure
+      expect(result.deactivatedCount).toBe(3);
+      expect(result.deactivatedChatIds).toHaveLength(3);
+      expect(result.deactivatedChatIds).toContain(BigInt(100));
+      expect(result.deactivatedChatIds).toContain(BigInt(200));
+      expect(result.deactivatedChatIds).toContain(BigInt(300));
+      expect(result.timestamp).toBeInstanceOf(Date);
+      expect(result.durationMs).toBeGreaterThanOrEqual(0);
+
+      // Verify logs
+      expect(logOutput.some(log => log.includes("[TG-CLEANUP] Starting cleanup"))).toBe(true);
+      expect(logOutput.some(log => log.includes("[TG-CLEANUP] Cleanup completed"))).toBe(true);
+      expect(logOutput.filter(log => log.includes("INACTIVE_CLEANUP")).length).toBe(3);
+    });
+
+    it("should correctly preview cleanup without making changes", async () => {
+      const inactiveSubscribers = [
+        createMockSubscriber({ chatId: BigInt(1) }),
+        createMockSubscriber({ chatId: BigInt(2) }),
+      ];
+      vi.mocked(mockSubscriberService.findInactiveSubscribers).mockResolvedValue(inactiveSubscribers);
+
+      const cleanupService = createSubscriberCleanupService(mockSubscriberService, {
+        inactiveDays: 60,
+      });
+
+      const preview = await cleanupService.previewCleanup();
+
+      expect(preview.count).toBe(2);
+      expect(preview.subscribers).toHaveLength(2);
+      // Verify actual cleanup was NOT called
+      expect(mockSubscriberService.cleanupInactiveSubscribers).not.toHaveBeenCalled();
+      // Verify findInactiveSubscribers was called with correct days
+      expect(mockSubscriberService.findInactiveSubscribers).toHaveBeenCalledWith(60);
+    });
+
+    it("should handle empty cleanup gracefully", async () => {
+      vi.mocked(mockSubscriberService.cleanupInactiveSubscribers).mockResolvedValue([]);
+
+      const cleanupService = createSubscriberCleanupService(mockSubscriberService);
+      const result = await cleanupService.runCleanup();
+
+      expect(result.deactivatedCount).toBe(0);
+      expect(result.deactivatedChatIds).toHaveLength(0);
+      expect(logOutput.some(log => log.includes("0 subscribers deactivated"))).toBe(true);
+    });
+
+    it("should track lastCleanupResult across multiple runs", async () => {
+      const cleanupService = createSubscriberCleanupService(mockSubscriberService);
+
+      // First cleanup
+      vi.mocked(mockSubscriberService.cleanupInactiveSubscribers).mockResolvedValue([
+        createMockSubscriber({ chatId: BigInt(1) }),
+      ]);
+      await cleanupService.runCleanup();
+
+      const firstResult = cleanupService.getLastCleanupResult();
+      expect(firstResult?.deactivatedCount).toBe(1);
+      const firstTimestamp = firstResult?.timestamp.getTime() || 0;
+
+      // Small delay to ensure different timestamp
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
+      // Second cleanup
+      vi.mocked(mockSubscriberService.cleanupInactiveSubscribers).mockResolvedValue([
+        createMockSubscriber({ chatId: BigInt(2) }),
+        createMockSubscriber({ chatId: BigInt(3) }),
+      ]);
+      await cleanupService.runCleanup();
+
+      const secondResult = cleanupService.getLastCleanupResult();
+      expect(secondResult?.deactivatedCount).toBe(2);
+      expect(secondResult?.timestamp.getTime()).toBeGreaterThanOrEqual(firstTimestamp);
+    });
+
+    it("should support dynamic configuration updates", async () => {
+      const cleanupService = createSubscriberCleanupService(mockSubscriberService, {
+        inactiveDays: 90,
+        intervalMs: 60000,
+        enabled: false,
+      });
+
+      // Verify initial config
+      let config = cleanupService.getConfig();
+      expect(config.inactiveDays).toBe(90);
+      expect(config.intervalMs).toBe(60000);
+      expect(config.enabled).toBe(false);
+
+      // Update config
+      cleanupService.updateConfig({
+        inactiveDays: 30,
+        enabled: true,
+      });
+
+      // Verify updated config
+      config = cleanupService.getConfig();
+      expect(config.inactiveDays).toBe(30);
+      expect(config.intervalMs).toBe(60000); // Unchanged
+      expect(config.enabled).toBe(true);
+    });
+  });
+
+  describe("Error Type Classification E2E", () => {
+    it("should correctly classify all Telegram API error types", () => {
+      const testCases = [
+        // Blocked by user errors
+        { error: "Forbidden: bot was blocked by the user", expectedType: "BLOCKED_BY_USER", shouldDeactivate: true },
+        { error: "403 Forbidden", expectedType: "BLOCKED_BY_USER", shouldDeactivate: true },
+        { error: "HTTP 403: Access denied, bot blocked", expectedType: "BLOCKED_BY_USER", shouldDeactivate: true },
+
+        // Chat not found errors
+        { error: "Bad Request: chat not found", expectedType: "CHAT_NOT_FOUND", shouldDeactivate: true },
+        { error: "400 Bad Request", expectedType: "CHAT_NOT_FOUND", shouldDeactivate: true },
+        { error: "Error 400: Invalid chat ID", expectedType: "CHAT_NOT_FOUND", shouldDeactivate: true },
+
+        // Bot kicked errors
+        { error: "Bot was kicked from the group", expectedType: "BOT_KICKED", shouldDeactivate: true },
+        { error: "bot was kicked from chat", expectedType: "BOT_KICKED", shouldDeactivate: true },
+
+        // User deactivated errors
+        { error: "Forbidden: user is deactivated", expectedType: "USER_DEACTIVATED", shouldDeactivate: true },
+        { error: "User is deactivated account", expectedType: "USER_DEACTIVATED", shouldDeactivate: true },
+
+        // Non-deactivation errors
+        { error: "Network timeout", expectedType: undefined, shouldDeactivate: false },
+        { error: "Too Many Requests: retry after 30", expectedType: undefined, shouldDeactivate: false },
+        { error: "Internal Server Error", expectedType: undefined, shouldDeactivate: false },
+        { error: "Service Unavailable", expectedType: undefined, shouldDeactivate: false },
+        { error: "Gateway Timeout", expectedType: undefined, shouldDeactivate: false },
+      ];
+
+      for (const testCase of testCases) {
+        const result = shouldDeactivateOnError(testCase.error);
+        expect(result.shouldDeactivate).toBe(testCase.shouldDeactivate);
+        if (testCase.shouldDeactivate) {
+          expect(result.reasonType).toBe(testCase.expectedType);
+        }
+      }
+    });
+  });
+
+  describe("Logging Integration E2E", () => {
+    const originalConsoleLog = console.log;
+    let logOutput: string[] = [];
+
+    beforeEach(() => {
+      logOutput = [];
+      console.log = (...args: unknown[]) => {
+        logOutput.push(args.map(String).join(" "));
+      };
+    });
+
+    afterEach(() => {
+      console.log = originalConsoleLog;
+    });
+
+    it("should produce properly formatted log entries", () => {
+      logDeactivation(
+        BigInt(123456789),
+        "User blocked the bot",
+        "BLOCKED_BY_USER",
+        "403 Forbidden: bot was blocked"
+      );
+
+      expect(logOutput.length).toBe(1);
+      const logEntry = logOutput[0];
+
+      // Check all required components are present
+      expect(logEntry).toMatch(/\[TG-BROADCAST\]/);
+      expect(logEntry).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/); // ISO timestamp
+      expect(logEntry).toMatch(/chatId=123456789/);
+      expect(logEntry).toMatch(/reason="User blocked the bot"/);
+      expect(logEntry).toMatch(/type=BLOCKED_BY_USER/);
+      expect(logEntry).toMatch(/error="403 Forbidden: bot was blocked"/);
+    });
+
+    it("should handle log entries without error message", () => {
+      logDeactivation(
+        BigInt(999),
+        "Inactive cleanup",
+        "INACTIVE_CLEANUP"
+      );
+
+      expect(logOutput.length).toBe(1);
+      const logEntry = logOutput[0];
+
+      expect(logEntry).toContain("chatId=999");
+      expect(logEntry).toContain("type=INACTIVE_CLEANUP");
+      expect(logEntry).not.toContain("error=");
     });
   });
 });

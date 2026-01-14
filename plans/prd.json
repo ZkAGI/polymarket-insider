@@ -3561,7 +3561,9 @@
       "priority": 176,
       "name": "Handle blocked users gracefully",
       "description": "Deactivate users who block the bot",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T02:45:00Z",
+      "notes": "Implemented comprehensive blocked user handling with: (1) Extended DeactivationInfo type with reasonType and errorCode, (2) logDeactivation() function for structured logging, (3) shouldDeactivateOnError() with proper pattern matching for BLOCKED_BY_USER, USER_DEACTIVATED, CHAT_NOT_FOUND, BOT_KICKED, (4) markBlockedWithReason() method in subscriber service, (5) SubscriberCleanupService with configurable periodic cleanup, preview mode, and start/stop controls. Added 50+ new unit and E2E tests, all 147 broadcaster tests pass.",
       "steps": [
         "In broadcaster, catch errors when sending",
         "If error code 403 (Forbidden/blocked): set isActive = false",

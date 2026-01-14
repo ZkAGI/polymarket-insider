@@ -97,7 +97,16 @@ export {
   filterEligibleSubscribers,
   meetsSeverityRequirement,
   shouldDeactivateOnError,
+  logDeactivation,
+  // Cleanup service exports
+  SubscriberCleanupService,
+  subscriberCleanupService,
+  createSubscriberCleanupService,
   type SendResult,
   type BroadcastResult,
   type BroadcastOptions,
+  type DeactivationReasonType,
+  type DeactivationInfo,
+  type CleanupConfig,
+  type CleanupResult,
 } from "./broadcaster";

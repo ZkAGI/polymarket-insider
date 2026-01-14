@@ -323,37 +323,102 @@ export function filterEligibleSubscribers(
 }
 
 /**
- * Check if an error indicates the user blocked the bot or chat not found
+ * Deactivation reason types for better categorization
  */
-export function shouldDeactivateOnError(error: string): {
+export type DeactivationReasonType =
+  | "BLOCKED_BY_USER"
+  | "CHAT_NOT_FOUND"
+  | "BOT_KICKED"
+  | "USER_DEACTIVATED"
+  | "INACTIVE_CLEANUP";
+
+/**
+ * Extended deactivation info with structured reason
+ */
+export interface DeactivationInfo {
   shouldDeactivate: boolean;
   reason?: string;
-} {
+  reasonType?: DeactivationReasonType;
+  errorCode?: number;
+}
+
+/**
+ * Log a deactivation event to console
+ */
+export function logDeactivation(
+  chatId: bigint,
+  reason: string,
+  reasonType: DeactivationReasonType,
+  errorMessage?: string
+): void {
+  const timestamp = new Date().toISOString();
+  console.log(
+    `[TG-BROADCAST] [${timestamp}] Subscriber deactivated: chatId=${chatId}, reason="${reason}", type=${reasonType}${
+      errorMessage ? `, error="${errorMessage}"` : ""
+    }`
+  );
+}
+
+/**
+ * Check if an error indicates the user blocked the bot or chat not found
+ *
+ * Note: Check order matters - more specific patterns must be checked
+ * before generic ones (e.g., "user is deactivated" before "forbidden")
+ */
+export function shouldDeactivateOnError(error: string): DeactivationInfo {
   const lowerError = error.toLowerCase();
 
-  // Telegram error codes/messages that indicate user blocked bot or chat not found
-  if (
-    lowerError.includes("forbidden") ||
-    lowerError.includes("bot was blocked") ||
-    lowerError.includes("user is deactivated") ||
-    lowerError.includes("403")
-  ) {
-    return { shouldDeactivate: true, reason: "User blocked the bot" };
+  // Check specific patterns first before generic ones
+
+  // User account deactivated (check before "forbidden" since it often includes "forbidden")
+  if (lowerError.includes("user is deactivated")) {
+    return {
+      shouldDeactivate: true,
+      reason: "User account is deactivated",
+      reasonType: "USER_DEACTIVATED",
+      errorCode: 403,
+    };
   }
 
+  // Bot kicked from chat (check before "forbidden" since it often includes "forbidden")
+  if (
+    lowerError.includes("kicked") ||
+    lowerError.includes("bot was kicked")
+  ) {
+    return {
+      shouldDeactivate: true,
+      reason: "Bot was kicked from chat",
+      reasonType: "BOT_KICKED",
+      errorCode: 403,
+    };
+  }
+
+  // Chat not found errors
   if (
     lowerError.includes("chat not found") ||
     lowerError.includes("bad request: chat not found") ||
     lowerError.includes("400")
   ) {
-    return { shouldDeactivate: true, reason: "Chat not found" };
+    return {
+      shouldDeactivate: true,
+      reason: "Chat not found",
+      reasonType: "CHAT_NOT_FOUND",
+      errorCode: 400,
+    };
   }
 
+  // Generic blocked/forbidden (check last as it's the most generic)
   if (
-    lowerError.includes("kicked") ||
-    lowerError.includes("bot was kicked")
+    lowerError.includes("forbidden") ||
+    lowerError.includes("bot was blocked") ||
+    lowerError.includes("403")
   ) {
-    return { shouldDeactivate: true, reason: "Bot was kicked from chat" };
+    return {
+      shouldDeactivate: true,
+      reason: "User blocked the bot",
+      reasonType: "BLOCKED_BY_USER",
+      errorCode: 403,
+    };
   }
 
   return { shouldDeactivate: false };
@@ -390,8 +455,15 @@ export async function sendAlertToSubscriber(
     } else {
       // Check if we should deactivate the user
       const deactivateCheck = shouldDeactivateOnError(result.error || "");
-      if (deactivateCheck.shouldDeactivate) {
-        await subscriberService.markBlocked(chatId);
+      if (deactivateCheck.shouldDeactivate && deactivateCheck.reason && deactivateCheck.reasonType) {
+        // Log the deactivation event
+        logDeactivation(chatId, deactivateCheck.reason, deactivateCheck.reasonType, result.error);
+        // Mark as blocked with reason
+        await subscriberService.markBlockedWithReason(
+          chatId,
+          deactivateCheck.reason,
+          deactivateCheck.reasonType
+        );
         return {
           chatId,
           success: false,
@@ -406,11 +478,19 @@ export async function sendAlertToSubscriber(
     const errorMessage = error instanceof Error ? error.message : String(error);
     const deactivateCheck = shouldDeactivateOnError(errorMessage);
 
-    if (deactivateCheck.shouldDeactivate) {
+    if (deactivateCheck.shouldDeactivate && deactivateCheck.reason && deactivateCheck.reasonType) {
       try {
-        await subscriberService.markBlocked(chatId);
+        // Log the deactivation event
+        logDeactivation(chatId, deactivateCheck.reason, deactivateCheck.reasonType, errorMessage);
+        // Mark as blocked with reason
+        await subscriberService.markBlockedWithReason(
+          chatId,
+          deactivateCheck.reason,
+          deactivateCheck.reasonType
+        );
       } catch {
         // Ignore errors when marking blocked
+        console.error(`[TG-BROADCAST] Failed to mark chatId=${chatId} as blocked`);
       }
       return {
         chatId,
@@ -578,3 +658,206 @@ export function createAlertBroadcaster(options: BroadcastOptions = {}): AlertBro
  * Default broadcaster instance
  */
 export const alertBroadcaster = new AlertBroadcaster();
+
+/**
+ * Configuration for subscriber cleanup
+ */
+export interface CleanupConfig {
+  /** Number of days of inactivity before cleanup (default: 90) */
+  inactiveDays?: number;
+  /** Interval between cleanup runs in milliseconds (default: 24 hours) */
+  intervalMs?: number;
+  /** Whether to enable periodic cleanup (default: false) */
+  enabled?: boolean;
+}
+
+/**
+ * Result of a cleanup operation
+ */
+export interface CleanupResult {
+  /** Number of subscribers deactivated */
+  deactivatedCount: number;
+  /** Chat IDs of deactivated subscribers */
+  deactivatedChatIds: bigint[];
+  /** Timestamp of cleanup */
+  timestamp: Date;
+  /** Duration of cleanup in milliseconds */
+  durationMs: number;
+}
+
+/**
+ * Subscriber Cleanup Service
+ *
+ * Handles periodic cleanup of long-inactive subscribers to keep the
+ * subscriber list clean and avoid wasting resources on inactive users.
+ */
+export class SubscriberCleanupService {
+  private subscriberService: TelegramSubscriberService;
+  private inactiveDays: number;
+  private intervalMs: number;
+  private enabled: boolean;
+  private intervalHandle: NodeJS.Timeout | null = null;
+  private lastCleanup: CleanupResult | null = null;
+
+  constructor(
+    subscriberService?: TelegramSubscriberService,
+    config: CleanupConfig = {}
+  ) {
+    this.subscriberService = subscriberService ?? telegramSubscriberService;
+    this.inactiveDays = config.inactiveDays ?? 90;
+    this.intervalMs = config.intervalMs ?? 24 * 60 * 60 * 1000; // 24 hours default
+    this.enabled = config.enabled ?? false;
+  }
+
+  /**
+   * Run a single cleanup operation
+   * @returns Cleanup result with statistics
+   */
+  async runCleanup(): Promise<CleanupResult> {
+    const startTime = Date.now();
+    const timestamp = new Date();
+
+    console.log(
+      `[TG-CLEANUP] Starting cleanup for subscribers inactive for ${this.inactiveDays}+ days`
+    );
+
+    const deactivated = await this.subscriberService.cleanupInactiveSubscribers(
+      this.inactiveDays
+    );
+
+    const result: CleanupResult = {
+      deactivatedCount: deactivated.length,
+      deactivatedChatIds: deactivated.map((s) => s.chatId),
+      timestamp,
+      durationMs: Date.now() - startTime,
+    };
+
+    // Log each deactivation
+    for (const subscriber of deactivated) {
+      logDeactivation(
+        subscriber.chatId,
+        `No activity for ${this.inactiveDays} days`,
+        "INACTIVE_CLEANUP"
+      );
+    }
+
+    console.log(
+      `[TG-CLEANUP] Cleanup completed: ${result.deactivatedCount} subscribers deactivated in ${result.durationMs}ms`
+    );
+
+    this.lastCleanup = result;
+    return result;
+  }
+
+  /**
+   * Preview cleanup without actually deactivating subscribers
+   * @returns Array of subscribers that would be deactivated
+   */
+  async previewCleanup(): Promise<{ count: number; subscribers: TelegramSubscriber[] }> {
+    const inactive = await this.subscriberService.findInactiveSubscribers(this.inactiveDays);
+    return {
+      count: inactive.length,
+      subscribers: inactive,
+    };
+  }
+
+  /**
+   * Start periodic cleanup
+   * Runs cleanup at the configured interval
+   */
+  start(): void {
+    if (this.intervalHandle) {
+      console.log("[TG-CLEANUP] Cleanup service already running");
+      return;
+    }
+
+    if (!this.enabled) {
+      console.log("[TG-CLEANUP] Cleanup service is disabled in config");
+      return;
+    }
+
+    console.log(
+      `[TG-CLEANUP] Starting periodic cleanup (every ${this.intervalMs / 1000}s, inactive days: ${this.inactiveDays})`
+    );
+
+    // Run immediately on start
+    void this.runCleanup();
+
+    // Set up periodic cleanup
+    this.intervalHandle = setInterval(() => {
+      void this.runCleanup();
+    }, this.intervalMs);
+  }
+
+  /**
+   * Stop periodic cleanup
+   */
+  stop(): void {
+    if (this.intervalHandle) {
+      clearInterval(this.intervalHandle);
+      this.intervalHandle = null;
+      console.log("[TG-CLEANUP] Cleanup service stopped");
+    }
+  }
+
+  /**
+   * Check if cleanup service is running
+   */
+  isRunning(): boolean {
+    return this.intervalHandle !== null;
+  }
+
+  /**
+   * Get the last cleanup result
+   */
+  getLastCleanupResult(): CleanupResult | null {
+    return this.lastCleanup;
+  }
+
+  /**
+   * Update cleanup configuration
+   */
+  updateConfig(config: CleanupConfig): void {
+    if (config.inactiveDays !== undefined) {
+      this.inactiveDays = config.inactiveDays;
+    }
+    if (config.intervalMs !== undefined) {
+      this.intervalMs = config.intervalMs;
+    }
+    if (config.enabled !== undefined) {
+      this.enabled = config.enabled;
+    }
+
+    // Restart if running to apply new interval
+    if (this.isRunning()) {
+      this.stop();
+      this.start();
+    }
+  }
+
+  /**
+   * Get current configuration
+   */
+  getConfig(): Required<CleanupConfig> {
+    return {
+      inactiveDays: this.inactiveDays,
+      intervalMs: this.intervalMs,
+      enabled: this.enabled,
+    };
+  }
+}
+
+/**
+ * Create a new SubscriberCleanupService instance
+ */
+export function createSubscriberCleanupService(
+  subscriberService?: TelegramSubscriberService,
+  config?: CleanupConfig
+): SubscriberCleanupService {
+  return new SubscriberCleanupService(subscriberService, config);
+}
+
+/**
+ * Default cleanup service instance (disabled by default)
+ */
+export const subscriberCleanupService = new SubscriberCleanupService();
