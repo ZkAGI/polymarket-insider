@@ -3651,7 +3651,8 @@
       "priority": 180,
       "name": "Real-time wallet profiler",
       "description": "Profile wallets as trades come in",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14",
       "steps": [
         "Create src/services/wallet-profiler.ts",
         "Listen for 'trade:new' events",
@@ -3673,7 +3674,8 @@
       "priority": 181,
       "name": "Real-time alert generator",
       "description": "Generate alerts from detection signals and broadcast",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14",
       "steps": [
         "Create src/services/alert-generator.ts",
         "Listen for 'trade:new' and 'wallet:profiled' events",

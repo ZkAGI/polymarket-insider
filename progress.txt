@@ -11718,3 +11718,115 @@ NOTES FOR NEXT SESSION:
 - Next feature to implement: API-LIVE-003 (Real-time wallet profiler)
 - TradeStreamService emits 'trade:processed' events that wallet profiler can subscribe to
 - Integration with MarketSyncService: both can run together for complete data pipeline
+
+=== Session 2026-01-14 ===
+
+COMPLETED: API-LIVE-004 - Real-time alert generator
+Feature ID: API-LIVE-004
+Priority: 181
+Description: Generate alerts from detection signals and broadcast
+
+Implementation Summary:
+- Created src/services/alert-generator.ts with AlertGeneratorService class
+- Event-driven architecture listening to TradeStreamService and WalletProfilerService
+- Handles whale trades, new wallets, and suspicious wallet profiles
+- Generates alerts with appropriate severity levels (CRITICAL/HIGH/MEDIUM/LOW/INFO)
+- Integrates with Telegram broadcaster for real-time notifications
+- Implements deduplication logic with configurable time window
+- Rate limiting per wallet and per market to prevent alert spam
+- Statistics tracking for monitoring alert generation performance
+
+Key Components:
+1. Event Listeners:
+   - trade:whale - Triggers whale trade alerts
+   - wallet:new - Triggers fresh wallet alerts
+   - wallet:profiled - Triggers suspicious wallet alerts (based on suspicion score)
+
+2. Severity Calculation:
+   - Whale trades: Based on USD value ($500K+ = CRITICAL, $200K+ = HIGH, etc.)
+   - Suspicious wallets: Based on suspicion score (95+ = CRITICAL, 85+ = HIGH, etc.)
+
+3. Deduplication:
+   - Uses type:walletId:marketId key pattern
+   - Configurable time window (default 60 seconds)
+   - Prevents duplicate alerts for same event
+
+4. Rate Limiting:
+   - Configurable alerts per wallet per hour (default 10)
+   - Configurable alerts per market per hour (default 20)
+   - Emits alert:suppressed event when rate limited
+
+5. Telegram Broadcasting:
+   - Optional integration with AlertBroadcaster
+   - Tracks broadcast success/failure statistics
+
+Events Emitted:
+- alert:created - When a new alert is generated
+- alert:suppressed - When an alert is suppressed (dedup or rate limit)
+- started - When service starts
+- stopped - When service stops
+
+Configuration Options:
+- enableEvents: Emit alert events (default true)
+- enableTelegramBroadcast: Send alerts to Telegram (default true)
+- whaleThreshold: Minimum USD value for whale trades
+- suspicionThreshold: Minimum score for suspicious wallet alerts (default 70)
+- deduplicationWindowMs: Time window for deduplication (default 60000)
+- maxAlertsPerWalletPerHour: Rate limit per wallet (default 10)
+- maxAlertsPerMarketPerHour: Rate limit per market (default 20)
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 23 tests PASSED (tests/services/alert-generator.test.ts)
+- E2E tests: 24 tests PASSED (tests/e2e/alert-generator.e2e.test.ts)
+
+Files Created:
+- src/services/alert-generator.ts
+- tests/services/alert-generator.test.ts
+- tests/e2e/alert-generator.e2e.test.ts
+
+Files Modified:
+- src/services/index.ts (added exports)
+
+Usage Example:
+```typescript
+import { alertGeneratorService } from './src/services';
+import { tradeStreamService } from './src/services';
+import { walletProfilerService } from './src/services';
+
+// Configure with existing services
+const alertGenerator = createAlertGeneratorService({
+  tradeStreamService,
+  walletProfilerService,
+  enableTelegramBroadcast: true,
+  suspicionThreshold: 75,
+});
+
+// Listen for alerts
+alertGenerator.on('alert:created', (event) => {
+  console.log('New alert:', event.alert.title);
+  console.log('Severity:', event.alert.severity);
+});
+
+// Start the service
+await alertGenerator.start();
+
+// Manual alert generation
+await alertGenerator.generateAlert({
+  type: AlertType.SYSTEM,
+  severity: AlertSeverity.INFO,
+  title: 'System Notification',
+  message: 'Monitoring started',
+});
+
+// Get statistics
+const stats = alertGenerator.getStats();
+console.log(`Generated ${stats.totalGenerated} alerts`);
+```
+
+NOTES FOR NEXT SESSION:
+- API-LIVE-004 complete and marked in prd.json
+- Next feature to implement: UI-API-001 (Dashboard stats API endpoint)
+- AlertGeneratorService is now part of the complete data pipeline:
+  MarketSyncService -> TradeStreamService -> WalletProfilerService -> AlertGeneratorService
+- All live API services (001-004) are now complete
