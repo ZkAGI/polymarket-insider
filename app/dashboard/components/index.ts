@@ -168,3 +168,6 @@ export type {
   ThemeToggleSize,
 } from './ThemeToggle';
 export { generateMockThemeState } from './ThemeToggle';
+
+export { default as LiveIndicator } from './LiveIndicator';
+export type { LiveIndicatorProps } from './LiveIndicator';

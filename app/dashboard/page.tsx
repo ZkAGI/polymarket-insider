@@ -47,6 +47,7 @@ import {
   MarketSummary,
   AlertType as APIAlertType,
 } from '@/hooks/useDashboardData';
+import useDashboardLive, { type AlertCallback, type StatsUpdateCallback } from '@/hooks/useDashboardLive';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -229,6 +230,32 @@ export default function DashboardPage() {
     error: marketsError,
     mutate: mutateMarkets,
   } = useMarkets({ limit: 5, refreshInterval: 30000 });
+
+  // Handle real-time alert updates
+  const handleLiveAlert = useCallback<AlertCallback>((alertData) => {
+    // Revalidate alerts when new one arrives
+    mutateAlerts();
+    console.log('[Dashboard] New alert received via SSE:', alertData.id);
+  }, [mutateAlerts]);
+
+  // Handle real-time stats updates
+  const handleLiveStatsUpdate = useCallback<StatsUpdateCallback>((statsUpdate) => {
+    // Revalidate stats when they change
+    mutateStats();
+    console.log('[Dashboard] Stats updated via SSE:', statsUpdate.changedFields);
+  }, [mutateStats]);
+
+  // Real-time dashboard updates via SSE (UI-WS-001)
+  const {
+    status: liveConnectionStatus,
+    error: liveError,
+    retry: retryLiveConnection,
+  } = useDashboardLive({
+    enabled: true,
+    onAlert: handleLiveAlert,
+    onStatsUpdate: handleLiveStatsUpdate,
+    maxReconnectAttempts: 5,
+  });
 
   // Local state for components not yet connected to API
   const [signals, setSignals] = useState<SignalCount[]>([]);
@@ -515,6 +542,13 @@ export default function DashboardPage() {
     console.log('Auto-refresh interval changed:', interval);
   }, []);
 
+  // Handle live indicator click - retry connection if disconnected
+  const handleLiveIndicatorClick = useCallback(() => {
+    if (liveError || liveConnectionStatus === 'disconnected') {
+      retryLiveConnection();
+    }
+  }, [liveError, liveConnectionStatus, retryLiveConnection]);
+
   // Show loading skeleton while initial data loads
   const isInitialLoading = isStatsLoading && !statsData;
 
@@ -538,6 +572,9 @@ export default function DashboardPage() {
       autoRefreshInterval={autoRefreshInterval}
       onAutoRefreshChange={handleAutoRefreshChange}
       showRefreshControls={true}
+      liveConnectionStatus={liveConnectionStatus}
+      showLiveIndicator={true}
+      onLiveIndicatorClick={handleLiveIndicatorClick}
     >
       {/* Error banner if any API failed */}
       {hasError && (

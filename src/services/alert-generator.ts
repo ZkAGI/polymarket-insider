@@ -40,6 +40,10 @@ import {
   type WalletProfiledEvent,
 } from "./wallet-profiler";
 import { env } from "../../config/env";
+import {
+  getDashboardEventBus,
+  type AlertEventData,
+} from "../lib/dashboard-events";
 
 // ============================================================================
 // Types
@@ -646,6 +650,9 @@ export class AlertGeneratorService extends EventEmitter {
       }
     }
 
+    // Emit to dashboard event bus for real-time UI updates
+    this.emitDashboardEvent(alert, input);
+
     // Emit event
     if (this.config.enableEvents) {
       this.emit("alert:created", {
@@ -656,6 +663,36 @@ export class AlertGeneratorService extends EventEmitter {
     }
 
     return alert;
+  }
+
+  /**
+   * Emit alert to dashboard event bus for real-time UI updates (UI-WS-001)
+   */
+  private emitDashboardEvent(alert: Alert, input: CreateAlertInput): void {
+    try {
+      const eventBus = getDashboardEventBus();
+      const alertData: AlertEventData = {
+        id: alert.id,
+        type: alert.type,
+        severity: alert.severity,
+        title: alert.title,
+        message: alert.message,
+        marketId: alert.marketId,
+        walletId: alert.walletId,
+        walletAddress: typeof input.data === 'object' && input.data !== null && 'walletAddress' in input.data
+          ? String(input.data.walletAddress)
+          : undefined,
+        tags: input.tags ?? [],
+        createdAt: alert.createdAt.toISOString(),
+      };
+      eventBus.emitAlertNew(alertData);
+      this.logger("Dashboard event emitted", { alertId: alert.id });
+    } catch (error) {
+      this.logger("Failed to emit dashboard event", {
+        alertId: alert.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   /**

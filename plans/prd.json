@@ -3847,7 +3847,9 @@
       "priority": 189,
       "name": "Dashboard real-time WebSocket updates",
       "description": "Push live updates to dashboard without refresh",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T13:00:00Z",
+      "notes": "Implemented using Server-Sent Events (SSE) instead of WebSocket for better Next.js App Router compatibility. Created: src/lib/dashboard-events.ts (event bus), app/api/dashboard/live/route.ts (SSE endpoint), src/hooks/useDashboardLive.ts (React hook), app/dashboard/components/LiveIndicator.tsx (visual indicator). Connected alert-generator to emit events. 22 unit tests + 14 E2E tests pass.",
       "steps": [
         "Create app/api/ws/route.ts WebSocket endpoint (or use socket.io)",
         "Emit 'alert:new' when alert created",

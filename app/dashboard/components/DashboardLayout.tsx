@@ -6,6 +6,8 @@ import QuickStatsSummaryBar, { StatValue } from './QuickStatsSummaryBar';
 import DashboardRefreshControls, { RefreshInterval } from './DashboardRefreshControls';
 import ThemeToggle from './ThemeToggle';
 import { Theme } from '../../contexts/ThemeContext';
+import LiveIndicator from './LiveIndicator';
+import type { ConnectionStatus } from '@/hooks/useDashboardLive';
 
 export interface DashboardLayoutProps {
   children: ReactNode;
@@ -30,6 +32,12 @@ export interface DashboardLayoutProps {
   showThemeToggle?: boolean;
   /** Callback fired when theme changes */
   onThemeChange?: (theme: Theme) => void;
+  /** Real-time connection status for live updates */
+  liveConnectionStatus?: ConnectionStatus;
+  /** Whether to show the live indicator */
+  showLiveIndicator?: boolean;
+  /** Callback when live indicator is clicked */
+  onLiveIndicatorClick?: () => void;
 }
 
 function StatusIndicator({ status }: { status: DashboardStats['systemStatus'] }) {
@@ -68,6 +76,9 @@ export default function DashboardLayout({
   showRefreshControls = true,
   showThemeToggle = true,
   onThemeChange,
+  liveConnectionStatus = 'disconnected',
+  showLiveIndicator = true,
+  onLiveIndicatorClick,
 }: DashboardLayoutProps) {
   // Default refresh handler that does nothing if not provided
   const handleDashboardRefresh = async () => {
@@ -89,6 +100,16 @@ export default function DashboardLayout({
               <span className="text-sm text-gray-500 dark:text-gray-400">Dashboard</span>
             </div>
             <div className="flex items-center gap-4">
+              {/* Live Indicator */}
+              {showLiveIndicator && (
+                <LiveIndicator
+                  status={liveConnectionStatus}
+                  showLabel={true}
+                  size="sm"
+                  testId="dashboard-live-indicator"
+                  onClick={onLiveIndicatorClick}
+                />
+              )}
               {/* Refresh Controls */}
               {showRefreshControls && onDashboardRefresh && (
                 <DashboardRefreshControls
