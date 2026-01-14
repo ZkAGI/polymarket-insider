@@ -883,7 +883,7 @@ export class StartupOrchestrator extends EventEmitter {
     super();
 
     this.config = {
-      enableMarketSync: config.enableMarketSync ?? true,
+      enableMarketSync: config.enableMarketSync ?? false,
       enableTradePolling: config.enableTradePolling ?? true,
       enableWalletProfiler: config.enableWalletProfiler ?? true,
       enableAlertGenerator: config.enableAlertGenerator ?? true,
