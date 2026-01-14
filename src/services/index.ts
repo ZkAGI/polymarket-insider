@@ -43,3 +43,18 @@ export type {
   AlertSuppressedEvent,
   AlertGeneratorStats,
 } from "./alert-generator";
+
+export {
+  StartupOrchestrator,
+  startupOrchestrator,
+  createStartupOrchestrator,
+  startAllServices,
+  stopAllServices,
+} from "./startup";
+export type {
+  StartupConfig,
+  ServiceStatus,
+  ServiceInfo,
+  StartupStatus,
+  StartupEvents,
+} from "./startup";

@@ -12209,3 +12209,51 @@ NOTES FOR NEXT SESSION:
 - API follows same patterns as wallet and dashboard endpoints
 - Database not running during E2E testing, tests handle 500 errors gracefully
 - Market page still uses mock data, can be updated to use this API
+
+=== STARTUP-001: Application Startup Orchestrator ===
+Date: 2026-01-14
+
+FEATURE: Verified and validated the application startup orchestrator implementation.
+
+IMPLEMENTATION VERIFIED:
+- src/services/startup.ts: Full StartupOrchestrator class with comprehensive lifecycle management
+  - startAllServices(): Starts all services in dependency order
+  - stopAllServices(): Stops all services in reverse order
+  - setupGracefulShutdown(): Registers SIGINT/SIGTERM handlers
+  - Event emitter for startup/shutdown lifecycle events
+
+STARTUP ORDER:
+1. Database connection (critical - must succeed)
+2. MarketSyncService - Fetches and syncs market data
+3. TradeStreamService - Connects to WebSocket and processes trades
+4. WalletProfilerService - Profiles wallets as trades come in
+5. AlertGeneratorService - Generates and broadcasts alerts
+6. Telegram Bot - Handles user commands (optional, requires TELEGRAM_BOT_TOKEN)
+
+FEATURES:
+- Configurable service enable/disable flags
+- Database health checks (optional, enabled in production)
+- Event emitter for startup/shutdown events
+- Individual service status tracking
+- Graceful shutdown on SIGINT/SIGTERM
+- Partial startup handling (non-critical services can fail)
+- Idempotent start/stop operations
+
+FILES:
+- src/services/startup.ts - Full StartupOrchestrator implementation
+- src/services/index.ts - Exports StartupOrchestrator
+- src/instrumentation.ts - Next.js instrumentation hook that starts services
+- tests/services/startup.test.ts - 43 unit tests
+- tests/e2e/startup-orchestrator.e2e.test.ts - 15 E2E tests
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 43 tests PASSED (tests/services/startup.test.ts)
+- E2E tests: 15 tests PASSED (tests/e2e/startup-orchestrator.e2e.test.ts)
+
+NOTES FOR NEXT SESSION:
+- STARTUP-001 complete and marked in prd.json
+- Next feature to implement: STARTUP-002 (Health check API endpoint)
+- The startup orchestrator is integrated with Next.js via instrumentation.ts
+- Services can be disabled via ENABLE_BACKGROUND_SERVICES=false env var
+- All services have comprehensive error handling and status reporting
