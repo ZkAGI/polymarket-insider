@@ -4,7 +4,7 @@
  * Tests the metrics endpoint behavior with mocked services.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import {
   setStartupOrchestrator,
@@ -62,7 +62,6 @@ function createMockOrchestrator(): StartupOrchestratorInterface {
 
 // Import the route handler after mock setup
 import { GET, type MetricsResponse } from "../../app/api/metrics/route";
-import { type ApplicationMetrics } from "../../src/utils/metrics";
 
 describe("Metrics API E2E Tests", () => {
   beforeEach(() => {

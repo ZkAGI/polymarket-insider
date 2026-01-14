@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-01-14T08:52:59.487Z",
+  "environment": "test",
+  "results": {
+    "marketsSync": {
+      "success": true,
+      "count": 1
+    },
+    "tradesProcessed": {
+      "success": true,
+      "count": 3,
+      "whaleTrades": 3
+    },
+    "alertsGenerated": {
+      "success": true,
+      "count": 3,
+      "byType": {
+        "WHALE_TRADE": 2,
+        "FRESH_WALLET": 1
+      }
+    },
+    "notifications": {
+      "success": true,
+      "broadcastCount": 2,
+      "totalSent": 16
+    }
+  }
+}
