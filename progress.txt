@@ -12642,3 +12642,48 @@ COMPLETED: INGEST-CORE-001 - Continuous Polymarket ingestion worker
   * src/workers/ingestion-worker.ts (~600 lines)
   * src/workers/index.ts
   * tests/workers/ingestion-worker.test.ts (~450 lines)
+
+COMPLETED: INGEST-MARKET-001 - Polymarket market ingestion
+- Verified market ingestion implementation in existing ingestion-worker.ts
+- syncMarkets() method properly:
+  * Fetches market list from Polymarket Gamma API
+  * Parses market identifiers (supports both id and conditionId fields)
+  * Extracts question text, slug, category, status flags
+  * Normalizes volume, liquidity, timestamps
+  * Upserts markets into Market table via MarketService.upsert()
+  * Updates lastSyncedAt timestamp on each sync
+- Created comprehensive test suite:
+  * tests/ingestion/market-ingestion.test.ts - 51 unit tests covering:
+    - ID extraction (id vs conditionId fallback)
+    - Question text and metadata parsing
+    - Status flag parsing (active, closed, archived)
+    - Volume and liquidity normalization
+    - Timestamp parsing
+    - Upsert operations with mock Prisma
+    - lastSyncedAt updates
+    - Edge cases (malformed data, empty strings, unicode, large strings)
+    - Batch processing with partial failures
+    - Data integrity preservation
+  * tests/e2e/market-ingestion.e2e.test.ts - 21 E2E browser tests covering:
+    - API endpoint verification (/api/dashboard/markets)
+    - Dashboard markets display
+    - Market data structure validation
+    - Market page navigation
+    - Health endpoint verification
+    - Responsive design (mobile, tablet, desktop)
+    - Error handling for invalid market IDs
+    - Console error monitoring
+    - Performance (load times)
+- Screenshots captured:
+  * tests/e2e/screenshots/market-ingestion/dashboard-markets.png
+  * tests/e2e/screenshots/market-ingestion/dashboard-markets-mobile.png
+  * tests/e2e/screenshots/market-ingestion/dashboard-markets-tablet.png
+  * tests/e2e/screenshots/market-ingestion/market-detail.png
+- All tests pass (72 total: 51 unit + 21 E2E)
+- TypeScript compiles with no errors
+
+NOTES FOR NEXT SESSION:
+- INGEST-MARKET-001 complete with full test coverage
+- Next priority features: INGEST-TRADE-001 (priority 200), INGEST-WALLET-001 (priority 201)
+- The ingestion worker already has trade ingestion and wallet materialization implemented
+- Need to verify and test those features next
