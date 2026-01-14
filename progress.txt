@@ -11630,3 +11630,91 @@ NOTES FOR NEXT SESSION:
 - Service will automatically sync every 5 minutes by default
 - Volume changes above 5% threshold emit 'market:updated' events
 
+=== Session 2026-01-14 ===
+
+COMPLETED: API-LIVE-002 - Live trade stream WebSocket processor
+- Created src/services/trade-stream.ts implementing TradeStreamService
+
+Features Implemented:
+- Real-time trade processing from WebSocket via TradeStreamClient
+- Store trades in database via TradeService.upsertByClobTradeId
+- Create/update wallets via WalletService.findOrCreate and incrementTradeStats
+- Find outcomes by clobTokenId to map trades to markets
+- Whale trade detection based on configurable threshold (default: WHALE_THRESHOLD_USD)
+- Event emissions: trade:processed, trade:whale, wallet:new, processing:error
+- Processing statistics tracking (totalProcessed, storedCount, errorCount, whaleTradesCount, newWalletsCount, duplicateCount, tradesPerSecond)
+- Lifecycle management (start, stop, dispose)
+- Market subscription management (subscribeToMarket, unsubscribeFromMarket)
+- Configuration updates at runtime (whaleThreshold, enableEvents, autoCreateWallets)
+
+Key Types Exported:
+- TradeStreamService class
+- tradeStreamService singleton
+- createTradeStreamService factory
+- TradeStreamServiceConfig, TradeProcessingStats
+- TradeProcessedEvent, WhaleTradeEvent, NewWalletEvent, ProcessingErrorEvent
+
+Tests Added:
+tests/services/trade-stream.test.ts (30 unit tests):
+- Constructor tests (default config, custom config, custom logger)
+- start/stop tests (lifecycle, double start/stop, connection failure)
+- subscribe/unsubscribe tests
+- processTrade tests (full flow, missing wallet, missing outcome, whale detection, duplicate handling)
+- processTradeBatch tests
+- Statistics tracking tests
+- Configuration tests (threshold, events enable/disable)
+- Edge cases (prefer taker over maker address)
+
+tests/e2e/trade-stream.e2e.test.ts (19 E2E integration tests):
+- Service lifecycle integration
+- Trade processing end-to-end
+- Whale trade detection and events
+- New wallet tracking
+- Error handling (database errors, missing outcome, duplicates)
+- Subscription management
+- Statistics accumulation and reset
+- Configuration at runtime
+- Singleton and factory patterns
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 30 tests PASSED
+- E2E tests: 19 tests PASSED
+
+Files Created:
+- src/services/trade-stream.ts
+- tests/services/trade-stream.test.ts
+- tests/e2e/trade-stream.e2e.test.ts
+
+Usage Example:
+```typescript
+import { tradeStreamService } from './src/services/trade-stream';
+
+// Start the service
+await tradeStreamService.start();
+
+// Subscribe to specific markets
+await tradeStreamService.subscribeToMarket(['token-id-1', 'token-id-2']);
+
+// Listen for events
+tradeStreamService.on('trade:whale', (event) => {
+  console.log('Whale trade detected:', event);
+});
+
+tradeStreamService.on('wallet:new', (event) => {
+  console.log('New wallet:', event.address);
+});
+
+// Get processing stats
+const stats = tradeStreamService.getStats();
+console.log(`Processed ${stats.totalProcessed} trades, ${stats.whaleTradesCount} whales`);
+
+// Stop the service
+tradeStreamService.stop();
+```
+
+NOTES FOR NEXT SESSION:
+- API-LIVE-002 complete and marked in prd.json
+- Next feature to implement: API-LIVE-003 (Real-time wallet profiler)
+- TradeStreamService emits 'trade:processed' events that wallet profiler can subscribe to
+- Integration with MarketSyncService: both can run together for complete data pipeline
