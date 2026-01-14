@@ -27,6 +27,13 @@ export {
   getGroupFarewellMessage,
   isBotMember,
   isBotRemoved,
+  handleStopCommand,
+  createStopCommandHandler,
+  unsubscribeUser,
+  getUnsubscribeMessage,
+  getAlreadyUnsubscribedMessage,
+  getNotFoundMessage,
   type RegistrationResult,
   type GroupMembershipResult,
+  type UnsubscribeResult,
 } from "./commands";

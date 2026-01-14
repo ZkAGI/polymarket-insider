@@ -3476,7 +3476,9 @@
       "priority": 172,
       "name": "Unsubscribe with /stop command",
       "description": "Allow users to stop receiving alerts",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T06:45:00Z",
+      "notes": "Implemented /stop command handler with: handleStopCommand(), createStopCommandHandler() factory, unsubscribeUser() function, getUnsubscribeMessage(), getAlreadyUnsubscribedMessage(), getNotFoundMessage(). Sets isActive=false with deactivationReason='User sent /stop command'. Preserves subscriber data for resubscribe. Works for private chats and groups. 29 unit tests and 22 E2E tests pass. TypeScript types verified clean.",
       "steps": [
         "Create /stop command handler",
         "Find subscriber by ctx.chat.id",

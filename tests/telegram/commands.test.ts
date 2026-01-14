@@ -15,6 +15,12 @@ import {
   getGroupFarewellMessage,
   isBotMember,
   isBotRemoved,
+  handleStopCommand,
+  createStopCommandHandler,
+  unsubscribeUser,
+  getUnsubscribeMessage,
+  getAlreadyUnsubscribedMessage,
+  getNotFoundMessage,
 } from "../../src/telegram/commands";
 import {
   TelegramSubscriberService,
@@ -33,6 +39,7 @@ vi.mock("../../src/db/telegram-subscribers", async () => {
       create: vi.fn(),
       activate: vi.fn(),
       updateByChatId: vi.fn(),
+      deactivate: vi.fn(),
     },
   };
 });
@@ -59,13 +66,16 @@ function createMockContext(overrides?: {
         ...(overrides?.title ? { title: overrides.title } : {}),
       };
 
+  // Handle lastName: undefined means no last name, null means use null, otherwise use value or default
+  const lastName = "lastName" in (overrides ?? {}) ? overrides?.lastName : "Doe";
+
   const from = overrides?.noFrom
     ? undefined
     : {
         id: overrides?.chatId ?? 123456789,
         is_bot: false,
         first_name: overrides?.firstName ?? "John",
-        last_name: overrides?.lastName ?? "Doe",
+        ...(lastName !== undefined ? { last_name: lastName } : {}),
         username: overrides?.username ?? "johndoe",
         language_code: overrides?.languageCode ?? "en",
       };
@@ -1261,6 +1271,440 @@ describe("createMyChatMemberHandler", () => {
 
   it("should work with default service", () => {
     const handler = createMyChatMemberHandler();
+    expect(handler).toBeDefined();
+  });
+});
+
+// =============================================================================
+// /stop Command Tests
+// =============================================================================
+
+describe("getUnsubscribeMessage", () => {
+  it("should include personalized goodbye", () => {
+    const message = getUnsubscribeMessage("John");
+    expect(message).toContain("Goodbye, John!");
+    expect(message).toContain("👋");
+  });
+
+  it("should mention unsubscription", () => {
+    const message = getUnsubscribeMessage("User");
+    expect(message).toContain("unsubscribed");
+    expect(message).toContain("Polymarket Whale Tracker");
+  });
+
+  it("should list what notifications are stopped", () => {
+    const message = getUnsubscribeMessage("User");
+    expect(message).toContain("Whale trades");
+    expect(message).toContain("Insider activity");
+    expect(message).toContain("Suspicious wallet");
+  });
+
+  it("should mention how to resubscribe", () => {
+    const message = getUnsubscribeMessage("User");
+    expect(message).toContain("/start");
+    expect(message).toContain("resubscribe");
+  });
+});
+
+describe("getAlreadyUnsubscribedMessage", () => {
+  it("should include personalized greeting", () => {
+    const message = getAlreadyUnsubscribedMessage("Jane");
+    expect(message).toContain("Hi Jane!");
+  });
+
+  it("should mention not currently subscribed", () => {
+    const message = getAlreadyUnsubscribedMessage("User");
+    expect(message).toContain("not currently subscribed");
+  });
+
+  it("should mention how to subscribe", () => {
+    const message = getAlreadyUnsubscribedMessage("User");
+    expect(message).toContain("/start");
+  });
+});
+
+describe("getNotFoundMessage", () => {
+  it("should mention not subscribed", () => {
+    const message = getNotFoundMessage();
+    expect(message).toContain("not currently subscribed");
+  });
+
+  it("should mention how to subscribe", () => {
+    const message = getNotFoundMessage();
+    expect(message).toContain("/start");
+  });
+});
+
+describe("unsubscribeUser", () => {
+  let mockService: TelegramSubscriberService;
+
+  beforeEach(() => {
+    mockService = createMockSubscriberService();
+    vi.clearAllMocks();
+  });
+
+  it("should return error when no chat information", async () => {
+    const ctx = createMockContext({ noChat: true });
+    const result = await unsubscribeUser(ctx, mockService);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("No chat information available");
+    expect(result.wasAlreadyInactive).toBe(false);
+  });
+
+  describe("active subscriber unsubscribe", () => {
+    it("should deactivate an active subscriber", async () => {
+      const ctx = createMockContext({ chatId: 111222333 });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(111222333),
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue({
+        ...existingSubscriber,
+        isActive: false,
+        deactivationReason: "User sent /stop command",
+      });
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.wasAlreadyInactive).toBe(false);
+      expect(result.subscriber?.isActive).toBe(false);
+      expect(mockService.deactivate).toHaveBeenCalledWith(
+        BigInt(111222333),
+        "User sent /stop command"
+      );
+    });
+
+    it("should work for groups", async () => {
+      const ctx = createMockContext({
+        chatId: -1001234567890,
+        chatType: "supergroup",
+        title: "Test Group",
+      });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(-1001234567890),
+        chatType: TelegramChatType.SUPERGROUP,
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue({
+        ...existingSubscriber,
+        isActive: false,
+      });
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(mockService.deactivate).toHaveBeenCalled();
+    });
+  });
+
+  describe("already inactive subscriber", () => {
+    it("should return wasAlreadyInactive for inactive subscriber", async () => {
+      const ctx = createMockContext({ chatId: 111222333 });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(111222333),
+        isActive: false,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.wasAlreadyInactive).toBe(true);
+      expect(result.subscriber).toEqual(existingSubscriber);
+      expect(mockService.deactivate).not.toHaveBeenCalled();
+    });
+
+    it("should not call deactivate for blocked subscriber", async () => {
+      const ctx = createMockContext({ chatId: 111222333 });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(111222333),
+        isActive: false,
+        isBlocked: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.wasAlreadyInactive).toBe(true);
+      expect(mockService.deactivate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("subscriber not found", () => {
+    it("should return error when subscriber not found", async () => {
+      const ctx = createMockContext({ chatId: 999888777 });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Subscriber not found");
+      expect(result.wasAlreadyInactive).toBe(false);
+    });
+  });
+
+  describe("error handling", () => {
+    it("should handle database errors gracefully", async () => {
+      const ctx = createMockContext({ chatId: 111222333 });
+
+      vi.mocked(mockService.findByChatId).mockRejectedValue(
+        new Error("Database connection failed")
+      );
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Database connection failed");
+    });
+
+    it("should handle deactivate errors", async () => {
+      const ctx = createMockContext({ chatId: 111222333 });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(111222333),
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+      vi.mocked(mockService.deactivate).mockRejectedValue(
+        new Error("Deactivation failed")
+      );
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Deactivation failed");
+    });
+
+    it("should handle non-Error objects", async () => {
+      const ctx = createMockContext({ chatId: 111222333 });
+
+      vi.mocked(mockService.findByChatId).mockRejectedValue("String error");
+
+      const result = await unsubscribeUser(ctx, mockService);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Unknown error occurred");
+    });
+  });
+});
+
+describe("handleStopCommand", () => {
+  let mockService: TelegramSubscriberService;
+
+  beforeEach(() => {
+    mockService = createMockSubscriberService();
+    vi.clearAllMocks();
+  });
+
+  describe("successful unsubscribe", () => {
+    it("should send unsubscribe message for active subscriber", async () => {
+      const ctx = createMockContext({
+        chatId: 111222333,
+        firstName: "John",
+        lastName: "Doe",
+      });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(111222333),
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue({
+        ...existingSubscriber,
+        isActive: false,
+      });
+
+      await handleStopCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("Goodbye, John Doe!");
+      expect(replyMessage).toContain("unsubscribed");
+    });
+
+    it("should send message with first name only when no last name", async () => {
+      const ctx = createMockContext({
+        chatId: 111222333,
+        firstName: "Jane",
+        lastName: undefined,
+      });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(111222333),
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue({
+        ...existingSubscriber,
+        isActive: false,
+      });
+
+      await handleStopCommand(ctx, mockService);
+
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("Goodbye, Jane!");
+    });
+  });
+
+  describe("already inactive subscriber", () => {
+    it("should send already unsubscribed message", async () => {
+      const ctx = createMockContext({
+        chatId: 111222333,
+        firstName: "John",
+      });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(111222333),
+        isActive: false,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+
+      await handleStopCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("not currently subscribed");
+      expect(replyMessage).toContain("/start");
+    });
+  });
+
+  describe("subscriber not found", () => {
+    it("should send not found message", async () => {
+      const ctx = createMockContext({ chatId: 999888777 });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+
+      await handleStopCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("not currently subscribed");
+      expect(replyMessage).toContain("/start");
+    });
+  });
+
+  describe("error handling", () => {
+    it("should send error message on database failure", async () => {
+      const ctx = createMockContext({ chatId: 111222333 });
+
+      vi.mocked(mockService.findByChatId).mockRejectedValue(
+        new Error("Database error")
+      );
+
+      await handleStopCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("error processing your request");
+      expect(replyMessage).toContain("Database error");
+    });
+
+    it("should send error message on no chat info", async () => {
+      const ctx = createMockContext({ noChat: true });
+
+      await handleStopCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("error processing your request");
+      expect(replyMessage).toContain("No chat information available");
+    });
+  });
+
+  describe("groups", () => {
+    it("should work in groups", async () => {
+      const ctx = createMockContext({
+        chatId: -1001234567890,
+        chatType: "supergroup",
+        title: "Test Group",
+      });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(-1001234567890),
+        chatType: TelegramChatType.SUPERGROUP,
+        isActive: true,
+        title: "Test Group",
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue({
+        ...existingSubscriber,
+        isActive: false,
+      });
+
+      await handleStopCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("Goodbye");
+      expect(replyMessage).toContain("unsubscribed");
+    });
+
+    it("should use group title as display name", async () => {
+      const ctx = createMockContext({
+        chatId: -1001234567890,
+        chatType: "group",
+        title: "Trading Alerts",
+        noFrom: true,
+      });
+      const existingSubscriber = createMockSubscriber({
+        chatId: BigInt(-1001234567890),
+        chatType: TelegramChatType.GROUP,
+        isActive: true,
+      });
+
+      vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+      vi.mocked(mockService.deactivate).mockResolvedValue({
+        ...existingSubscriber,
+        isActive: false,
+      });
+
+      await handleStopCommand(ctx, mockService);
+
+      const replyMessage = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(replyMessage).toContain("Trading Alerts");
+    });
+  });
+});
+
+describe("createStopCommandHandler", () => {
+  it("should create a handler function", () => {
+    const handler = createStopCommandHandler();
+    expect(typeof handler).toBe("function");
+  });
+
+  it("should use provided subscriber service", async () => {
+    const mockService = createMockSubscriberService();
+    const ctx = createMockContext({ chatId: 111222333 });
+    const existingSubscriber = createMockSubscriber({
+      chatId: BigInt(111222333),
+      isActive: true,
+    });
+
+    vi.mocked(mockService.findByChatId).mockResolvedValue(existingSubscriber);
+    vi.mocked(mockService.deactivate).mockResolvedValue({
+      ...existingSubscriber,
+      isActive: false,
+    });
+
+    const handler = createStopCommandHandler(mockService);
+    await handler(ctx);
+
+    expect(mockService.findByChatId).toHaveBeenCalled();
+    expect(mockService.deactivate).toHaveBeenCalled();
+  });
+
+  it("should work with default service", () => {
+    const handler = createStopCommandHandler();
     expect(handler).toBeDefined();
   });
 });

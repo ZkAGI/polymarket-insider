@@ -11109,3 +11109,63 @@ NOTES FOR NEXT SESSION:
 - Commands module now exports all group membership functions
 - To actually use this in production, add to bot setup:
   bot.on("my_chat_member", createMyChatMemberHandler())
+
+
+=== Session 2026-01-14 (TG-BOT-004) ===
+
+COMPLETED: TG-BOT-004 - Unsubscribe with /stop command
+
+Summary:
+- Implemented /stop command handler to allow users to unsubscribe from alerts
+- Sets isActive = false (preserves data for resubscribe later)
+- Logs unsubscribe event with reason
+
+Implementation Details:
+
+UnsubscribeResult interface:
+- success: boolean
+- wasAlreadyInactive: boolean
+- subscriber?: TelegramSubscriber
+- error?: string
+
+unsubscribeUser() function:
+- Gets chat from ctx
+- Finds subscriber by chatId
+- If not found: returns error "Subscriber not found"
+- If already inactive: returns wasAlreadyInactive = true
+- If active: calls deactivate(chatId, "User sent /stop command")
+- Logs unsubscribe event
+
+handleStopCommand() function:
+- Gets display name (firstName lastName for private, title for groups)
+- Calls unsubscribeUser() with the context
+- Sends appropriate message:
+  - "Goodbye, {name}!" for successful unsubscribe
+  - "Hi {name}! You're not currently subscribed..." for already inactive
+  - "You're not currently subscribed..." for not found
+- Handles errors gracefully with user-friendly error messages
+
+Helper functions:
+- getUnsubscribeMessage(displayName): Goodbye message with resubscribe instructions
+- getAlreadyUnsubscribedMessage(displayName): Message for already inactive users
+- getNotFoundMessage(): Message for users not in database
+
+Files Modified:
+- src/telegram/commands.ts: Added /stop command handler functions
+- src/telegram/index.ts: Added exports for new functions
+- tests/telegram/commands.test.ts: Added 29 unit tests (105 total now)
+- tests/telegram/commands.e2e.test.ts: Added 22 E2E tests (46 total now)
+
+Verification:
+- TypeScript typecheck: PASSED (pnpm typecheck)
+- Unit tests: 105 tests PASSED for commands.test.ts
+- E2E tests: 46 tests PASSED for commands.e2e.test.ts
+- All telegram module tests: 200 tests PASSED (4 test files)
+- Browser smoke tests: PASSED (dashboard renders correctly)
+
+NOTES FOR NEXT SESSION:
+- TG-BOT-004 complete and marked in prd.json
+- Next feature to implement: TG-BOT-005 (/settings command for alert preferences)
+- The /stop command handler is ready and can be registered using bot.onCommand("stop", handler)
+- Commands module now exports: handleStopCommand, createStopCommandHandler, unsubscribeUser, getUnsubscribeMessage, getAlreadyUnsubscribedMessage, getNotFoundMessage
+- Users can resubscribe by sending /start (reactivation logic already in place from TG-BOT-002)

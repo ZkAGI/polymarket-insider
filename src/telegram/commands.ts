@@ -481,3 +481,162 @@ export function createMyChatMemberHandler(
 ): (ctx: Context) => Promise<GroupMembershipResult> {
   return (ctx: Context) => handleMyChatMember(ctx, subscriberService);
 }
+
+/**
+ * Result of an unsubscribe attempt
+ */
+export interface UnsubscribeResult {
+  success: boolean;
+  wasAlreadyInactive: boolean;
+  subscriber?: TelegramSubscriber;
+  error?: string;
+}
+
+/**
+ * Get the confirmation message for unsubscribe
+ */
+export function getUnsubscribeMessage(displayName: string): string {
+  return `Goodbye, ${displayName}! 👋
+
+You have been unsubscribed from Polymarket Whale Tracker alerts.
+
+You will no longer receive notifications about:
+• 🔔 Whale trades
+• 🕵️ Insider activity patterns
+• 📊 Suspicious wallet activity
+
+To resubscribe at any time, simply send /start.
+
+See you next time!`;
+}
+
+/**
+ * Get the message when user is already unsubscribed
+ */
+export function getAlreadyUnsubscribedMessage(displayName: string): string {
+  return `Hi ${displayName}! 👋
+
+You're not currently subscribed to alerts.
+
+To subscribe and start receiving whale and insider activity alerts, send /start.`;
+}
+
+/**
+ * Get the message when subscriber is not found
+ */
+export function getNotFoundMessage(): string {
+  return `You're not currently subscribed to alerts.
+
+To subscribe and start receiving whale and insider activity alerts, send /start.`;
+}
+
+/**
+ * Unsubscribe a user from alerts
+ */
+export async function unsubscribeUser(
+  ctx: Context,
+  subscriberService: TelegramSubscriberService = telegramSubscriberService
+): Promise<UnsubscribeResult> {
+  const chat = ctx.chat;
+
+  if (!chat) {
+    return {
+      success: false,
+      wasAlreadyInactive: false,
+      error: "No chat information available",
+    };
+  }
+
+  try {
+    const chatId = BigInt(chat.id);
+
+    // Find the subscriber
+    const existingSubscriber = await subscriberService.findByChatId(chatId);
+
+    if (!existingSubscriber) {
+      return {
+        success: false,
+        wasAlreadyInactive: false,
+        error: "Subscriber not found",
+      };
+    }
+
+    // Check if already inactive
+    if (!existingSubscriber.isActive) {
+      return {
+        success: true,
+        wasAlreadyInactive: true,
+        subscriber: existingSubscriber,
+      };
+    }
+
+    // Deactivate the subscriber
+    const deactivatedSubscriber = await subscriberService.deactivate(
+      chatId,
+      "User sent /stop command"
+    );
+
+    console.log(
+      `[TG-BOT] Subscriber unsubscribed: chatId=${chatId}, type=${existingSubscriber.chatType}`
+    );
+
+    return {
+      success: true,
+      wasAlreadyInactive: false,
+      subscriber: deactivatedSubscriber,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error(`[TG-BOT] Unsubscribe error:`, error);
+
+    return {
+      success: false,
+      wasAlreadyInactive: false,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Handle /stop command
+ *
+ * Unsubscribes the user from receiving alerts
+ */
+export async function handleStopCommand(
+  ctx: Context,
+  subscriberService: TelegramSubscriberService = telegramSubscriberService
+): Promise<void> {
+  const displayName = getDisplayName(ctx);
+  const result = await unsubscribeUser(ctx, subscriberService);
+
+  if (!result.success) {
+    if (result.error === "Subscriber not found") {
+      await ctx.reply(getNotFoundMessage());
+      return;
+    }
+
+    await ctx.reply(
+      `Sorry, there was an error processing your request. Please try again later.\n\nError: ${result.error}`
+    );
+    return;
+  }
+
+  if (result.wasAlreadyInactive) {
+    await ctx.reply(getAlreadyUnsubscribedMessage(displayName));
+    return;
+  }
+
+  await ctx.reply(getUnsubscribeMessage(displayName));
+}
+
+/**
+ * Create the /stop command handler
+ *
+ * Factory function that returns a handler with injected dependencies
+ */
+export function createStopCommandHandler(
+  subscriberService: TelegramSubscriberService = telegramSubscriberService
+): (ctx: Context) => Promise<void> {
+  return (ctx: Context) => handleStopCommand(ctx, subscriberService);
+}
