@@ -4046,8 +4046,127 @@
       }
     },
     {
+  "id": "INGEST-CORE-001",
+  "priority": 198,
+  "name": "Continuous Polymarket ingestion worker",
+  "description": "Always-running background worker that continuously fetches Polymarket markets and trades and writes normalized data to the database.",
+  "passes": true,
+  "completed_at": "2026-01-14T17:00:00Z",
+  "notes": "This worker is independent of API routes and UI. It must run continuously in production and be restart-safe.",
+  "steps": [
+    "Create a dedicated ingestion worker process (not an API route)",
+    "Initialize Prisma client inside worker",
+    "Run ingestion in an infinite loop with sleep interval",
+    "Handle network failures and retries gracefully",
+    "Ensure worker does not exit on single-cycle failure"
+  ],
+  "test_instructions": {
+    "unit": "Test individual ingestion functions",
+    "typecheck": "Verify worker compiles and imports Prisma correctly",
+    "e2e": "Run worker locally and confirm DB tables populate",
+    "manual_verification": "Verify worker continues running for >10 minutes"
+  }
+},
+{
+  "id": "INGEST-MARKET-001",
+  "priority": 199,
+  "name": "Polymarket market ingestion",
+  "description": "Fetch market metadata from Polymarket CLOB/Gamma APIs and persist normalized market records in the database.",
+  "passes": false,
+  "steps": [
+    "Fetch market list from Polymarket API",
+    "Parse market identifiers, question text, status flags",
+    "Normalize volume, liquidity, timestamps",
+    "Upsert markets into Market table",
+    "Update lastSyncedAt timestamp"
+  ],
+  "test_instructions": {
+    "unit": "Test market normalization logic",
+    "typecheck": "Verify Market schema alignment",
+    "e2e": "Confirm markets appear in DB after ingestion cycle",
+    "manual_verification": "Verify /api/dashboard/markets returns data"
+  }
+},
+{
+  "id": "INGEST-TRADE-001",
+  "priority": 200,
+  "name": "Polymarket trade ingestion",
+  "description": "Fetch recent trades from Polymarket CLOB and store individual trade records for downstream analysis.",
+  "passes": false,
+  "steps": [
+    "Fetch recent trades per active market",
+    "Extract wallet address, marketId, side, size, price",
+    "Normalize USD trade size",
+    "Deduplicate trades by transaction hash or trade ID",
+    "Insert trades into Trade table"
+  ],
+  "test_instructions": {
+    "unit": "Test trade parsing and normalization",
+    "typecheck": "Verify Trade schema compatibility",
+    "e2e": "Confirm trades are written after ingestion",
+    "manual_verification": "Verify Trade table row count increases over time"
+  }
+},
+{
+  "id": "INGEST-WALLET-001",
+  "priority": 201,
+  "name": "Wallet materialization from trades",
+  "description": "Automatically create and update wallet records based on observed trading activity.",
+  "passes": false,
+  "steps": [
+    "Extract unique wallet addresses from trades",
+    "Create wallet records if not present",
+    "Update wallet activity timestamps",
+    "Track cumulative trade count and volume"
+  ],
+  "test_instructions": {
+    "unit": "Test wallet creation logic",
+    "typecheck": "Verify Wallet schema alignment",
+    "e2e": "Confirm wallets appear after trade ingestion",
+    "manual_verification": "Verify wallet profiles show activity"
+  }
+},{
+  "id": "INGEST-DETECT-001",
+  "priority": 202,
+  "name": "Post-ingestion detection trigger",
+  "description": "Trigger all detection and scoring pipelines after each successful ingestion cycle.",
+  "passes": false,
+  "steps": [
+    "Run fresh wallet detectors after trade ingestion",
+    "Run volume and whale detectors",
+    "Update suspicion scores",
+    "Generate alerts when thresholds are crossed"
+  ],
+  "test_instructions": {
+    "unit": "Test individual detector invocation",
+    "typecheck": "Verify detector imports",
+    "e2e": "Confirm alerts appear after ingestion",
+    "manual_verification": "Verify /whales endpoint shows data"
+  }
+},
+{
+  "id": "INGEST-HEALTH-001",
+  "priority": 203,
+  "name": "Ingestion health tracking",
+  "description": "Track and expose ingestion health and last successful sync times.",
+  "passes": false,
+  "steps": [
+    "Persist last successful market ingestion timestamp",
+    "Persist last successful trade ingestion timestamp",
+    "Expose ingestion health via internal API or log",
+    "Alert if ingestion stalls beyond threshold"
+  ],
+  "test_instructions": {
+    "unit": "Test health record updates",
+    "typecheck": "Verify SyncLog schema",
+    "e2e": "Confirm health endpoint updates over time",
+    "manual_verification": "Verify ingestion timestamp updates every cycle"
+  }
+},
+
+    {
       "id": "TEST-PERF-001",
-      "priority": 200,
+      "priority": 204,
       "name": "Performance benchmarks",
       "description": "Comprehensive performance benchmarks for all systems",
       "passes": true,

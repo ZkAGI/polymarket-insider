@@ -12620,3 +12620,25 @@ NOTES FOR NEXT SESSION:
 - Full integration test can be run with: npm test -- tests/e2e/full-integration.test.ts
 - Screenshot directory: tests/e2e/screenshots/integration/
 - Test summary JSON provides machine-readable results
+
+=== Session 2026-01-14 ===
+
+COMPLETED: INGEST-CORE-001 - Continuous Polymarket ingestion worker
+- Created src/workers/ingestion-worker.ts with IngestionWorker class
+- Worker extends EventEmitter for event-driven notifications
+- Implements infinite loop with configurable cycle interval
+- Key features:
+  * Configurable intervals for market sync and trade fetching
+  * Retry logic with exponential backoff
+  * Graceful error handling (worker continues on single-cycle failure)
+  * Health tracking with cycle counts, error tracking, uptime
+  * Event emissions: started, stopped, cycle:start, cycle:complete, cycle:error
+  * Force cycle capability for on-demand sync
+- Created src/workers/index.ts for module exports
+- Created comprehensive unit tests in tests/workers/ingestion-worker.test.ts (35 tests)
+- All tests pass in 10ms
+- TypeScript compiles with no errors
+- Files created:
+  * src/workers/ingestion-worker.ts (~600 lines)
+  * src/workers/index.ts
+  * tests/workers/ingestion-worker.test.ts (~450 lines)
