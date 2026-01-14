@@ -3697,7 +3697,9 @@
       "priority": 182,
       "name": "Dashboard stats API endpoint",
       "description": "API endpoint for dashboard statistics",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T06:00:00Z",
+      "notes": "Implemented GET /api/dashboard/stats endpoint with: DashboardStatsResponse type with alerts, criticalAlerts, suspiciousWallets, hotMarkets, volume24h, whaleTrades, trends object, and generatedAt timestamp; Parallel database queries for current (last 24h) and previous (24-48h ago) period statistics; Trend calculation as percentage change between periods; 30-second in-memory caching with TTL; Cache headers (max-age=30, stale-while-revalidate=60); X-Cache header (HIT/MISS/STALE); Graceful error handling returning stale cache on database errors; Uses Prisma client for queries (alert.count, wallet.count, alert.groupBy, trade.aggregate, trade.count). 18 unit tests and 26 E2E tests pass. TypeScript types verified clean.",
       "steps": [
         "Create app/api/dashboard/stats/route.ts",
         "Query database for: total alerts (24h), critical alerts, suspicious wallets count, hot markets count, total volume (24h), whale trades count",
