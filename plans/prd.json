@@ -4004,7 +4004,9 @@
       "priority": 196,
       "name": "Metrics endpoint",
       "description": "Expose application metrics",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T08:35:00Z",
+      "notes": "Implemented MetricsCollector in src/utils/metrics.ts with JSON and Prometheus formats. Created app/api/metrics/route.ts endpoint. Tracks trade stream stats (processed/stored/errors/whale trades), alert stats (generated/broadcast/suppressed by type/severity), wallet profiler stats (profiled/new/high-suspicion), market sync stats, WebSocket metrics, API request metrics by endpoint with durations, and system metrics (memory/heap/uptime). Supports dependency injection for testability. 41 unit tests and 23 E2E tests pass.",
       "steps": [
         "Create app/api/metrics/route.ts",
         "Track: trades processed count, alerts generated count, API response times, WebSocket message rate, active subscribers count",

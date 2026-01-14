@@ -12453,3 +12453,91 @@ NOTES FOR NEXT SESSION:
 - Logger ready to replace console.log throughout codebase
 - Next feature: MONITOR-002 (Metrics endpoint)
 - Consider installing actual pino package for production if needed
+
+=== MONITOR-002: Metrics Endpoint ===
+Date: 2026-01-14
+
+FEATURE: Implemented metrics endpoint with Prometheus and JSON formats
+
+IMPLEMENTATION OVERVIEW:
+Created a comprehensive metrics collection system that aggregates statistics from
+all application services and exposes them via a REST API endpoint.
+
+SRC/UTILS/METRICS.TS:
+- MetricsCollector class with getMetrics(), toPrometheus(), and reset() methods
+- ApplicationMetrics interface defining all tracked metrics
+- StartupOrchestratorInterface for dependency injection and testability
+- Recording functions: recordApiRequest(), recordWebSocketMessage(), recordWebSocketReconnect()
+- Subscription tracking: setActiveSubscriptions(), incrementSubscriptions(), decrementSubscriptions()
+- setStartupOrchestrator() and resetStartupOrchestrator() for testing
+
+TRACKED METRICS:
+1. Trade Stream Metrics:
+   - tradesProcessedTotal, tradesStoredTotal, tradesErrorTotal
+   - whaleTradesTotal, newWalletsFromTradesTotal, tradesPerSecond
+
+2. Alert Metrics:
+   - alertsGeneratedTotal, alertsBroadcastTotal, alertsSuppressedTotal
+   - alertsByType (map), alertsBySeverity (map)
+
+3. Wallet Profiler Metrics:
+   - walletsProfiledTotal, newWalletsProfiledTotal
+   - highSuspicionWalletsTotal, freshWalletsTotal
+   - walletCacheHits, walletCacheMisses
+
+4. Market Sync Metrics:
+   - marketsSyncedTotal, newMarketsTotal
+   - marketSyncDurationMs, lastSyncAt
+
+5. WebSocket Metrics:
+   - websocketMessagesTotal, websocketReconnectsTotal, activeSubscriptions
+
+6. API Metrics:
+   - apiRequestsTotal, apiErrorsTotal
+   - apiRequestsByEndpoint (with requests, errors, duration stats)
+
+7. System Metrics:
+   - uptimeSeconds, memoryUsageMb, heapUsedMb, heapTotalMb
+   - collectedAt, startedAt timestamps
+
+APP/API/METRICS/ROUTE.TS:
+- GET /api/metrics - Returns JSON metrics (default)
+- GET /api/metrics?format=json - Explicit JSON format
+- GET /api/metrics?format=prometheus - Prometheus exposition format
+- Returns MetricsResponse wrapper with status, format, and data fields
+- Sets appropriate Content-Type headers for each format
+- No-cache headers to prevent stale metrics
+- Error handling with 400 for invalid format, 500 for internal errors
+
+PROMETHEUS FORMAT:
+- Standard exposition format (text/plain; version=0.0.4)
+- HELP comments describing each metric
+- TYPE comments (counter/gauge)
+- Properly formatted labels for by-type and by-endpoint metrics
+- Compatible with Prometheus scraping
+
+TEST FILES:
+- tests/utils/metrics.test.ts: 41 unit tests
+- tests/e2e/metrics-api.e2e.test.ts: 23 E2E tests
+
+USAGE:
+# JSON format (default)
+curl http://localhost:3000/api/metrics
+
+# Prometheus format
+curl http://localhost:3000/api/metrics?format=prometheus
+
+# Record API requests (in application code)
+import { recordApiRequest } from '@/utils/metrics';
+recordApiRequest('/api/endpoint', 'GET', 200, 45);
+
+# For testing with custom orchestrator
+import { setStartupOrchestrator, resetStartupOrchestrator } from '@/utils/metrics';
+setStartupOrchestrator(mockOrchestrator);
+
+NOTES FOR NEXT SESSION:
+- MONITOR-002 complete
+- Metrics endpoint ready for Prometheus integration
+- Next feature: FINAL-001 (End-to-end integration test)
+- Consider integrating recordApiRequest() into API middleware for automatic tracking
+- WebSocket message tracking can be added to trade stream service
