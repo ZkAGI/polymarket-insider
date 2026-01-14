@@ -1992,3 +1992,148 @@ export function createTestCommandHandler(
 ): (ctx: Context) => Promise<TestAlertResult> {
   return (ctx: Context) => handleTestCommand(ctx, botClient);
 }
+
+// =============================================================================
+// /whales Command - Show recent whale trades
+// =============================================================================
+
+/**
+ * Get the whales message with recent large trades
+ */
+export async function getWhalesMessage(): Promise<string> {
+  try {
+    const { PrismaClient } = await import("@prisma/client");
+    const prisma = new PrismaClient();
+    
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const trades = await prisma.trade.findMany({
+      where: {
+        createdAt: { gte: oneDayAgo },
+        usdValue: { gte: 10000 },
+      },
+      orderBy: { usdValue: "desc" },
+      take: 10,
+      include: {
+        market: { select: { question: true } },
+        wallet: { select: { address: true } },
+      },
+    });
+
+    await prisma.$disconnect();
+
+    if (trades.length === 0) {
+      return `🐋 *Recent Whale Trades*
+
+No whale trades (>$10K) in the last 24 hours.
+
+Check back later or adjust your threshold in /settings.`;
+    }
+
+    let message = `🐋 *Recent Whale Trades* (24h)\n\n`;
+
+    for (const trade of trades) {
+      const size = trade.usdValue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+      const walletAddr = (trade as any).wallet?.address || trade.walletId;
+      const wallet = walletAddr.slice(0, 6) + "..." + walletAddr.slice(-4);
+      const marketQuestion = (trade as any).market?.question || "Unknown Market";
+      const marketDisplay = marketQuestion.slice(0, 40);
+      const side = trade.side === "BUY" ? "🟢 BUY" : "🔴 SELL";
+      
+      message += `${side} *${size}*\n`;
+      message += `└ ${marketDisplay}${marketQuestion.length > 40 ? "..." : ""}\n`;
+      message += `└ Wallet: \`${wallet}\`\n\n`;
+    }
+
+    message += `_Updated: ${new Date().toLocaleTimeString()}_`;
+    return message;
+  } catch (error) {
+    console.error("[TG-BOT] Error fetching whales:", error);
+    return `🐋 *Recent Whale Trades*
+
+⚠️ Error fetching whale trades. Please try again later.`;
+  }
+}
+
+/**
+ * Handle /whales command
+ */
+export async function handleWhalesCommand(ctx: Context): Promise<void> {
+  await ctx.reply("🔄 Fetching whale trades...");
+  const message = await getWhalesMessage();
+  await ctx.reply(message, { parse_mode: "Markdown" });
+}
+
+/**
+ * Create the /whales command handler
+ */
+export function createWhalesCommandHandler(): (ctx: Context) => Promise<void> {
+  return handleWhalesCommand;
+}
+
+// =============================================================================
+// /markets Command - Show hot markets
+// =============================================================================
+
+/**
+ * Get the markets message with trending markets
+ */
+export async function getMarketsMessage(): Promise<string> {
+  try {
+    const { PrismaClient } = await import("@prisma/client");
+    const prisma = new PrismaClient();
+    
+    const markets = await prisma.market.findMany({
+      where: { active: true },
+      orderBy: { volume: "desc" },
+      take: 10,
+    });
+
+    await prisma.$disconnect();
+
+    if (markets.length === 0) {
+      return `📊 *Hot Markets*
+
+No active markets found.
+
+Markets will appear here once data is synced.`;
+    }
+
+    let message = `📊 *Hot Markets*\n\n`;
+
+    for (let i = 0; i < markets.length; i++) {
+  const market = markets[i];
+  if (!market) continue;
+  
+  const question = market.question.slice(0, 45);
+  const volume = market.volume?.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) || "$0";
+  
+  message += `*${i + 1}.* ${question}${market.question.length > 45 ? "..." : ""}\n`;
+  message += `   💰 Volume: ${volume}\n\n`;
+}
+
+    message += `_Updated: ${new Date().toLocaleTimeString()}_`;
+    return message;
+  } catch (error) {
+    console.error("[TG-BOT] Error fetching markets:", error);
+    return `📊 *Hot Markets*
+
+⚠️ Error fetching markets. Please try again later.`;
+  }
+}
+
+/**
+ * Handle /markets command
+ */
+export async function handleMarketsCommand(ctx: Context): Promise<void> {
+  await ctx.reply("🔄 Fetching hot markets...");
+  const message = await getMarketsMessage();
+  await ctx.reply(message, { parse_mode: "Markdown" });
+}
+
+/**
+ * Create the /markets command handler
+ */
+export function createMarketsCommandHandler(): (ctx: Context) => Promise<void> {
+  return handleMarketsCommand;
+}
