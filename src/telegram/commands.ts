@@ -4232,6 +4232,12 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
       const marketDisplay = marketQuestion.length > 35 ? marketQuestion.slice(0, 35) + "..." : marketQuestion;
       const marketSlug = market?.slug || "";
       
+      // Use Polymarket search - extract key words from question
+      const searchTerms = marketQuestion
+        .replace(/\?/g, '')
+        .slice(0, 40);
+      const polymarketUrl = `https://polymarket.com/search?query=${encodeURIComponent(searchTerms)}`;
+      
       // Context badges
       const badges: string[] = [];
       if (wallet?.tradeCount && wallet.tradeCount < 10) badges.push("🆕");
@@ -4241,7 +4247,7 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
       message += `${severity} ${side} *${size}*${badgeStr}\n`;
       message += `├ ${marketDisplay}\n`;
       message += `├ 👛 [${walletShort}](https://polygonscan.com/address/${walletAddr})\n`;
-      message += `└ [View on Polymarket](https://polymarket.com/event/${marketSlug})\n\n`;
+      message += `└ [View on Polymarket](${polymarketUrl})\n\n`;
     }
 
     message += `_Updated: ${new Date().toLocaleTimeString()}_`;
@@ -4317,7 +4323,10 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
       
       message += `${medal} ${question}\n`;
       message += `   💰 Volume: ${volume}\n`;
-      message += `   🔗 [View Market](https://polymarket.com/event/${market.slug})\n\n`;
+      
+      // Use search URL  
+      const searchTerms = market.question.replace(/\?/g, '').slice(0, 40);
+      message += `   🔗 [View Market](https://polymarket.com/search?query=${encodeURIComponent(searchTerms)})\n\n`;
     }
 
     message += `_Updated: ${new Date().toLocaleTimeString()}_`;
