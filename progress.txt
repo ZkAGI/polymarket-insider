@@ -11830,3 +11830,70 @@ NOTES FOR NEXT SESSION:
 - AlertGeneratorService is now part of the complete data pipeline:
   MarketSyncService -> TradeStreamService -> WalletProfilerService -> AlertGeneratorService
 - All live API services (001-004) are now complete
+
+=== UI-API-002: Dashboard Alerts API Endpoint ===
+Date: 2026-01-14
+
+FEATURE: Implemented GET /api/dashboard/alerts endpoint for fetching paginated, filterable alerts.
+
+IMPLEMENTATION:
+- Created app/api/dashboard/alerts/route.ts with comprehensive API endpoint
+
+RESPONSE STRUCTURE:
+- DashboardAlertsResponse type:
+  - alerts: AlertSummary[] (id, type, severity, title, message, tags, read, acknowledged, createdAt, market, wallet)
+  - pagination: { offset, limit, total, hasMore }
+  - filters: { severity, type, since, read }
+  - generatedAt: ISO timestamp
+
+QUERY PARAMETERS:
+- limit: Number of results (1-100, default 20)
+- offset: Pagination offset (default 0)
+- severity: Comma-separated list (e.g., HIGH,CRITICAL)
+- type: Comma-separated list (e.g., WHALE_TRADE,FRESH_WALLET)
+- since: ISO timestamp for alerts created after this time
+- read: Filter by read status (true/false)
+
+FEATURES:
+- 15-second in-memory caching with per-request cache keys
+- Cache headers (max-age=15, stale-while-revalidate=30)
+- X-Cache header (HIT/MISS)
+- Case-insensitive filter parsing
+- Invalid values gracefully ignored
+- Related market data (id, question, slug, category)
+- Related wallet data (id, address, label, suspicionScore)
+- Ordered by createdAt descending
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 65 tests PASSED (tests/api/dashboard/alerts.test.ts)
+- E2E tests: 48 tests written (tests/e2e/dashboard-alerts-api.e2e.test.ts)
+
+Files Created:
+- app/api/dashboard/alerts/route.ts
+- tests/api/dashboard/alerts.test.ts
+- tests/e2e/dashboard-alerts-api.e2e.test.ts
+
+Usage Example:
+```
+# Get all alerts (default limit 20)
+GET /api/dashboard/alerts
+
+# Get critical alerts only
+GET /api/dashboard/alerts?severity=CRITICAL,HIGH
+
+# Get whale trade alerts from last 24 hours
+GET /api/dashboard/alerts?type=WHALE_TRADE&since=2026-01-13T00:00:00.000Z
+
+# Get unread alerts with pagination
+GET /api/dashboard/alerts?read=false&limit=50&offset=100
+
+# Combine multiple filters
+GET /api/dashboard/alerts?severity=HIGH,CRITICAL&type=WHALE_TRADE,FRESH_WALLET&limit=20
+```
+
+NOTES FOR NEXT SESSION:
+- UI-API-002 complete and marked in prd.json
+- Next feature to implement: UI-API-003 (Dashboard whales API endpoint)
+- Database not running during testing, but unit tests pass with mocking
+- E2E tests require running PostgreSQL database

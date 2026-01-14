@@ -3718,7 +3718,9 @@
       "priority": 183,
       "name": "Dashboard alerts API endpoint",
       "description": "API endpoint for recent alerts",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T11:40:00Z",
+      "notes": "Implemented GET /api/dashboard/alerts endpoint with: DashboardAlertsResponse type with alerts array, pagination object (offset, limit, total, hasMore), filters object (severity, type, since, read); Query parameters: limit (1-100, default 20), offset (default 0), severity (comma-separated list e.g. HIGH,CRITICAL), type (comma-separated list e.g. WHALE_TRADE,FRESH_WALLET), since (ISO timestamp), read (true/false); Database queries: findMany with filters and includes (market: id, question, slug, category; wallet: id, address, label, suspicionScore), count for total; 15-second in-memory caching with per-request cache keys; Cache headers (max-age=15, stale-while-revalidate=30); X-Cache header (HIT/MISS); Case-insensitive filter parsing. 65 unit tests and 48 E2E tests pass. TypeScript types verified clean.",
       "steps": [
         "Create app/api/dashboard/alerts/route.ts",
         "Accept query params: limit (default 20), severity, type, since",
