@@ -4194,7 +4194,7 @@ export async function getWhalesMessage(): Promise<string> {
       orderBy: { usdValue: "desc" },
       take: 10,
       include: {
-        market: { select: { question: true, slug: true } },
+        market: { select: { question: true, slug: true, conditionId: true } },
         wallet: { select: { address: true, tradeCount: true, isWhale: true } },
       },
     });
@@ -4231,6 +4231,14 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
       const marketQuestion = market?.question || "Unknown Market";
       const marketDisplay = marketQuestion.length > 35 ? marketQuestion.slice(0, 35) + "..." : marketQuestion;
       const marketSlug = market?.slug || "";
+      const conditionId = market?.conditionId || "";
+      
+      // Use conditionId if available (more reliable), fallback to slug
+      const polymarketUrl = conditionId 
+        ? `https://polymarket.com/markets/${conditionId}`
+        : marketSlug 
+          ? `https://polymarket.com/event/${marketSlug}`
+          : `https://polymarket.com`;
       
       // Context badges
       const badges: string[] = [];
@@ -4241,7 +4249,7 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
       message += `${severity} ${side} *${size}*${badgeStr}\n`;
       message += `├ ${marketDisplay}\n`;
       message += `├ 👛 [${walletShort}](https://polygonscan.com/address/${walletAddr})\n`;
-      message += `└ [View on Polymarket](https://polymarket.com/event/${marketSlug})\n\n`;
+      message += `└ [View on Polymarket](${polymarketUrl})\n\n`;
     }
 
     message += `_Updated: ${new Date().toLocaleTimeString()}_`;
@@ -4287,6 +4295,12 @@ export async function getMarketsMessage(): Promise<string> {
       where: { active: true },
       orderBy: { volume: "desc" },
       take: 10,
+      select: {
+        question: true,
+        slug: true,
+        conditionId: true,
+        volume: true,
+      },
     });
 
     await prisma.$disconnect();
@@ -4315,9 +4329,16 @@ _Updated: ${new Date().toLocaleTimeString()}_`;
         ? `$${(market.volume / 1000000).toFixed(2)}M`
         : `$${(market.volume / 1000).toFixed(0)}K`;
       
+      // Use conditionId if available, fallback to slug
+      const polymarketUrl = market.conditionId 
+        ? `https://polymarket.com/markets/${market.conditionId}`
+        : market.slug 
+          ? `https://polymarket.com/event/${market.slug}`
+          : `https://polymarket.com`;
+      
       message += `${medal} ${question}\n`;
       message += `   💰 Volume: ${volume}\n`;
-      message += `   🔗 [View Market](https://polymarket.com/event/${market.slug})\n\n`;
+      message += `   🔗 [View Market](${polymarketUrl})\n\n`;
     }
 
     message += `_Updated: ${new Date().toLocaleTimeString()}_`;
