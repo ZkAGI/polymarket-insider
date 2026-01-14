@@ -3891,7 +3891,8 @@
       "priority": 191,
       "name": "Health check API endpoint",
       "description": "Endpoint to check all services health",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T08:35:00Z",
       "steps": [
         "Create app/api/health/route.ts",
         "Check database connection with simple query",
@@ -3912,7 +3913,9 @@
       "priority": 192,
       "name": "Graceful shutdown handler",
       "description": "Clean shutdown of all services",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T08:05:00Z",
+      "notes": "Implemented as part of STARTUP-001 in startup.ts. setupGracefulShutdown() registers SIGINT/SIGTERM handlers that call stopAllServices() which closes WebSocket, Telegram, database in correct order.",
       "steps": [
         "Add SIGTERM and SIGINT handlers in startup.ts",
         "On signal: call stopAllServices()",

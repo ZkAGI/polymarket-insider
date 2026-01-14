@@ -12257,3 +12257,61 @@ NOTES FOR NEXT SESSION:
 - The startup orchestrator is integrated with Next.js via instrumentation.ts
 - Services can be disabled via ENABLE_BACKGROUND_SERVICES=false env var
 - All services have comprehensive error handling and status reporting
+
+=== STARTUP-002: Health Check API Endpoint ===
+Date: 2026-01-14
+
+FEATURE: Created comprehensive health check API endpoint at GET /api/health
+
+ENDPOINT: GET /api/health
+- Returns full health status for all services
+- Checks: database, websocket, telegram, marketSync, walletProfiler, alertGenerator, orchestrator
+- Returns status: "healthy" | "degraded" | "unhealthy"
+- 200 OK for healthy/degraded, 503 Service Unavailable for unhealthy
+
+QUERY PARAMETERS:
+- simple=true: Returns minimal { status: "healthy" } response for load balancer health checks
+
+RESPONSE STRUCTURE:
+{
+  status: "healthy" | "degraded" | "unhealthy",
+  timestamp: string,
+  version: string,
+  environment: string,
+  uptimeSeconds: number,
+  services: ServiceHealth[],
+  summary: { healthy, degraded, unhealthy, disabled, total }
+}
+
+SERVICE HEALTH CHECKS:
+- database: Checks PostgreSQL connection via performHealthCheck()
+- websocket: Checks trade stream service running and processing
+- telegram: Checks bot status (running/stopped/error/disabled)
+- marketSync: Checks last sync time (degraded if >10 min stale)
+- walletProfiler: Checks service running status
+- alertGenerator: Checks service running status
+- orchestrator: Checks overall orchestrator status
+
+FEATURES:
+- Disabled services don't affect overall status
+- Response time tracking for database
+- Metadata with service-specific stats
+- Cache-Control: no-store for health checks
+- Graceful error handling (service exceptions don't crash endpoint)
+
+FILES CREATED:
+- app/api/health/route.ts: Health check API endpoint
+- tests/api/health/health.test.ts: 30 unit tests
+- tests/e2e/health-api.e2e.test.ts: 12 E2E tests
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 30 tests PASSED (tests/api/health/health.test.ts)
+- E2E tests: 12 tests PASSED (tests/e2e/health-api.e2e.test.ts)
+
+NOTES FOR NEXT SESSION:
+- STARTUP-002 complete and marked in prd.json
+- STARTUP-003 was already completed as part of STARTUP-001
+- Next features: DEPLOY-001 (Docker compose), DEPLOY-002 (Production Dockerfile)
+- Health endpoint ready for production monitoring/load balancers
+- Use ?simple=true for AWS/GCP health checks
