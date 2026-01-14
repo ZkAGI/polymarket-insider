@@ -4116,7 +4116,8 @@
   "priority": 201,
   "name": "Wallet materialization from trades",
   "description": "Automatically create and update wallet records based on observed trading activity.",
-  "passes": false,
+  "passes": true,
+  "completed_at": "2026-01-14T17:58:00Z",
   "steps": [
     "Extract unique wallet addresses from trades",
     "Create wallet records if not present",
