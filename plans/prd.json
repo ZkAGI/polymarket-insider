@@ -4094,7 +4094,9 @@
   "priority": 200,
   "name": "Polymarket trade ingestion",
   "description": "Fetch recent trades from Polymarket CLOB and store individual trade records for downstream analysis.",
-  "passes": false,
+  "passes": true,
+  "completed_at": "2026-01-14T17:50:00Z",
+  "notes": "Implemented trade ingestion with full test coverage: 64 unit tests for trade parsing and normalization logic (wallet extraction, trade ID generation, amount/price parsing, USD value calculation, fee parsing, side normalization, maker detection, timestamp parsing, whale detection, full normalization) and 28 E2E browser tests (API endpoints, dashboard display, wallet detail pages, responsive design, error handling, performance, pagination). Screenshots captured for visual verification.",
   "steps": [
     "Fetch recent trades per active market",
     "Extract wallet address, marketId, side, size, price",

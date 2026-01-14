@@ -12682,8 +12682,55 @@ COMPLETED: INGEST-MARKET-001 - Polymarket market ingestion
 - All tests pass (72 total: 51 unit + 21 E2E)
 - TypeScript compiles with no errors
 
+COMPLETED: INGEST-TRADE-001 - Polymarket trade ingestion
+- Verified trade ingestion implementation in existing ingestion-worker.ts
+- ingestTrades() and processTrade() methods properly:
+  * Fetch recent trades from Polymarket CLOB API per active market
+  * Extract wallet address (from taker_address, maker_address, or owner)
+  * Parse marketId, side (BUY/SELL), size/amount, price
+  * Calculate USD trade value (amount * price)
+  * Parse fees from fee_rate_bps field
+  * Detect whale trades ($10,000 USD threshold)
+  * Deduplicate trades by CLOB trade ID (clobTradeId)
+  * Insert trades into Trade table via TradeService.upsertByClobTradeId()
+- Created comprehensive test suite:
+  * tests/ingestion/trade-ingestion.test.ts - 64 unit tests covering:
+    - extractWalletAddress: taker/maker/owner extraction, lowercasing, null handling
+    - generateTradeId: CLOB ID usage, fallback ID generation, uniqueness
+    - parseTradeAmount: size/amount parsing, type coercion, edge cases
+    - parseTradePrice: price parsing, 0/1 prices, invalid values
+    - calculateUsdValue: correct calculation, zero handling, large values
+    - parseTradeFee: fee parsing from string, missing/invalid fees
+    - normalizeTradeSide: BUY/SELL normalization, case insensitivity
+    - determineIsMaker: maker detection, case insensitive comparison
+    - parseTradeTimestamp: timestamp/created_at parsing, invalid timestamps
+    - isWhaleTrade: $10k threshold, custom thresholds
+    - normalizeTradeFromClob: full normalization function
+    - Edge cases: empty strings, whitespace, negative values, scientific notation
+    - Trade deduplication logic
+    - Batch processing with statistics
+    - TradeService.create compatibility
+  * tests/e2e/trade-ingestion.e2e.test.ts - 28 E2E browser tests covering:
+    - API endpoint verification (/api/dashboard/whales, /api/dashboard/stats)
+    - Dashboard trade activity display
+    - Wallet trade data structure validation
+    - Wallet detail page navigation
+    - Health endpoint verification
+    - Responsive design (mobile, tablet, desktop)
+    - Error handling for invalid wallet addresses
+    - Console error monitoring
+    - Performance (load times)
+    - Pagination support
+- Screenshots captured:
+  * tests/e2e/screenshots/trade-ingestion/dashboard-trades.png
+  * tests/e2e/screenshots/trade-ingestion/dashboard-trades-mobile.png
+  * tests/e2e/screenshots/trade-ingestion/dashboard-trades-tablet.png
+  * tests/e2e/screenshots/trade-ingestion/wallet-detail.png
+- All tests pass (92 total: 64 unit + 28 E2E)
+- TypeScript compiles with no errors
+
 NOTES FOR NEXT SESSION:
-- INGEST-MARKET-001 complete with full test coverage
-- Next priority features: INGEST-TRADE-001 (priority 200), INGEST-WALLET-001 (priority 201)
-- The ingestion worker already has trade ingestion and wallet materialization implemented
-- Need to verify and test those features next
+- INGEST-TRADE-001 complete with full test coverage
+- Next priority feature: INGEST-WALLET-001 (priority 201)
+- The ingestion worker already has wallet materialization implemented
+- Need to verify and test that feature next
