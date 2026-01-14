@@ -11970,3 +11970,72 @@ NOTES FOR NEXT SESSION:
 - Database not running during testing, but unit tests pass with mocking
 - E2E tests require running PostgreSQL database
 - API follows same patterns as stats and alerts endpoints
+
+=== UI-API-004: Dashboard Markets API Endpoint ===
+Date: 2026-01-14
+
+FEATURE: Implemented GET /api/dashboard/markets endpoint for fetching paginated, filterable hot markets with alert activity.
+
+IMPLEMENTATION:
+- Created app/api/dashboard/markets/route.ts with comprehensive API endpoint
+- Fetches markets ordered by alert count in last 24h, with fallback to volume24h ordering
+- Includes outcome data (name, price, priceChange24h) for each market
+
+RESPONSE STRUCTURE:
+- MarketSummary type:
+  - id, question, slug, category, subcategory
+  - volume, volume24h, liquidity
+  - alertCount, topAlertType
+  - active, closed, endDate, imageUrl
+  - outcomes: { name, price, priceChange24h }[]
+- DashboardMarketsResponse type:
+  - markets: MarketSummary[]
+  - pagination: { offset, limit, total, hasMore }
+  - filters: { category }
+  - generatedAt: ISO timestamp
+
+QUERY PARAMETERS:
+- limit: Number of results (1-50, default 10)
+- offset: Pagination offset (default 0)
+- category: Filter by market category (case-insensitive)
+
+FEATURES:
+- 30-second in-memory caching with per-request cache keys
+- Cache headers (max-age=30, stale-while-revalidate=60)
+- X-Cache header (HIT/MISS)
+- Markets prioritized by alert count, then volume
+- Category filtering with case-insensitive matching
+- Includes top alert type per market
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 38 tests PASSED (tests/api/dashboard/markets.test.ts)
+- E2E tests: 47 tests written (tests/e2e/dashboard-markets-api.e2e.test.ts)
+  - Note: E2E tests require running PostgreSQL database
+
+Files Created:
+- app/api/dashboard/markets/route.ts
+- tests/api/dashboard/markets.test.ts
+- tests/e2e/dashboard-markets-api.e2e.test.ts
+
+Usage Example:
+```
+# Get top 10 hot markets (default)
+GET /api/dashboard/markets
+
+# Get politics markets
+GET /api/dashboard/markets?category=politics
+
+# Get crypto markets with pagination
+GET /api/dashboard/markets?category=crypto&limit=20&offset=40
+
+# Get top 5 markets
+GET /api/dashboard/markets?limit=5
+```
+
+NOTES FOR NEXT SESSION:
+- UI-API-004 complete and marked in prd.json
+- Next feature to implement: UI-API-005 (Connect dashboard widgets to real APIs)
+- Database not running during testing, but unit tests pass with mocking
+- E2E tests require running PostgreSQL database
+- API follows same patterns as stats, alerts, and whales endpoints

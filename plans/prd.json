@@ -3761,7 +3761,8 @@
       "priority": 185,
       "name": "Dashboard markets API endpoint",
       "description": "API endpoint for hot markets",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T12:10:00Z",
       "steps": [
         "Create app/api/dashboard/markets/route.ts",
         "Query markets with most alerts/activity in last 24h",
