@@ -3604,7 +3604,8 @@
       "priority": 178,
       "name": "Market sync background service",
       "description": "Periodically fetch and store live market data",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T10:15:00Z",
       "steps": [
         "Create src/services/market-sync.ts",
         "Create MarketSyncService class with start/stop methods",

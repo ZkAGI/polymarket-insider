@@ -11539,3 +11539,94 @@ NOTES FOR NEXT SESSION:
 - Usage for test alerts:
   /test
 
+=== Session 2026-01-14 ===
+
+COMPLETED: API-LIVE-001 - Market sync background service
+- Created src/services/market-sync.ts with MarketSyncService class:
+  - Background service for periodic market data synchronization
+  - Fetches all active markets from Gamma API
+  - Stores/updates markets in database using Prisma upsert
+  - Detects and reports volume changes above configurable threshold
+  - Emits events for UI updates and monitoring
+
+Implementation Details:
+- MarketSyncService class extending EventEmitter
+  - start(): Start service with initial sync and scheduled interval
+  - stop(): Stop service and clear interval
+  - sync(): Perform single sync operation
+  - forceSync(): Force immediate sync (waits for in-progress)
+  - getIsRunning(): Check if service is running
+  - getIsSyncing(): Check if sync in progress
+  - getLastSyncStats(): Get stats from last sync
+  - clearVolumeCache(): Reset volume tracking
+  - getVolumeCacheSize(): Get tracked markets count
+  - updateConfig(): Update runtime configuration
+
+Configuration Options (MarketSyncConfig):
+- syncIntervalMs: Sync interval in ms (default: 5 minutes)
+- enableEvents: Toggle event emission (default: true)
+- volumeChangeThreshold: % change to trigger event (default: 5%)
+- gammaClient: Custom Gamma API client
+- marketService: Custom market database service
+- logger: Custom logging function
+
+Events Emitted:
+- 'started': Service started
+- 'stopped': Service stopped
+- 'sync:start': Sync operation beginning
+- 'sync:complete': Sync completed with SyncStats
+- 'market:new': New market discovered
+- 'market:updated': Significant volume change (VolumeChangeEvent)
+
+SyncStats Interface:
+- totalSynced: Total markets processed
+- newMarkets: New markets discovered
+- updatedMarkets: Existing markets updated
+- volumeChanges: Markets with significant volume change
+- closedMarkets: Markets now closed
+- durationMs: Sync duration
+- syncedAt: ISO timestamp
+- errors: Array of error messages
+
+Created src/services/index.ts:
+- Exports MarketSyncService class
+- Exports marketSyncService singleton
+- Exports createMarketSyncService factory
+- Type exports: MarketSyncConfig, SyncStats, VolumeChangeEvent
+
+Tests Added (tests/services/market-sync.test.ts):
+- Constructor tests (default config, custom config, custom logger)
+- start/stop tests (lifecycle, double start, double stop)
+- sync tests (basic sync, count tracking, events, volume detection)
+- Volume change detection (above/below threshold)
+- Event emission (sync events, market events, enable/disable)
+- Error handling (API errors, individual market errors)
+- Concurrent sync prevention
+- Volume cache management
+- Config updates
+- Singleton and factory tests
+- Edge cases (empty markets, missing fields, zero volume)
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Market sync unit tests: 35 tests PASSED
+- Browser smoke test: PASSED
+- E2E screenshot test: PASSED
+
+Files Created:
+- src/services/market-sync.ts
+- src/services/index.ts
+- tests/services/market-sync.test.ts
+- scripts/e2e-screenshot-test.mjs
+
+NOTES FOR NEXT SESSION:
+- API-LIVE-001 complete and marked in prd.json
+- Next feature to implement: API-LIVE-002 (Live trade stream WebSocket processor)
+- MarketSyncService can be started via:
+  ```typescript
+  import { marketSyncService } from './src/services';
+  await marketSyncService.start();
+  ```
+- Service will automatically sync every 5 minutes by default
+- Volume changes above 5% threshold emit 'market:updated' events
+
