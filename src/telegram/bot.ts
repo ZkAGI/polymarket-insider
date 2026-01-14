@@ -7,19 +7,30 @@
 
 import { Bot, Context, GrammyError, HttpError } from "grammy";
 import { env } from "../../config/env";
+// import {
+//   createStartCommandHandler,
+//   createStopCommandHandler,
+//   createHelpCommandHandler,
+//   createSettingsCommandHandler,
+//   createSettingsCallbackHandler,
+//   createStatusCommandHandler,
+//   createStatsCommandHandler,
+//   createBroadcastCommandHandler,
+//   createTestCommandHandler,
+//   createWhalesCommandHandler,    
+//   createMarketsCommandHandler, 
+//   handleMyChatMember,
+// } from "./commands";
+
 import {
   createStartCommandHandler,
-  createStopCommandHandler,
   createHelpCommandHandler,
-  createSettingsCommandHandler,
-  createSettingsCallbackHandler,
-  createStatusCommandHandler,
-  createStatsCommandHandler,
-  createBroadcastCommandHandler,
-  createTestCommandHandler,
   createWhalesCommandHandler,    
-  createMarketsCommandHandler, 
-  handleMyChatMember,
+  createMarketsCommandHandler,
+  createInsidersCommandHandler,
+  createFreshCommandHandler,
+  createAlertsCommandHandler,
+  createStatsCommandHandler,
 } from "./commands";
 
 /**
@@ -200,22 +211,15 @@ export class TelegramBotClient {
     });
 
     // Register command handlers
+// Register command handlers
     this.bot.command("start", createStartCommandHandler());
-    this.bot.command("stop", createStopCommandHandler());
     this.bot.command("help", createHelpCommandHandler());
-    this.bot.command("settings", createSettingsCommandHandler());
-    this.bot.command("status", createStatusCommandHandler());
-    this.bot.command("stats", createStatsCommandHandler());
-    this.bot.command("broadcast", createBroadcastCommandHandler());
-    this.bot.command("test", createTestCommandHandler());
     this.bot.command("whales", createWhalesCommandHandler());
     this.bot.command("markets", createMarketsCommandHandler());
-
-    // Register callback query handler for settings buttons
-    this.bot.callbackQuery(/^settings:/, createSettingsCallbackHandler());
-
-    // Register my_chat_member handler for group registration
-    this.bot.on("my_chat_member", (ctx) => handleMyChatMember(ctx));
+    this.bot.command("insiders", createInsidersCommandHandler());
+    this.bot.command("fresh", createFreshCommandHandler());
+    this.bot.command("alerts", createAlertsCommandHandler());
+    this.bot.command("stats", createStatsCommandHandler());
 
     console.log("[TelegramBot] Command handlers registered");
 
