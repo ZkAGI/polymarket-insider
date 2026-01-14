@@ -3781,7 +3781,8 @@
       "priority": 186,
       "name": "Connect dashboard widgets to real APIs",
       "description": "Replace mock data in UI with real API calls",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T00:00:00Z",
       "steps": [
         "Install SWR: npm install swr",
         "Create src/hooks/useDashboardData.ts with SWR hooks",

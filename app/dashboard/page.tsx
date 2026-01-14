@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import DashboardLayout from './components/DashboardLayout';
 import WidgetContainer from './components/WidgetContainer';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
-import AlertFeed, { FeedAlert, generateMockAlerts } from './components/AlertFeed';
+import AlertFeed, { FeedAlert } from './components/AlertFeed';
 import ActiveSignalsCounter, {
   SignalCount,
   SignalType,
@@ -12,11 +12,14 @@ import ActiveSignalsCounter, {
 } from './components/ActiveSignalsCounter';
 import SuspiciousWalletsWidget, {
   SuspiciousWallet,
-  generateMockWallets,
+  RiskFlag,
+  getSuspicionLevelFromScore,
 } from './components/SuspiciousWalletsWidget';
 import HotMarketsWidget, {
   HotMarket,
-  generateMockMarkets,
+  MarketCategory,
+  MarketAlertType,
+  getHeatLevelFromScore,
 } from './components/HotMarketsWidget';
 import RecentLargeTradesWidget, {
   LargeTrade,
@@ -34,6 +37,16 @@ import {
   statTypeConfig,
 } from './components/QuickStatsSummaryBar';
 import { RefreshInterval } from './components/DashboardRefreshControls';
+import {
+  useStats,
+  useAlerts,
+  useWhales,
+  useMarkets,
+  AlertSummary,
+  WalletSummary,
+  MarketSummary,
+  AlertType as APIAlertType,
+} from '@/hooks/useDashboardData';
 
 export interface DashboardStats {
   activeAlerts: number;
@@ -79,180 +92,261 @@ function createStatValue(
   };
 }
 
+// Convert API AlertSummary to UI FeedAlert
+function convertAlertToFeedAlert(alert: AlertSummary): FeedAlert {
+  return {
+    id: alert.id,
+    type: alert.type,
+    severity: alert.severity,
+    title: alert.title,
+    message: alert.message,
+    marketId: alert.market?.id ?? null,
+    walletId: alert.wallet?.id ?? null,
+    walletAddress: alert.wallet?.address,
+    marketName: alert.market?.question,
+    tags: alert.tags,
+    read: alert.read,
+    acknowledged: alert.acknowledged,
+    createdAt: new Date(alert.createdAt),
+    isNew: false,
+  };
+}
+
+// Convert API WalletSummary to UI SuspiciousWallet
+function convertWalletToSuspiciousWallet(wallet: WalletSummary): SuspiciousWallet {
+  // Map API flags to UI RiskFlags
+  const riskFlags: RiskFlag[] = [];
+  if (wallet.flags.isFresh) riskFlags.push('FRESH_WALLET');
+  if (wallet.winRate && wallet.winRate >= 70) riskFlags.push('HIGH_WIN_RATE');
+  if (wallet.flags.isWhale || (wallet.maxTradeSize && wallet.maxTradeSize >= 100000))
+    riskFlags.push('LARGE_POSITIONS');
+  if (wallet.flags.isInsider) riskFlags.push('NICHE_FOCUS');
+
+  return {
+    id: wallet.id,
+    address: wallet.address,
+    suspicionScore: wallet.suspicionScore,
+    suspicionLevel: getSuspicionLevelFromScore(wallet.suspicionScore),
+    riskFlags,
+    totalVolume: wallet.totalVolume,
+    winRate: wallet.winRate ?? 0,
+    lastActivity: wallet.lastTradeAt ? new Date(wallet.lastTradeAt) : new Date(),
+    tradeCount: wallet.tradeCount,
+    isWatched: wallet.flags.isMonitored,
+  };
+}
+
+// Map API AlertType to UI MarketAlertType
+function mapAlertTypeToMarketAlertType(type: APIAlertType): MarketAlertType | null {
+  const mapping: Record<string, MarketAlertType> = {
+    WHALE_TRADE: 'WHALE_ACTIVITY',
+    COORDINATED_ACTIVITY: 'COORDINATED_TRADING',
+    PRICE_MOVEMENT: 'VOLUME_SPIKE',
+    INSIDER_ACTIVITY: 'INSIDER_PATTERN',
+    FRESH_WALLET: 'FRESH_WALLET_CLUSTER',
+  };
+  return mapping[type] ?? null;
+}
+
+// Convert API MarketSummary to UI HotMarket
+function convertMarketToHotMarket(market: MarketSummary): HotMarket {
+  // Map category string to MarketCategory enum
+  const categoryMap: Record<string, MarketCategory> = {
+    politics: 'POLITICS',
+    crypto: 'CRYPTO',
+    sports: 'SPORTS',
+    entertainment: 'ENTERTAINMENT',
+    finance: 'FINANCE',
+    science: 'SCIENCE',
+    geopolitical: 'GEOPOLITICAL',
+  };
+  const category: MarketCategory =
+    categoryMap[market.category?.toLowerCase() ?? ''] ?? 'OTHER';
+
+  // Calculate heat score based on alert count and volume
+  const heatScore = Math.min(
+    100,
+    Math.round((market.alertCount * 10) + (market.volume24h / 100000))
+  );
+
+  // Get alert types
+  const alertTypes: MarketAlertType[] = [];
+  if (market.topAlertType) {
+    const mapped = mapAlertTypeToMarketAlertType(market.topAlertType);
+    if (mapped) alertTypes.push(mapped);
+  }
+
+  // Get first outcome price
+  const primaryOutcome = market.outcomes[0];
+  const probability = primaryOutcome?.price ?? 0.5;
+  const priceChange = primaryOutcome?.priceChange24h ?? 0;
+
+  return {
+    id: market.id,
+    title: market.question,
+    slug: market.slug,
+    category,
+    heatLevel: getHeatLevelFromScore(heatScore),
+    heatScore,
+    alertCount: market.alertCount,
+    alertTypes,
+    currentProbability: probability,
+    probabilityChange: priceChange,
+    volume24h: market.volume24h,
+    volumeChange: 0, // Not available in API
+    suspiciousWallets: 0, // Not available in API
+    lastAlert: new Date(), // Using current time as placeholder
+    isWatched: false,
+  };
+}
+
 export default function DashboardPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>(initialStats);
-  const [previousStats, setPreviousStats] = useState<DashboardStats>(initialStats);
-  const [alerts, setAlerts] = useState<FeedAlert[]>([]);
-  const [isAlertFeedLoading, setIsAlertFeedLoading] = useState(true);
+  // SWR hooks for real API data
+  const {
+    data: statsData,
+    isLoading: isStatsLoading,
+    error: statsError,
+    mutate: mutateStats,
+  } = useStats({ refreshInterval: 30000 });
+
+  const {
+    alerts: apiAlerts,
+    isLoading: isAlertsLoading,
+    error: alertsError,
+    mutate: mutateAlerts,
+  } = useAlerts({ limit: 20, refreshInterval: 30000 });
+
+  const {
+    wallets: apiWallets,
+    isLoading: isWalletsLoading,
+    error: walletsError,
+    mutate: mutateWallets,
+  } = useWhales({ limit: 5, refreshInterval: 30000 });
+
+  const {
+    markets: apiMarkets,
+    isLoading: isMarketsLoading,
+    error: marketsError,
+    mutate: mutateMarkets,
+  } = useMarkets({ limit: 5, refreshInterval: 30000 });
+
+  // Local state for components not yet connected to API
   const [signals, setSignals] = useState<SignalCount[]>([]);
   const [isSignalsLoading, setIsSignalsLoading] = useState(true);
-  const [suspiciousWallets, setSuspiciousWallets] = useState<SuspiciousWallet[]>([]);
-  const [isWalletsLoading, setIsWalletsLoading] = useState(true);
-  const [hotMarkets, setHotMarkets] = useState<HotMarket[]>([]);
-  const [isMarketsLoading, setIsMarketsLoading] = useState(true);
   const [largeTrades, setLargeTrades] = useState<LargeTrade[]>([]);
   const [isTradesLoading, setIsTradesLoading] = useState(true);
   const [dataSources, setDataSources] = useState<DataSourceStatus[]>([]);
   const [isStatusExpanded, setIsStatusExpanded] = useState(false);
-  const [isQuickStatsLoading, setIsQuickStatsLoading] = useState(true);
-  const [totalVolume, setTotalVolume] = useState(0);
-  const [previousTotalVolume, setPreviousTotalVolume] = useState(0);
-  const [criticalAlerts, setCriticalAlerts] = useState(0);
-  const [previousCriticalAlerts, setPreviousCriticalAlerts] = useState(0);
-  const [whaleTradesCount, setWhaleTradesCount] = useState(0);
-  const [previousWhaleTradesCount, setPreviousWhaleTradesCount] = useState(0);
-  const [connectedSourcesCount, setConnectedSourcesCount] = useState(0);
-  const [previousConnectedSourcesCount, setPreviousConnectedSourcesCount] = useState(0);
 
   // Dashboard refresh controls state
   const [isDashboardRefreshing, setIsDashboardRefreshing] = useState(false);
   const [lastDashboardRefresh, setLastDashboardRefresh] = useState<Date | null>(null);
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState<RefreshInterval>('OFF');
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<RefreshInterval>('30s');
 
-  // Build quickStats from current state
-  const quickStats = useMemo<StatValue[]>(() => {
-    return [
-      createStatValue('ACTIVE_ALERTS', stats.activeAlerts, previousStats.activeAlerts, {
-        isHighlighted: stats.activeAlerts > 10,
-      }),
-      createStatValue('CRITICAL_ALERTS', criticalAlerts, previousCriticalAlerts, {
-        isCritical: criticalAlerts > 0,
-        isHighlighted: criticalAlerts > 0,
-      }),
-      createStatValue('SUSPICIOUS_WALLETS', stats.suspiciousWallets, previousStats.suspiciousWallets),
-      createStatValue('HOT_MARKETS', stats.hotMarkets, previousStats.hotMarkets),
-      createStatValue('LARGE_TRADES', stats.recentTrades, previousStats.recentTrades),
-      createStatValue('WHALE_TRADES', whaleTradesCount, previousWhaleTradesCount),
-      createStatValue('TOTAL_VOLUME', totalVolume, previousTotalVolume, { prefix: '$' }),
-      createStatValue('CONNECTED_SOURCES', connectedSourcesCount, previousConnectedSourcesCount),
-    ];
-  }, [
-    stats,
-    previousStats,
-    criticalAlerts,
-    previousCriticalAlerts,
-    whaleTradesCount,
-    previousWhaleTradesCount,
-    totalVolume,
-    previousTotalVolume,
-    connectedSourcesCount,
-    previousConnectedSourcesCount,
-  ]);
+  // Track previous stats for trend calculation
+  const [previousStatsData, setPreviousStatsData] = useState<typeof statsData | null>(null);
 
-  // Load initial dashboard data
-  useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Convert API alerts to UI format
+  const alerts: FeedAlert[] = useMemo(() => {
+    if (apiAlerts.length > 0) {
+      return apiAlerts.map(convertAlertToFeedAlert);
+    }
+    return [];
+  }, [apiAlerts]);
 
-        // Generate initial mock alerts
-        const mockAlerts = generateMockAlerts(8);
-        setAlerts(mockAlerts);
+  // Convert API wallets to UI format
+  const suspiciousWallets: SuspiciousWallet[] = useMemo(() => {
+    if (apiWallets.length > 0) {
+      return apiWallets.map(convertWalletToSuspiciousWallet);
+    }
+    return [];
+  }, [apiWallets]);
 
-        // Generate initial mock signals
-        const mockSignals = generateMockSignals();
-        setSignals(mockSignals);
+  // Convert API markets to UI format
+  const hotMarkets: HotMarket[] = useMemo(() => {
+    if (apiMarkets.length > 0) {
+      return apiMarkets.map(convertMarketToHotMarket);
+    }
+    return [];
+  }, [apiMarkets]);
 
-        // Generate initial mock suspicious wallets
-        const mockWallets = generateMockWallets(5);
-        setSuspiciousWallets(mockWallets);
-
-        // Generate initial mock hot markets
-        const mockMarkets = generateMockMarkets(5);
-        setHotMarkets(mockMarkets);
-
-        // Generate initial mock large trades
-        const mockTrades = generateMockTrades(5);
-        setLargeTrades(mockTrades);
-
-        // Generate initial mock data sources
-        const mockSources = generateMockSources();
-        setDataSources(mockSources);
-
-        // Set mock initial data - count unread alerts
-        const unreadCount = mockAlerts.filter((a) => !a.read).length;
-        const criticalCount = mockAlerts.filter((a) => a.severity === 'CRITICAL').length;
-        const whaleCount = mockTrades.filter((t) => t.usdValue >= 100000).length;
-        const connectedCount = mockSources.filter((s) => s.status === 'CONNECTED').length;
-        const mockVolume = Math.floor(Math.random() * 2000000) + 500000;
-
-        // Store previous values before updating
-        setPreviousStats((prev) => ({
-          activeAlerts: prev.activeAlerts || 0,
-          suspiciousWallets: prev.suspiciousWallets || 0,
-          hotMarkets: prev.hotMarkets || 0,
-          recentTrades: prev.recentTrades || 0,
-          systemStatus: prev.systemStatus,
-        }));
-        setPreviousCriticalAlerts(0);
-        setPreviousWhaleTradesCount(0);
-        setPreviousTotalVolume(0);
-        setPreviousConnectedSourcesCount(0);
-
-        // Set current values
-        setStats({
-          activeAlerts: unreadCount,
-          suspiciousWallets: mockWallets.length,
-          hotMarkets: mockMarkets.length,
-          recentTrades: mockTrades.length,
-          systemStatus: 'connected',
-        });
-        setCriticalAlerts(criticalCount);
-        setWhaleTradesCount(whaleCount);
-        setTotalVolume(mockVolume);
-        setConnectedSourcesCount(connectedCount);
-        // Set initial last refresh time
-        setLastDashboardRefresh(new Date());
-      } finally {
-        setIsLoading(false);
-        setIsAlertFeedLoading(false);
-        setIsSignalsLoading(false);
-        setIsWalletsLoading(false);
-        setIsMarketsLoading(false);
-        setIsTradesLoading(false);
-        setIsQuickStatsLoading(false);
-      }
-    };
-
-    loadDashboard();
-  }, []);
-
-  // Simulate real-time alert updates
-  useEffect(() => {
-    if (isLoading) return;
-
-    const addNewAlert = () => {
-      const mockAlerts = generateMockAlerts(1);
-      const baseAlert = mockAlerts[0];
-      if (!baseAlert) return;
-
-      const newAlert: FeedAlert = {
-        ...baseAlert,
-        id: `alert-${Date.now()}`,
-        createdAt: new Date(),
-        read: false,
-        isNew: true,
+  // Calculate stats from API data
+  const stats: DashboardStats = useMemo(() => {
+    if (statsData) {
+      return {
+        activeAlerts: statsData.alerts,
+        suspiciousWallets: statsData.suspiciousWallets,
+        hotMarkets: statsData.hotMarkets,
+        recentTrades: statsData.whaleTrades,
+        systemStatus: 'connected' as const,
       };
+    }
+    return {
+      ...initialStats,
+      systemStatus: (isStatsLoading ? 'connecting' : statsError ? 'disconnected' : 'connected') as
+        | 'connected'
+        | 'disconnected'
+        | 'connecting',
+    };
+  }, [statsData, isStatsLoading, statsError]);
 
-      setAlerts((prev) => {
-        const updated = [newAlert, ...prev].slice(0, 20);
-        // Update stats with new alert count
-        const unreadCount = updated.filter((a) => !a.read).length;
-        setStats((s) => ({ ...s, activeAlerts: unreadCount }));
-        return updated;
-      });
+  // Build quickStats from API data
+  const quickStats = useMemo<StatValue[]>(() => {
+    if (!statsData) {
+      return [];
+    }
+
+    const prev = previousStatsData || statsData;
+
+    return [
+      createStatValue('ACTIVE_ALERTS', statsData.alerts, prev.alerts, {
+        isHighlighted: statsData.alerts > 10,
+      }),
+      createStatValue('CRITICAL_ALERTS', statsData.criticalAlerts, prev.criticalAlerts, {
+        isCritical: statsData.criticalAlerts > 0,
+        isHighlighted: statsData.criticalAlerts > 0,
+      }),
+      createStatValue('SUSPICIOUS_WALLETS', statsData.suspiciousWallets, prev.suspiciousWallets),
+      createStatValue('HOT_MARKETS', statsData.hotMarkets, prev.hotMarkets),
+      createStatValue('LARGE_TRADES', statsData.whaleTrades, prev.whaleTrades),
+      createStatValue('WHALE_TRADES', statsData.whaleTrades, prev.whaleTrades),
+      createStatValue('TOTAL_VOLUME', statsData.volume24h, prev.volume24h, { prefix: '$' }),
+      createStatValue('CONNECTED_SOURCES', 4, 4), // Placeholder - system status not in API
+    ];
+  }, [statsData, previousStatsData]);
+
+  // Update previous stats when new data arrives
+  useEffect(() => {
+    if (statsData && !previousStatsData) {
+      setPreviousStatsData(statsData);
+    }
+  }, [statsData, previousStatsData]);
+
+  // Load initial mock data for components not connected to API
+  useEffect(() => {
+    const loadMockData = async () => {
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Generate initial mock signals
+      const mockSignals = generateMockSignals();
+      setSignals(mockSignals);
+
+      // Generate initial mock large trades
+      const mockTrades = generateMockTrades(5);
+      setLargeTrades(mockTrades);
+
+      // Generate initial mock data sources
+      const mockSources = generateMockSources();
+      setDataSources(mockSources);
+
+      setIsSignalsLoading(false);
+      setIsTradesLoading(false);
+      setLastDashboardRefresh(new Date());
     };
 
-    // Add a new alert every 15-30 seconds for demo
-    const interval = setInterval(
-      addNewAlert,
-      15000 + Math.random() * 15000
-    );
-
-    return () => clearInterval(interval);
-  }, [isLoading]);
+    loadMockData();
+  }, []);
 
   // Handle alert click
   const handleAlertClick = useCallback((alert: FeedAlert) => {
@@ -260,33 +354,16 @@ export default function DashboardPage() {
     // In a real app, this would open a detail modal or navigate to alert details
   }, []);
 
-  // Handle mark as read
+  // Handle mark as read - TODO: call API to mark as read
   const handleMarkRead = useCallback((alertId: string) => {
-    setAlerts((prev) => {
-      const updated = prev.map((a) =>
-        a.id === alertId ? { ...a, read: true } : a
-      );
-      // Update stats with new unread count
-      const unreadCount = updated.filter((a) => !a.read).length;
-      setStats((s) => ({ ...s, activeAlerts: unreadCount }));
-      return updated;
-    });
+    console.log('Mark alert as read:', alertId);
+    // TODO: Call API to mark alert as read
   }, []);
 
   // Handle refresh alerts
   const handleRefreshAlerts = useCallback(async () => {
-    setIsAlertFeedLoading(true);
-    try {
-      // Simulate API fetch
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const newAlerts = generateMockAlerts(8);
-      setAlerts(newAlerts);
-      const unreadCount = newAlerts.filter((a) => !a.read).length;
-      setStats((s) => ({ ...s, activeAlerts: unreadCount }));
-    } finally {
-      setIsAlertFeedLoading(false);
-    }
-  }, []);
+    await mutateAlerts();
+  }, [mutateAlerts]);
 
   // Handle signal click
   const handleSignalClick = useCallback((signalType: SignalType) => {
@@ -313,28 +390,16 @@ export default function DashboardPage() {
     // In a real app, this would navigate to wallet details
   }, []);
 
-  // Handle wallet watch toggle
+  // Handle wallet watch toggle - TODO: call API
   const handleWatchToggle = useCallback((walletId: string) => {
-    setSuspiciousWallets((prev) =>
-      prev.map((w) =>
-        w.id === walletId ? { ...w, isWatched: !w.isWatched } : w
-      )
-    );
+    console.log('Toggle watch for wallet:', walletId);
+    // TODO: Call API to toggle watch status
   }, []);
 
   // Handle refresh wallets
   const handleRefreshWallets = useCallback(async () => {
-    setIsWalletsLoading(true);
-    try {
-      // Simulate API fetch
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const newWallets = generateMockWallets(5);
-      setSuspiciousWallets(newWallets);
-      setStats((s) => ({ ...s, suspiciousWallets: newWallets.length }));
-    } finally {
-      setIsWalletsLoading(false);
-    }
-  }, []);
+    await mutateWallets();
+  }, [mutateWallets]);
 
   // Handle market click
   const handleMarketClick = useCallback((market: HotMarket) => {
@@ -342,28 +407,16 @@ export default function DashboardPage() {
     // In a real app, this would navigate to market details
   }, []);
 
-  // Handle market watch toggle
+  // Handle market watch toggle - TODO: call API
   const handleMarketWatchToggle = useCallback((marketId: string) => {
-    setHotMarkets((prev) =>
-      prev.map((m) =>
-        m.id === marketId ? { ...m, isWatched: !m.isWatched } : m
-      )
-    );
+    console.log('Toggle watch for market:', marketId);
+    // TODO: Call API to toggle watch status
   }, []);
 
   // Handle refresh markets
   const handleRefreshMarkets = useCallback(async () => {
-    setIsMarketsLoading(true);
-    try {
-      // Simulate API fetch
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const newMarkets = generateMockMarkets(5);
-      setHotMarkets(newMarkets);
-      setStats((s) => ({ ...s, hotMarkets: newMarkets.length }));
-    } finally {
-      setIsMarketsLoading(false);
-    }
-  }, []);
+    await mutateMarkets();
+  }, [mutateMarkets]);
 
   // Handle trade click
   const handleTradeClick = useCallback((trade: LargeTrade) => {
@@ -385,7 +438,6 @@ export default function DashboardPage() {
       await new Promise((resolve) => setTimeout(resolve, 500));
       const newTrades = generateMockTrades(5);
       setLargeTrades(newTrades);
-      setStats((s) => ({ ...s, recentTrades: newTrades.length }));
     } finally {
       setIsTradesLoading(false);
     }
@@ -416,45 +468,30 @@ export default function DashboardPage() {
 
   // Handle quick stats refresh
   const handleQuickStatsRefresh = useCallback(async () => {
-    setIsQuickStatsLoading(true);
-    try {
-      // Simulate API fetch
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Store previous values
-      setPreviousStats({ ...stats });
-      setPreviousCriticalAlerts(criticalAlerts);
-      setPreviousWhaleTradesCount(whaleTradesCount);
-      setPreviousTotalVolume(totalVolume);
-      setPreviousConnectedSourcesCount(connectedSourcesCount);
-
-      // Generate new mock values with some variation
-      const newCritical = Math.max(0, criticalAlerts + Math.floor(Math.random() * 3) - 1);
-      const newWhale = Math.max(0, whaleTradesCount + Math.floor(Math.random() * 3) - 1);
-      const newVolume = totalVolume + Math.floor(Math.random() * 200000) - 100000;
-      const newConnected = Math.max(3, Math.min(5, connectedSourcesCount + Math.floor(Math.random() * 3) - 1));
-
-      setCriticalAlerts(newCritical);
-      setWhaleTradesCount(newWhale);
-      setTotalVolume(newVolume);
-      setConnectedSourcesCount(newConnected);
-    } finally {
-      setIsQuickStatsLoading(false);
+    // Store previous for trend calculation
+    if (statsData) {
+      setPreviousStatsData(statsData);
     }
-  }, [stats, criticalAlerts, whaleTradesCount, totalVolume, connectedSourcesCount]);
+    await mutateStats();
+  }, [statsData, mutateStats]);
 
   // Handle full dashboard refresh - refreshes all widgets
   const handleDashboardRefresh = useCallback(async () => {
     setIsDashboardRefreshing(true);
     try {
+      // Store previous stats for trend calculation
+      if (statsData) {
+        setPreviousStatsData(statsData);
+      }
+
       // Refresh all widgets in parallel
       await Promise.all([
-        handleRefreshAlerts(),
+        mutateStats(),
+        mutateAlerts(),
+        mutateWallets(),
+        mutateMarkets(),
         handleRefreshSignals(),
-        handleRefreshWallets(),
-        handleRefreshMarkets(),
         handleRefreshTrades(),
-        handleQuickStatsRefresh(),
       ]);
 
       // Update last refresh time
@@ -463,12 +500,13 @@ export default function DashboardPage() {
       setIsDashboardRefreshing(false);
     }
   }, [
-    handleRefreshAlerts,
+    statsData,
+    mutateStats,
+    mutateAlerts,
+    mutateWallets,
+    mutateMarkets,
     handleRefreshSignals,
-    handleRefreshWallets,
-    handleRefreshMarkets,
     handleRefreshTrades,
-    handleQuickStatsRefresh,
   ]);
 
   // Handle auto-refresh interval change
@@ -477,9 +515,15 @@ export default function DashboardPage() {
     console.log('Auto-refresh interval changed:', interval);
   }, []);
 
-  if (isLoading) {
+  // Show loading skeleton while initial data loads
+  const isInitialLoading = isStatsLoading && !statsData;
+
+  if (isInitialLoading) {
     return <DashboardSkeleton />;
   }
+
+  // Show error state if stats API failed
+  const hasError = !!(statsError || alertsError || walletsError || marketsError);
 
   return (
     <DashboardLayout
@@ -487,7 +531,7 @@ export default function DashboardPage() {
       quickStats={quickStats}
       onStatClick={handleStatClick}
       onStatsRefresh={handleQuickStatsRefresh}
-      isStatsLoading={isQuickStatsLoading}
+      isStatsLoading={isStatsLoading}
       onDashboardRefresh={handleDashboardRefresh}
       isDashboardRefreshing={isDashboardRefreshing}
       lastDashboardRefresh={lastDashboardRefresh}
@@ -495,6 +539,21 @@ export default function DashboardPage() {
       onAutoRefreshChange={handleAutoRefreshChange}
       showRefreshControls={true}
     >
+      {/* Error banner if any API failed */}
+      {hasError && (
+        <div className="lg:col-span-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-red-600 dark:text-red-400">Error loading data.</span>
+            <button
+              onClick={handleDashboardRefresh}
+              className="text-sm underline text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Row 1: Alert Feed and Active Signals */}
       <div className="lg:col-span-2">
         <WidgetContainer
@@ -502,7 +561,7 @@ export default function DashboardPage() {
           testId="alert-feed-widget"
           className="h-full min-h-[300px]"
           onRefresh={handleRefreshAlerts}
-          isLoading={isAlertFeedLoading}
+          isLoading={isAlertsLoading}
         >
           <AlertFeed
             alerts={alerts}

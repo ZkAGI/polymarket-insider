@@ -12039,3 +12039,53 @@ NOTES FOR NEXT SESSION:
 - Database not running during testing, but unit tests pass with mocking
 - E2E tests require running PostgreSQL database
 - API follows same patterns as stats, alerts, and whales endpoints
+
+=== UI-API-005: Connect Dashboard Widgets to Real APIs ===
+Date: 2026-01-14
+
+FEATURE: Connected all dashboard widgets to real API endpoints using SWR hooks.
+
+IMPLEMENTATION:
+- Installed SWR package for data fetching with caching and revalidation
+- Created src/hooks/useDashboardData.ts with comprehensive SWR-based hooks:
+  - useStats() - fetches dashboard stats from /api/dashboard/stats
+  - useAlerts() - fetches alerts from /api/dashboard/alerts with filtering
+  - useWhales() - fetches wallets from /api/dashboard/whales with filtering
+  - useMarkets() - fetches markets from /api/dashboard/markets with filtering
+  - useDashboardData() - combined hook for all dashboard data
+- Updated app/dashboard/page.tsx to use real API hooks instead of mock data
+- Added data conversion functions to transform API responses to UI component formats
+- All hooks have 30-second refresh interval by default
+
+HOOKS FEATURES:
+- Type-safe API response types matching backend endpoints
+- Configurable refresh intervals
+- Loading and error states
+- Manual revalidation via mutate()
+- Enabled/disabled toggle for conditional fetching
+- Pagination support for alerts, whales, and markets
+
+DATA TRANSFORMATIONS:
+- convertAlertToFeedAlert(): Converts API AlertSummary to UI FeedAlert format
+- convertWalletToUI(): Converts API WalletSummary to UI wallet format
+- convertMarketToUI(): Converts API MarketSummary to UI market format
+
+FILES CREATED:
+- src/hooks/useDashboardData.ts - SWR hooks for dashboard data fetching
+- tests/hooks/useDashboardData.test.ts - Unit tests for all hooks
+- tests/e2e/dashboard-real-api.e2e.test.ts - E2E browser tests
+
+FILES MODIFIED:
+- app/dashboard/page.tsx - Updated to use real API hooks
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 15 tests PASSED (tests/hooks/useDashboardData.test.ts)
+- E2E tests: 19 tests PASSED (tests/e2e/dashboard-real-api.e2e.test.ts)
+
+NOTES FOR NEXT SESSION:
+- UI-API-005 complete and marked in prd.json
+- Next feature to implement: UI-API-006 (Wallet page API endpoint)
+- Dashboard now fetches real data from all 4 API endpoints
+- Auto-refresh set to 30 seconds for all data sources
+- SWR handles caching and deduplication automatically
