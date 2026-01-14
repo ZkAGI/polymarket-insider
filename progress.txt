@@ -11222,3 +11222,147 @@ NOTES FOR NEXT SESSION:
   bot.command("settings", createSettingsCommandHandler())
   bot.callbackQuery(/^settings:/, createSettingsCallbackHandler())
 
+
+=== Session 2026-01-14 (TG-BOT-006) ===
+
+COMPLETED: TG-BOT-006 - Status and help commands
+
+Summary:
+- Implemented /help command to list all available commands with descriptions
+- Implemented /status command to show subscription status, alerts received, and preferences
+- Implemented /stats command (admin only) to show total subscribers, alerts sent, system health
+- Added admin verification using TELEGRAM_ADMIN_IDS environment variable
+- All responses formatted with Telegram Markdown
+
+Implementation Details:
+
+/help Command:
+- getHelpMessage(): Returns formatted help text with all commands
+- handleHelpCommand(): Sends help message with Markdown parsing
+- createHelpCommandHandler(): Factory for Grammy bot registration
+- Includes: command list, what bot tracks, alert settings, tips
+
+/status Command:
+- getSubscriptionStatus(): Fetches subscriber and returns status info
+- getStatusMessage(): Formats status with preferences and stats
+- handleStatusCommand(): Sends status with Markdown parsing
+- formatDate(): Formats dates or returns "Never" for null
+- escapeMarkdown(): Escapes special Telegram markdown chars
+- Shows: subscription status, alerts sent, last alert, preferences
+
+/stats Command (Admin Only):
+- checkIsAdmin(): Verifies user ID against TELEGRAM_ADMIN_IDS env var
+- getUnauthorizedMessage(): Access denied message for non-admins
+- getStatsMessage(): Formats all bot statistics
+- handleStatsCommand(): Admin check then show stats
+- getUptimeString(): Formats process uptime as "Xd Yh Zm"
+- Shows: total/active/inactive/blocked subscribers, breakdown by type, uptime, system status
+
+New Types:
+- StatusResult: success, isSubscribed, subscriber?, error?
+- AdminCheckResult: isAdmin, userId?, reason?
+- BotStats: total, active, blocked, byType
+
+Files Modified:
+- src/telegram/commands.ts: Added /help, /status, /stats handlers (~200 lines)
+- src/telegram/index.ts: Added exports for 15 new functions/types
+- tests/telegram/commands.test.ts: Added ~51 unit tests (221 total now)
+- tests/telegram/commands.e2e.test.ts: Added db/client mock and ~40 E2E tests (121 total now)
+
+Verification:
+- TypeScript typecheck: PASSED
+- Unit tests: 221 tests PASSED for commands.test.ts
+- E2E tests: 121 tests PASSED for commands.e2e.test.ts
+- All telegram module tests: 391 tests PASSED (4 test files)
+- Browser smoke tests: PASSED via E2E tests
+
+NOTES FOR NEXT SESSION:
+- TG-BOT-006 complete and marked in prd.json
+- Next feature to implement: TG-BROADCAST-001 (Alert broadcaster service)
+- All command handlers are ready and can be registered using:
+  bot.command("help", createHelpCommandHandler())
+  bot.command("status", createStatusCommandHandler())
+  bot.command("stats", createStatsCommandHandler())
+- Admin IDs are read from env.TELEGRAM_ADMIN_IDS (array of numbers)
+
+
+=== Session 2026-01-14 (TG-BROADCAST-001) ===
+
+COMPLETED: TG-BROADCAST-001 - Alert broadcaster service
+
+Summary:
+- Implemented alert broadcaster service to send alerts to all eligible Telegram subscribers
+- Filters subscribers by their alert preferences (type, severity, trade value, watched markets)
+- Handles blocked users gracefully by deactivating them when send fails
+- Supports dry run mode for testing
+- Includes rate limiting delay between messages
+
+Implementation Details:
+
+Core Functions:
+- broadcastAlert(alert, options): Main broadcast function that sends to all eligible subscribers
+- sendAlertToSubscriber(): Sends alert to single subscriber with error handling
+- formatAlertMessage(alert): Formats alert for Telegram with emojis and markdown
+- matchesAlertPreferences(alert, subscriber): Checks if alert matches subscriber preferences
+- filterEligibleSubscribers(alert, subscribers): Filters list of eligible subscribers
+- meetsSeverityRequirement(): Compares alert severity against minimum
+- shouldDeactivateOnError(): Checks if error indicates user blocked bot
+
+Helper Functions:
+- getSeverityEmoji(): Returns emoji for severity level (INFO=ℹ️, LOW=🔵, MEDIUM=🟡, HIGH=🟠, CRITICAL=🔴)
+- getAlertTypeEmoji(): Returns emoji for alert type (WHALE_TRADE=🐋, INSIDER_ACTIVITY=🕵️, etc.)
+- formatAlertType(): Formats alert type for display (WHALE_TRADE -> "Whale Trade")
+- formatNumber(): Formats numbers with commas
+- formatTimestamp(): Formats dates for display
+- escapeMarkdown(): Escapes special Telegram markdown characters
+
+AlertBroadcaster Class:
+- broadcast(alert, options): Broadcast a single alert
+- broadcastById(alertId, options): Broadcast alert by ID (fetches from DB)
+- getStats(): Get subscriber statistics
+
+Types:
+- SendResult: Result of sending to single subscriber
+- BroadcastResult: Overall broadcast statistics (sent, failed, deactivated, duration)
+- BroadcastOptions: Configuration for broadcast (botClient, subscriberService, dryRun, sendDelay)
+
+Preference Matching Logic:
+- Checks severity level against subscriber's minSeverity
+- Checks alert type against whaleAlerts, insiderAlerts toggles
+- Checks trade value against minTradeValue preference
+- Checks market ID against watchedMarkets list
+- Checks against enabledTypes and disabledTypes arrays
+
+Error Handling:
+- Detects blocked users (403 Forbidden, bot was blocked)
+- Detects deleted chats (400 Bad Request, chat not found)
+- Detects kicked bot (bot was kicked from group)
+- Marks user as blocked in database when errors indicate block
+- Does not deactivate on network errors or rate limits
+
+Files Created:
+- src/telegram/broadcaster.ts: Main broadcaster implementation (~500 lines)
+- tests/telegram/broadcaster.test.ts: Unit tests (85 tests)
+- tests/telegram/broadcaster.e2e.test.ts: E2E tests (22 tests)
+
+Files Modified:
+- src/telegram/index.ts: Added exports for broadcaster functions and types
+
+Verification:
+- TypeScript typecheck: PASSED (pnpm typecheck)
+- Unit tests: 85 tests PASSED for broadcaster.test.ts
+- E2E tests: 22 tests PASSED for broadcaster.e2e.test.ts
+- All telegram module tests: 498 tests PASSED (6 test files)
+- Browser smoke test: PASSED (localhost:3000 returns 200)
+
+NOTES FOR NEXT SESSION:
+- TG-BROADCAST-001 complete and marked in prd.json
+- Next feature to implement: TG-BROADCAST-002 (Handle blocked users gracefully)
+- The broadcaster is ready and can be used with:
+  import { broadcastAlert, alertBroadcaster } from './src/telegram';
+  const result = await broadcastAlert(alert);
+  // or
+  const result = await alertBroadcaster.broadcast(alert);
+- TG-BROADCAST-002 is partially done - shouldDeactivateOnError() and markBlocked()
+  logic is already implemented in this feature
+

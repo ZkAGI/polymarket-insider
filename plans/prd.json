@@ -3519,7 +3519,8 @@
       "priority": 174,
       "name": "Status and help commands",
       "description": "Informational commands for users",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T07:15:00Z",
       "steps": [
         "Create /help command - list all commands with descriptions",
         "Create /status command - show bot status, your subscription status, alerts received today",
@@ -3538,7 +3539,8 @@
       "priority": 175,
       "name": "Alert broadcaster service",
       "description": "Broadcast alerts to all active subscribers",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T07:25:00Z",
       "steps": [
         "Create src/telegram/broadcaster.ts",
         "Create broadcastAlert(alert: Alert) function",
