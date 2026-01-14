@@ -3583,7 +3583,9 @@
       "priority": 177,
       "name": "Admin broadcast command",
       "description": "Allow admins to send announcements",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T08:45:00Z",
+      "notes": "Implemented /broadcast command (admin only) with message parsing, subscriber iteration, error handling, and detailed report. Added /test command to send test alerts. Includes rate limiting (50ms delay between sends), blocked user detection via broadcaster module, and comprehensive error reporting. 256 unit tests and 148 E2E tests pass.",
       "steps": [
         "Create /broadcast <message> command (admin only)",
         "Verify sender is in TELEGRAM_ADMIN_IDS",

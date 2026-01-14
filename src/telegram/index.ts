@@ -69,6 +69,17 @@ export {
   getUnauthorizedMessage,
   getStatsMessage,
   getUptimeString,
+  // Broadcast command exports (admin only)
+  handleBroadcastCommand,
+  createBroadcastCommandHandler,
+  broadcastMessage,
+  parseBroadcastMessage,
+  getBroadcastReportMessage,
+  getEmptyBroadcastMessage,
+  // Test command exports (admin only)
+  handleTestCommand,
+  createTestCommandHandler,
+  getTestAlertMessage,
   type RegistrationResult,
   type GroupMembershipResult,
   type UnsubscribeResult,
@@ -77,6 +88,8 @@ export {
   type StatusResult,
   type AdminCheckResult,
   type BotStats,
+  type AdminBroadcastResult,
+  type TestAlertResult,
 } from "./commands";
 
 // Broadcaster exports

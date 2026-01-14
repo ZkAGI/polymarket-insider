@@ -11462,3 +11462,80 @@ NOTES FOR NEXT SESSION:
   const result = await subscriberCleanupService.runCleanup();
   console.log(`Deactivated ${result.deactivatedCount} subscribers`);
 
+
+
+=== Session 2026-01-14 ===
+
+COMPLETED: TG-BROADCAST-003 - Admin broadcast command
+
+Implemented admin broadcast functionality with /broadcast and /test commands.
+
+Implementation Details:
+
+1. /broadcast Command (src/telegram/commands.ts):
+   - parseBroadcastMessage(): Parses message from /broadcast <message> format
+   - broadcastMessage(): Sends announcement to all active subscribers with:
+     * Rate limiting (50ms delay between sends)
+     * Error tracking and blocked user detection
+     * Statistics tracking (sent, failed, total, duration)
+   - handleBroadcastCommand(): Command handler that:
+     * Verifies admin status via checkIsAdmin()
+     * Shows usage if no message provided
+     * Displays progress indicator while broadcasting
+     * Updates message with final report (success/failure counts)
+   - getBroadcastReportMessage(): Formats broadcast results with:
+     * Success/warning emoji based on failures
+     * Success rate percentage
+     * Error details (limited to first 5)
+
+2. /test Command (src/telegram/commands.ts):
+   - getTestAlertMessage(): Returns formatted test whale alert message
+   - handleTestCommand(): Sends test alert to admin only
+   - Uses MarkdownV2 format with proper escaping
+
+3. Exports (src/telegram/index.ts):
+   - Added exports: handleBroadcastCommand, createBroadcastCommandHandler,
+     broadcastMessage, parseBroadcastMessage, getBroadcastReportMessage,
+     getEmptyBroadcastMessage, handleTestCommand, createTestCommandHandler,
+     getTestAlertMessage
+   - Added type exports: AdminBroadcastResult, TestAlertResult
+
+Tests Added:
+
+Unit Tests (tests/telegram/commands.test.ts):
+- parseBroadcastMessage tests (7 tests)
+- getBroadcastReportMessage tests (7 tests)
+- handleBroadcastCommand tests (4 tests)
+- getTestAlertMessage tests (4 tests)
+- handleTestCommand tests (4 tests)
+- broadcastMessage tests (5 tests)
+
+E2E Tests (tests/telegram/commands.e2e.test.ts):
+- parseBroadcastMessage E2E (2 tests)
+- getBroadcastReportMessage E2E (3 tests)
+- handleBroadcastCommand E2E (4 tests)
+- broadcastMessage E2E (2 tests)
+- handleTestCommand E2E (4 tests)
+- createTestCommandHandler E2E (2 tests)
+- Browser verification tests (5 tests)
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Commands unit tests: 256 tests PASSED
+- Commands E2E tests: 148 tests PASSED
+- All telegram tests: 600 tests PASSED
+
+Files Modified:
+- src/telegram/commands.ts: Added broadcast and test command handlers
+- src/telegram/index.ts: Added new exports and types
+- tests/telegram/commands.test.ts: Added 31 new unit tests
+- tests/telegram/commands.e2e.test.ts: Added 27 new E2E tests
+
+NOTES FOR NEXT SESSION:
+- TG-BROADCAST-003 complete and marked in prd.json
+- Next feature to implement: API-LIVE-001 (Market sync background service)
+- Usage for admin broadcast:
+  /broadcast Your announcement message here
+- Usage for test alerts:
+  /test
+

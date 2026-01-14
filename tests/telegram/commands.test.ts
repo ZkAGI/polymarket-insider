@@ -29,6 +29,29 @@ import {
   type TelegramSubscriber,
 } from "../../src/db/telegram-subscribers";
 
+// Mock the database client to prevent actual DB connection
+vi.mock("../../src/db/client", () => ({
+  prisma: {
+    telegramSubscriber: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      upsert: vi.fn(),
+      count: vi.fn(),
+      groupBy: vi.fn(),
+    },
+  },
+}));
+
+// Mock the env module
+vi.mock("../../config/env", () => ({
+  env: {
+    TELEGRAM_ADMIN_IDS: [12345, 67890],
+  },
+}));
+
 // Mock the telegram-subscribers service
 vi.mock("../../src/db/telegram-subscribers", async () => {
   const actual = await vi.importActual("../../src/db/telegram-subscribers");
@@ -134,6 +157,7 @@ function createMockSubscriberService(): TelegramSubscriberService {
     findAdmins: vi.fn(),
     deactivate: vi.fn(),
     markBlocked: vi.fn(),
+    markBlockedWithReason: vi.fn(),
     incrementAlertsSent: vi.fn(),
     updateAlertPreferences: vi.fn(),
     updateMinSeverity: vi.fn(),
@@ -141,6 +165,9 @@ function createMockSubscriberService(): TelegramSubscriberService {
     getStats: vi.fn(),
     isSubscribed: vi.fn(),
     isAdmin: vi.fn(),
+    findInactiveSubscribers: vi.fn(),
+    cleanupInactiveSubscribers: vi.fn(),
+    reactivate: vi.fn(),
   } as unknown as TelegramSubscriberService;
 }
 
@@ -2515,5 +2542,1062 @@ describe("createSettingsCallbackHandler", () => {
     await handler(ctx);
 
     expect(mockService.findByChatId).toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// /help Command Tests
+// =============================================================================
+
+import {
+  handleHelpCommand,
+  createHelpCommandHandler,
+  getHelpMessage,
+  handleStatusCommand,
+  createStatusCommandHandler,
+  getSubscriptionStatus,
+  getStatusMessage,
+  formatDate,
+  escapeMarkdown,
+  handleStatsCommand,
+  createStatsCommandHandler,
+  checkIsAdmin,
+  getUnauthorizedMessage,
+  getStatsMessage,
+  getUptimeString,
+  // Broadcast command imports
+  handleBroadcastCommand,
+  createBroadcastCommandHandler,
+  broadcastMessage,
+  parseBroadcastMessage,
+  getBroadcastReportMessage,
+  getEmptyBroadcastMessage,
+  // Test command imports
+  handleTestCommand,
+  createTestCommandHandler,
+  getTestAlertMessage,
+  type AdminBroadcastResult,
+} from "../../src/telegram/commands";
+
+describe("getHelpMessage", () => {
+  it("should return help message with markdown", () => {
+    const message = getHelpMessage();
+    expect(message).toContain("Polymarket Whale Tracker");
+    expect(message).toContain("*Available Commands:*");
+  });
+
+  it("should include all basic commands", () => {
+    const message = getHelpMessage();
+    expect(message).toContain("/start");
+    expect(message).toContain("/stop");
+    expect(message).toContain("/status");
+    expect(message).toContain("/settings");
+    expect(message).toContain("/help");
+  });
+
+  it("should include what the bot tracks", () => {
+    const message = getHelpMessage();
+    expect(message).toContain("whale trades");
+    expect(message).toContain("insider trading");
+    expect(message).toContain("wallet activity");
+  });
+
+  it("should include alert settings info", () => {
+    const message = getHelpMessage();
+    expect(message).toContain("Alert Settings");
+    expect(message).toContain("whale alerts");
+    expect(message).toContain("insider alerts");
+    expect(message).toContain("minimum trade size");
+  });
+
+  it("should include tips", () => {
+    const message = getHelpMessage();
+    expect(message).toContain("Tips");
+    expect(message).toContain("/settings");
+  });
+});
+
+describe("handleHelpCommand", () => {
+  it("should reply with help message", async () => {
+    const ctx = createMockContext({ firstName: "John" });
+
+    await handleHelpCommand(ctx);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Polymarket Whale Tracker"),
+      { parse_mode: "Markdown" }
+    );
+  });
+
+  it("should include parse_mode Markdown", async () => {
+    const ctx = createMockContext();
+
+    await handleHelpCommand(ctx);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ parse_mode: "Markdown" })
+    );
+  });
+});
+
+describe("createHelpCommandHandler", () => {
+  it("should create a handler function", () => {
+    const handler = createHelpCommandHandler();
+    expect(typeof handler).toBe("function");
+  });
+
+  it("should return help message when called", async () => {
+    const ctx = createMockContext();
+    const handler = createHelpCommandHandler();
+
+    await handler(ctx);
+
+    expect(ctx.reply).toHaveBeenCalled();
+    const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+    expect(message).toContain("Polymarket Whale Tracker");
+  });
+});
+
+// =============================================================================
+// /status Command Tests
+// =============================================================================
+
+describe("formatDate", () => {
+  it("should return Never for null date", () => {
+    expect(formatDate(null)).toBe("Never");
+  });
+
+  it("should format valid date", () => {
+    const date = new Date("2024-01-15T14:30:00Z");
+    const formatted = formatDate(date);
+    expect(formatted).toContain("Jan");
+    expect(formatted).toContain("15");
+    expect(formatted).toContain("2024");
+  });
+
+  it("should include time in formatted date", () => {
+    const date = new Date("2024-01-15T14:30:00Z");
+    const formatted = formatDate(date);
+    // Should include time (AM/PM format)
+    expect(formatted).toMatch(/\d{1,2}:\d{2}/);
+  });
+});
+
+describe("escapeMarkdown", () => {
+  it("should escape underscores", () => {
+    expect(escapeMarkdown("hello_world")).toBe("hello\\_world");
+  });
+
+  it("should escape asterisks", () => {
+    expect(escapeMarkdown("hello*world")).toBe("hello\\*world");
+  });
+
+  it("should escape brackets", () => {
+    expect(escapeMarkdown("hello[world]")).toBe("hello\\[world\\]");
+  });
+
+  it("should not modify plain text", () => {
+    expect(escapeMarkdown("hello world")).toBe("hello world");
+  });
+
+  it("should escape multiple special characters", () => {
+    const input = "hello_world *bold* [link]";
+    const result = escapeMarkdown(input);
+    expect(result).toContain("\\_");
+    expect(result).toContain("\\*");
+    expect(result).toContain("\\[");
+    expect(result).toContain("\\]");
+  });
+});
+
+describe("getStatusMessage", () => {
+  it("should show not subscribed message when not subscribed", () => {
+    const message = getStatusMessage("John", false);
+    expect(message).toContain("Not Subscribed");
+    expect(message).toContain("/start");
+    expect(message).toContain("John");
+  });
+
+  it("should show subscribed status when subscribed", () => {
+    const subscriber = createMockSubscriber({
+      isActive: true,
+      alertsSent: 42,
+      alertPreferences: { whaleAlerts: true, insiderAlerts: false, minTradeValue: 50000 },
+    });
+    const message = getStatusMessage("John", true, subscriber);
+    expect(message).toContain("Subscribed");
+    expect(message).toContain("42");
+    expect(message).toContain("Whale Alerts");
+    expect(message).toContain("Insider Alerts");
+  });
+
+  it("should show alert preferences", () => {
+    const subscriber = createMockSubscriber({
+      isActive: true,
+      alertPreferences: { whaleAlerts: true, insiderAlerts: false, minTradeValue: 50000 },
+    });
+    const message = getStatusMessage("John", true, subscriber);
+    expect(message).toContain("ON");
+    expect(message).toContain("OFF");
+    expect(message).toContain("$50K");
+  });
+
+  it("should show statistics", () => {
+    const subscriber = createMockSubscriber({
+      isActive: true,
+      alertsSent: 100,
+      lastAlertAt: new Date("2024-01-15T14:30:00Z"),
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+    });
+    const message = getStatusMessage("John", true, subscriber);
+    expect(message).toContain("100");
+    expect(message).toContain("Statistics");
+    expect(message).toContain("Alerts Received");
+  });
+
+  it("should escape display name", () => {
+    const message = getStatusMessage("John_Doe", false);
+    expect(message).toContain("John\\_Doe");
+  });
+});
+
+describe("getSubscriptionStatus", () => {
+  let mockService: TelegramSubscriberService;
+
+  beforeEach(() => {
+    mockService = createMockSubscriberService();
+    vi.clearAllMocks();
+  });
+
+  it("should return error when no chat", async () => {
+    const ctx = createMockContext({ noChat: true });
+
+    const result = await getSubscriptionStatus(ctx, mockService);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("No chat information available");
+  });
+
+  it("should return not subscribed when subscriber not found", async () => {
+    const ctx = createMockContext();
+    vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+
+    const result = await getSubscriptionStatus(ctx, mockService);
+
+    expect(result.success).toBe(true);
+    expect(result.isSubscribed).toBe(false);
+  });
+
+  it("should return subscribed when subscriber is active", async () => {
+    const ctx = createMockContext();
+    const subscriber = createMockSubscriber({ isActive: true, isBlocked: false });
+    vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+    const result = await getSubscriptionStatus(ctx, mockService);
+
+    expect(result.success).toBe(true);
+    expect(result.isSubscribed).toBe(true);
+    expect(result.subscriber).toBe(subscriber);
+  });
+
+  it("should return not subscribed when subscriber is inactive", async () => {
+    const ctx = createMockContext();
+    const subscriber = createMockSubscriber({ isActive: false });
+    vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+    const result = await getSubscriptionStatus(ctx, mockService);
+
+    expect(result.success).toBe(true);
+    expect(result.isSubscribed).toBe(false);
+    expect(result.subscriber).toBe(subscriber);
+  });
+
+  it("should return not subscribed when subscriber is blocked", async () => {
+    const ctx = createMockContext();
+    const subscriber = createMockSubscriber({ isActive: true, isBlocked: true });
+    vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+    const result = await getSubscriptionStatus(ctx, mockService);
+
+    expect(result.success).toBe(true);
+    expect(result.isSubscribed).toBe(false);
+  });
+
+  it("should handle database errors", async () => {
+    const ctx = createMockContext();
+    vi.mocked(mockService.findByChatId).mockRejectedValue(new Error("DB error"));
+
+    const result = await getSubscriptionStatus(ctx, mockService);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("DB error");
+  });
+});
+
+describe("handleStatusCommand", () => {
+  let mockService: TelegramSubscriberService;
+
+  beforeEach(() => {
+    mockService = createMockSubscriberService();
+    vi.clearAllMocks();
+  });
+
+  it("should reply with subscribed status", async () => {
+    const ctx = createMockContext({ firstName: "John" });
+    const subscriber = createMockSubscriber({ isActive: true, alertsSent: 5 });
+    vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+    await handleStatusCommand(ctx, mockService);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Subscribed"),
+      { parse_mode: "Markdown" }
+    );
+  });
+
+  it("should reply with not subscribed status", async () => {
+    const ctx = createMockContext({ firstName: "John" });
+    vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+
+    await handleStatusCommand(ctx, mockService);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Not Subscribed"),
+      { parse_mode: "Markdown" }
+    );
+  });
+
+  it("should show error on database failure", async () => {
+    const ctx = createMockContext();
+    vi.mocked(mockService.findByChatId).mockRejectedValue(new Error("DB error"));
+
+    await handleStatusCommand(ctx, mockService);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("error")
+    );
+  });
+
+  it("should use display name from context", async () => {
+    const ctx = createMockContext({ firstName: "Jane", lastName: "Smith" });
+    vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+
+    await handleStatusCommand(ctx, mockService);
+
+    const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+    expect(message).toContain("Jane");
+  });
+});
+
+describe("createStatusCommandHandler", () => {
+  it("should create a handler function", () => {
+    const handler = createStatusCommandHandler();
+    expect(typeof handler).toBe("function");
+  });
+
+  it("should use provided subscriber service", async () => {
+    const mockService = createMockSubscriberService();
+    const ctx = createMockContext({ firstName: "John" });
+    vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+
+    const handler = createStatusCommandHandler(mockService);
+    await handler(ctx);
+
+    expect(mockService.findByChatId).toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// /stats Command Tests (Admin Only)
+// =============================================================================
+
+describe("checkIsAdmin", () => {
+  it("should return not admin when no from", () => {
+    const ctx = createMockContext({ noFrom: true });
+
+    const result = checkIsAdmin(ctx);
+
+    expect(result.isAdmin).toBe(false);
+    expect(result.reason).toBe("No user information available");
+  });
+
+  it("should return admin for user in admin list", () => {
+    const ctx = createMockContext({ chatId: 12345 });
+
+    const result = checkIsAdmin(ctx);
+
+    expect(result.isAdmin).toBe(true);
+    expect(result.userId).toBe(12345);
+  });
+
+  it("should return not admin for user not in admin list", () => {
+    const ctx = createMockContext({ chatId: 99999 });
+
+    const result = checkIsAdmin(ctx);
+
+    expect(result.isAdmin).toBe(false);
+    expect(result.userId).toBe(99999);
+    expect(result.reason).toBe("User ID not in admin list");
+  });
+});
+
+describe("getUnauthorizedMessage", () => {
+  it("should return access denied message", () => {
+    const message = getUnauthorizedMessage();
+    expect(message).toContain("Access Denied");
+    expect(message).toContain("administrators");
+  });
+});
+
+describe("getStatsMessage", () => {
+  it("should include subscriber stats", () => {
+    const stats = {
+      total: 100,
+      active: 80,
+      blocked: 5,
+      byType: {
+        PRIVATE: 50,
+        GROUP: 20,
+        SUPERGROUP: 25,
+        CHANNEL: 5,
+      },
+    };
+    const message = getStatsMessage(stats, "1d 2h");
+
+    expect(message).toContain("100");
+    expect(message).toContain("80");
+    expect(message).toContain("5");
+  });
+
+  it("should calculate inactive subscribers", () => {
+    const stats = {
+      total: 100,
+      active: 80,
+      blocked: 5,
+      byType: { PRIVATE: 0, GROUP: 0, SUPERGROUP: 0, CHANNEL: 0 },
+    };
+    const message = getStatsMessage(stats, "1h");
+
+    // Inactive = total - active - blocked = 100 - 80 - 5 = 15
+    expect(message).toContain("15");
+  });
+
+  it("should include by type breakdown", () => {
+    const stats = {
+      total: 100,
+      active: 80,
+      blocked: 0,
+      byType: {
+        PRIVATE: 50,
+        GROUP: 20,
+        SUPERGROUP: 25,
+        CHANNEL: 5,
+      },
+    };
+    const message = getStatsMessage(stats, "1h");
+
+    expect(message).toContain("Private Chats: 50");
+    expect(message).toContain("Groups: 20");
+    expect(message).toContain("Supergroups: 25");
+    expect(message).toContain("Channels: 5");
+  });
+
+  it("should include uptime", () => {
+    const stats = {
+      total: 0,
+      active: 0,
+      blocked: 0,
+      byType: { PRIVATE: 0, GROUP: 0, SUPERGROUP: 0, CHANNEL: 0 },
+    };
+    const message = getStatsMessage(stats, "2d 5h 30m");
+
+    expect(message).toContain("2d 5h 30m");
+  });
+
+  it("should show online status", () => {
+    const stats = {
+      total: 0,
+      active: 0,
+      blocked: 0,
+      byType: { PRIVATE: 0, GROUP: 0, SUPERGROUP: 0, CHANNEL: 0 },
+    };
+    const message = getStatsMessage(stats, "1h");
+
+    expect(message).toContain("Online");
+  });
+
+  it("should mention broadcast command", () => {
+    const stats = {
+      total: 0,
+      active: 0,
+      blocked: 0,
+      byType: { PRIVATE: 0, GROUP: 0, SUPERGROUP: 0, CHANNEL: 0 },
+    };
+    const message = getStatsMessage(stats, "1h");
+
+    expect(message).toContain("/broadcast");
+  });
+});
+
+describe("getUptimeString", () => {
+  it("should return formatted uptime", () => {
+    // Note: This tests the function returns a string in expected format
+    const uptime = getUptimeString();
+    expect(typeof uptime).toBe("string");
+    expect(uptime.length).toBeGreaterThan(0);
+  });
+
+  it("should return < 1m for very short uptime", () => {
+    // process.uptime() returns seconds, mock a very short process
+    // In practice this is hard to test without mocking process.uptime
+    const uptime = getUptimeString();
+    // Should return something like "< 1m" or "Xm" or "Xh Xm" etc
+    expect(uptime).toMatch(/^(\d+d\s*)?(\d+h\s*)?(\d+m)?$|^< 1m$/);
+  });
+});
+
+describe("handleStatsCommand", () => {
+  let mockService: TelegramSubscriberService;
+
+  beforeEach(() => {
+    mockService = createMockSubscriberService();
+    vi.clearAllMocks();
+  });
+
+  it("should deny access to non-admin users", async () => {
+    const ctx = createMockContext({ chatId: 99999 }); // Not in admin list
+
+    await handleStatsCommand(ctx, mockService);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Access Denied"),
+      { parse_mode: "Markdown" }
+    );
+    expect(mockService.getStats).not.toHaveBeenCalled();
+  });
+
+  it("should show stats for admin users", async () => {
+    const ctx = createMockContext({ chatId: 12345 }); // In admin list
+    vi.mocked(mockService.getStats).mockResolvedValue({
+      total: 100,
+      active: 80,
+      blocked: 5,
+      byType: {
+        PRIVATE: 50,
+        GROUP: 20,
+        SUPERGROUP: 25,
+        CHANNEL: 5,
+      },
+    });
+
+    await handleStatsCommand(ctx, mockService);
+
+    expect(mockService.getStats).toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Bot Statistics"),
+      { parse_mode: "Markdown" }
+    );
+  });
+
+  it("should show error on database failure", async () => {
+    const ctx = createMockContext({ chatId: 12345 });
+    vi.mocked(mockService.getStats).mockRejectedValue(new Error("DB error"));
+
+    await handleStatsCommand(ctx, mockService);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("error")
+    );
+  });
+});
+
+describe("createStatsCommandHandler", () => {
+  it("should create a handler function", () => {
+    const handler = createStatsCommandHandler();
+    expect(typeof handler).toBe("function");
+  });
+
+  it("should use provided subscriber service", async () => {
+    const mockService = createMockSubscriberService();
+    const ctx = createMockContext({ chatId: 12345 });
+    vi.mocked(mockService.getStats).mockResolvedValue({
+      total: 0,
+      active: 0,
+      blocked: 0,
+      byType: { PRIVATE: 0, GROUP: 0, SUPERGROUP: 0, CHANNEL: 0 },
+    });
+
+    const handler = createStatsCommandHandler(mockService);
+    await handler(ctx);
+
+    expect(mockService.getStats).toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// /broadcast Command Tests (Admin Only)
+// =============================================================================
+
+describe("parseBroadcastMessage", () => {
+  it("should parse simple broadcast message", () => {
+    const result = parseBroadcastMessage("/broadcast Hello World!");
+    expect(result).toBe("Hello World!");
+  });
+
+  it("should parse multiline broadcast message", () => {
+    const result = parseBroadcastMessage("/broadcast Line 1\nLine 2\nLine 3");
+    expect(result).toBe("Line 1\nLine 2\nLine 3");
+  });
+
+  it("should parse broadcast with bot mention", () => {
+    const result = parseBroadcastMessage("/broadcast@mybot Hello!");
+    expect(result).toBe("Hello!");
+  });
+
+  it("should return null for empty broadcast", () => {
+    const result = parseBroadcastMessage("/broadcast");
+    expect(result).toBeNull();
+  });
+
+  it("should return null for broadcast with only whitespace", () => {
+    const result = parseBroadcastMessage("/broadcast   ");
+    expect(result).toBeNull();
+  });
+
+  it("should return null for non-broadcast commands", () => {
+    const result = parseBroadcastMessage("/start");
+    expect(result).toBeNull();
+  });
+
+  it("should trim leading and trailing whitespace", () => {
+    const result = parseBroadcastMessage("/broadcast   Hello!   ");
+    expect(result).toBe("Hello!");
+  });
+});
+
+describe("getBroadcastReportMessage", () => {
+  it("should show success emoji when no failures", () => {
+    const result: AdminBroadcastResult = {
+      success: true,
+      sent: 10,
+      failed: 0,
+      total: 10,
+      errors: [],
+      duration: 100,
+    };
+    const message = getBroadcastReportMessage(result);
+    expect(message).toContain("✅");
+    expect(message).toContain("Broadcast Complete");
+  });
+
+  it("should show warning emoji when there are failures", () => {
+    const result: AdminBroadcastResult = {
+      success: false,
+      sent: 8,
+      failed: 2,
+      total: 10,
+      errors: [
+        { chatId: BigInt(1), error: "Error 1" },
+        { chatId: BigInt(2), error: "Error 2" },
+      ],
+      duration: 100,
+    };
+    const message = getBroadcastReportMessage(result);
+    expect(message).toContain("⚠️");
+  });
+
+  it("should include statistics", () => {
+    const result: AdminBroadcastResult = {
+      success: true,
+      sent: 10,
+      failed: 0,
+      total: 10,
+      errors: [],
+      duration: 500,
+    };
+    const message = getBroadcastReportMessage(result);
+    expect(message).toContain("Total subscribers: 10");
+    expect(message).toContain("Successfully sent: 10");
+    expect(message).toContain("Failed: 0");
+    expect(message).toContain("100%");
+    expect(message).toContain("500ms");
+  });
+
+  it("should show errors when present (5 or fewer)", () => {
+    const result: AdminBroadcastResult = {
+      success: false,
+      sent: 3,
+      failed: 2,
+      total: 5,
+      errors: [
+        { chatId: BigInt(111), error: "User blocked" },
+        { chatId: BigInt(222), error: "Chat not found" },
+      ],
+      duration: 100,
+    };
+    const message = getBroadcastReportMessage(result);
+    expect(message).toContain("Errors:");
+    expect(message).toContain("Chat 111");
+    expect(message).toContain("Chat 222");
+  });
+
+  it("should limit errors shown to 5 when more than 5 failures", () => {
+    const errors = Array.from({ length: 10 }, (_, i) => ({
+      chatId: BigInt(i + 1),
+      error: `Error ${i + 1}`,
+    }));
+    const result: AdminBroadcastResult = {
+      success: false,
+      sent: 0,
+      failed: 10,
+      total: 10,
+      errors,
+      duration: 100,
+    };
+    const message = getBroadcastReportMessage(result);
+    expect(message).toContain("10 failures (showing first 5)");
+    expect(message).toContain("Chat 1");
+    expect(message).toContain("Chat 5");
+    expect(message).not.toContain("Chat 6");
+  });
+
+  it("should calculate success rate correctly", () => {
+    const result: AdminBroadcastResult = {
+      success: false,
+      sent: 7,
+      failed: 3,
+      total: 10,
+      errors: [],
+      duration: 100,
+    };
+    const message = getBroadcastReportMessage(result);
+    expect(message).toContain("70%");
+  });
+
+  it("should handle zero total subscribers", () => {
+    const result: AdminBroadcastResult = {
+      success: true,
+      sent: 0,
+      failed: 0,
+      total: 0,
+      errors: [],
+      duration: 50,
+    };
+    const message = getBroadcastReportMessage(result);
+    expect(message).toContain("Success rate: 0%");
+  });
+});
+
+describe("getEmptyBroadcastMessage", () => {
+  it("should include usage instructions", () => {
+    const message = getEmptyBroadcastMessage();
+    expect(message).toContain("/broadcast <message>");
+    expect(message).toContain("Usage");
+  });
+
+  it("should include example", () => {
+    const message = getEmptyBroadcastMessage();
+    expect(message).toContain("Example");
+    expect(message).toContain("/broadcast");
+  });
+});
+
+describe("handleBroadcastCommand", () => {
+  let mockService: TelegramSubscriberService;
+  let mockBotClient: { sendMessage: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    mockService = createMockSubscriberService();
+    mockBotClient = {
+      sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 1 }),
+    };
+    vi.clearAllMocks();
+  });
+
+  it("should deny access to non-admin users", async () => {
+    const ctx = createMockContext({ chatId: 99999 }); // Not in admin list
+    (ctx as { message?: { text?: string } }).message = { text: "/broadcast Hello" };
+
+    await handleBroadcastCommand(ctx, mockService, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Access Denied"),
+      { parse_mode: "Markdown" }
+    );
+    expect(mockService.findActive).not.toHaveBeenCalled();
+  });
+
+  it("should show usage for empty broadcast message", async () => {
+    const ctx = createMockContext({ chatId: 12345 }); // Admin user
+    (ctx as { message?: { text?: string } }).message = { text: "/broadcast" };
+
+    await handleBroadcastCommand(ctx, mockService, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Usage"),
+      { parse_mode: "Markdown" }
+    );
+  });
+
+  it("should broadcast message to active subscribers", async () => {
+    const ctx = createMockContext({ chatId: 12345 });
+    (ctx as { message?: { text?: string } }).message = { text: "/broadcast Hello everyone!" };
+    (ctx as unknown as { api: { editMessageText: ReturnType<typeof vi.fn> } }).api = {
+      editMessageText: vi.fn().mockResolvedValue({}),
+    };
+
+    const subscribers = [
+      createMockSubscriber({ chatId: BigInt(1) }),
+      createMockSubscriber({ chatId: BigInt(2) }),
+    ];
+    vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+    vi.mocked(mockService.incrementAlertsSent).mockResolvedValue(createMockSubscriber());
+
+    await handleBroadcastCommand(ctx, mockService, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    // Should send to both subscribers
+    expect(mockBotClient.sendMessage).toHaveBeenCalledTimes(2);
+    expect(mockBotClient.sendMessage).toHaveBeenCalledWith(
+      "1",
+      expect.stringContaining("Hello everyone!"),
+      expect.any(Object)
+    );
+    expect(mockBotClient.sendMessage).toHaveBeenCalledWith(
+      "2",
+      expect.stringContaining("Hello everyone!"),
+      expect.any(Object)
+    );
+  });
+
+  it("should increment alerts sent counter on success", async () => {
+    const ctx = createMockContext({ chatId: 12345 });
+    (ctx as { message?: { text?: string } }).message = { text: "/broadcast Test" };
+    (ctx as unknown as { api: { editMessageText: ReturnType<typeof vi.fn> } }).api = {
+      editMessageText: vi.fn().mockResolvedValue({}),
+    };
+
+    const subscribers = [createMockSubscriber({ chatId: BigInt(1) })];
+    vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+    vi.mocked(mockService.incrementAlertsSent).mockResolvedValue(createMockSubscriber());
+
+    await handleBroadcastCommand(ctx, mockService, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    expect(mockService.incrementAlertsSent).toHaveBeenCalledWith(BigInt(1));
+  });
+});
+
+describe("createBroadcastCommandHandler", () => {
+  it("should create a handler function", () => {
+    const handler = createBroadcastCommandHandler();
+    expect(typeof handler).toBe("function");
+  });
+});
+
+// =============================================================================
+// /test Command Tests (Admin Only)
+// =============================================================================
+
+describe("getTestAlertMessage", () => {
+  it("should return test alert message with markdown", () => {
+    const message = getTestAlertMessage();
+    expect(message).toContain("Test Whale Trade Alert");
+    expect(message).toContain("$1,234,567");
+    expect(message).toContain("0xTest...1234");
+  });
+
+  it("should include severity and type", () => {
+    const message = getTestAlertMessage();
+    expect(message).toContain("Critical");
+    expect(message).toContain("Whale Trade");
+  });
+
+  it("should include test disclaimer", () => {
+    const message = getTestAlertMessage();
+    expect(message).toContain("test alert");
+    expect(message).toContain("alerts are working correctly");
+  });
+
+  it("should include timestamp", () => {
+    const message = getTestAlertMessage();
+    // Should have a timestamp
+    expect(message).toMatch(/\d{1,2}:\d{2}/);
+  });
+});
+
+describe("handleTestCommand", () => {
+  let mockBotClient: { sendMessage: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    mockBotClient = {
+      sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 123 }),
+    };
+    vi.clearAllMocks();
+  });
+
+  it("should deny access to non-admin users", async () => {
+    const ctx = createMockContext({ chatId: 99999 }); // Not in admin list
+
+    const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining("Access Denied"),
+      { parse_mode: "Markdown" }
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Unauthorized");
+  });
+
+  it("should send test alert for admin users", async () => {
+    const ctx = createMockContext({ chatId: 12345 }); // Admin user
+
+    const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    expect(mockBotClient.sendMessage).toHaveBeenCalledWith(
+      "12345",
+      expect.stringContaining("Test Whale Trade Alert"),
+      expect.objectContaining({ parseMode: "MarkdownV2" })
+    );
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBe(123);
+  });
+
+  it("should return error when bot client fails", async () => {
+    const ctx = createMockContext({ chatId: 12345 });
+    mockBotClient.sendMessage.mockResolvedValue({ success: false, error: "Network error" });
+
+    const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Network error");
+  });
+
+  it("should return error when no chat ID", async () => {
+    const ctx = createMockContext({ noChat: true, chatId: 12345 });
+    // Make sure from has admin ID even though chat is null
+    (ctx as unknown as { from: { id: number } }).from = { id: 12345, is_bot: false, first_name: "Admin" } as unknown as { id: number };
+
+    const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("No chat ID available");
+  });
+});
+
+describe("createTestCommandHandler", () => {
+  it("should create a handler function", () => {
+    const handler = createTestCommandHandler();
+    expect(typeof handler).toBe("function");
+  });
+});
+
+describe("broadcastMessage", () => {
+  let mockService: TelegramSubscriberService;
+  let mockBotClient: { sendMessage: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    mockService = createMockSubscriberService();
+    mockBotClient = {
+      sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 1 }),
+    };
+    vi.clearAllMocks();
+  });
+
+  it("should broadcast to all active subscribers", async () => {
+    const subscribers = [
+      createMockSubscriber({ chatId: BigInt(1) }),
+      createMockSubscriber({ chatId: BigInt(2) }),
+      createMockSubscriber({ chatId: BigInt(3) }),
+    ];
+    vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+    vi.mocked(mockService.incrementAlertsSent).mockResolvedValue(createMockSubscriber());
+
+    const result = await broadcastMessage(
+      "Test message",
+      mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient,
+      mockService
+    );
+
+    expect(result.total).toBe(3);
+    expect(result.sent).toBe(3);
+    expect(result.failed).toBe(0);
+    expect(result.success).toBe(true);
+  });
+
+  it("should handle send failures gracefully", async () => {
+    const subscribers = [
+      createMockSubscriber({ chatId: BigInt(1) }),
+      createMockSubscriber({ chatId: BigInt(2) }),
+    ];
+    vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+    mockBotClient.sendMessage
+      .mockResolvedValueOnce({ success: true, messageId: 1 })
+      .mockResolvedValueOnce({ success: false, error: "User blocked" });
+
+    const result = await broadcastMessage(
+      "Test message",
+      mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient,
+      mockService
+    );
+
+    expect(result.total).toBe(2);
+    expect(result.sent).toBe(1);
+    expect(result.failed).toBe(1);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toEqual({
+      chatId: BigInt(2),
+      error: "User blocked",
+    });
+  });
+
+  it("should format message with announcement header", async () => {
+    const subscribers = [createMockSubscriber({ chatId: BigInt(1) })];
+    vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+    vi.mocked(mockService.incrementAlertsSent).mockResolvedValue(createMockSubscriber());
+
+    await broadcastMessage(
+      "Test message",
+      mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient,
+      mockService
+    );
+
+    expect(mockBotClient.sendMessage).toHaveBeenCalledWith(
+      "1",
+      expect.stringContaining("Announcement"),
+      expect.any(Object)
+    );
+    expect(mockBotClient.sendMessage).toHaveBeenCalledWith(
+      "1",
+      expect.stringContaining("Test message"),
+      expect.any(Object)
+    );
+  });
+
+  it("should return duration in milliseconds", async () => {
+    vi.mocked(mockService.findActive).mockResolvedValue([]);
+
+    const result = await broadcastMessage(
+      "Test",
+      mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient,
+      mockService
+    );
+
+    expect(typeof result.duration).toBe("number");
+    expect(result.duration).toBeGreaterThanOrEqual(0);
+  });
+
+  it("should handle empty subscriber list", async () => {
+    vi.mocked(mockService.findActive).mockResolvedValue([]);
+
+    const result = await broadcastMessage(
+      "Test",
+      mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient,
+      mockService
+    );
+
+    expect(result.total).toBe(0);
+    expect(result.sent).toBe(0);
+    expect(result.failed).toBe(0);
+    expect(result.success).toBe(true);
   });
 });

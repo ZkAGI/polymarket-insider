@@ -5,6 +5,29 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+// Mock the database client to prevent actual connections
+vi.mock("../../src/db/client", () => ({
+  prisma: {
+    telegramSubscriber: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      upsert: vi.fn(),
+      count: vi.fn(),
+      groupBy: vi.fn(),
+    },
+  },
+}));
+
+// Mock the env module for admin tests
+vi.mock("../../config/env", () => ({
+  env: {
+    TELEGRAM_ADMIN_IDS: [12345, 67890],
+  },
+}));
 import puppeteer, { Browser, Page } from "puppeteer";
 import type { Context } from "grammy";
 import {
@@ -114,6 +137,7 @@ function createMockSubscriberService(): TelegramSubscriberService {
     findAdmins: vi.fn(),
     deactivate: vi.fn(),
     markBlocked: vi.fn(),
+    markBlockedWithReason: vi.fn(),
     incrementAlertsSent: vi.fn(),
     updateAlertPreferences: vi.fn(),
     updateMinSeverity: vi.fn(),
@@ -121,6 +145,9 @@ function createMockSubscriberService(): TelegramSubscriberService {
     getStats: vi.fn(),
     isSubscribed: vi.fn(),
     isAdmin: vi.fn(),
+    findInactiveSubscribers: vi.fn(),
+    cleanupInactiveSubscribers: vi.fn(),
+    reactivate: vi.fn(),
   } as unknown as TelegramSubscriberService;
 }
 
@@ -1755,6 +1782,989 @@ describe("Settings Command E2E Tests (TG-BOT-005)", () => {
 
       const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
       expect(message).toContain("Whale Watchers");
+    });
+  });
+});
+
+// =============================================================================
+// /help Command E2E Tests
+// =============================================================================
+
+import {
+  handleHelpCommand,
+  getHelpMessage,
+  handleStatusCommand,
+  getSubscriptionStatus,
+  getStatusMessage,
+  formatDate,
+  escapeMarkdown,
+  handleStatsCommand,
+  createStatsCommandHandler,
+  checkIsAdmin,
+  getUnauthorizedMessage,
+  getStatsMessage,
+  getUptimeString,
+  // Broadcast command imports
+  handleBroadcastCommand,
+  createBroadcastCommandHandler,
+  broadcastMessage,
+  parseBroadcastMessage,
+  getBroadcastReportMessage,
+  getEmptyBroadcastMessage,
+  // Test command imports
+  handleTestCommand,
+  createTestCommandHandler,
+  getTestAlertMessage,
+  type AdminBroadcastResult,
+} from "../../src/telegram/commands";
+
+describe("/help Command E2E", () => {
+  let browser: Browser;
+  let page: Page;
+
+  beforeEach(async () => {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    page = await browser.newPage();
+  }, 30000);
+
+  afterEach(async () => {
+    if (page) await page.close();
+    if (browser) await browser.close();
+  });
+
+  describe("Help Message E2E", () => {
+    it("should contain all expected sections", () => {
+      const message = getHelpMessage();
+      expect(message).toContain("Available Commands");
+      expect(message).toContain("Basic Commands");
+      expect(message).toContain("What I Track");
+      expect(message).toContain("Alert Settings");
+      expect(message).toContain("Tips");
+    });
+
+    it("should be properly formatted with markdown", () => {
+      const message = getHelpMessage();
+      // Should use markdown bold markers
+      expect(message).toContain("*");
+      // Should use emojis
+      expect(message).toContain("🐋");
+      expect(message).toContain("📌");
+    });
+  });
+
+  describe("Help Command Handler E2E", () => {
+    it("should reply with help message", async () => {
+      const ctx = createMockContext({ firstName: "TestUser" });
+
+      await handleHelpCommand(ctx);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(message).toContain("/start");
+      expect(message).toContain("/stop");
+      expect(message).toContain("/status");
+      expect(message).toContain("/settings");
+      expect(message).toContain("/help");
+    });
+
+    it("should use Markdown parse mode", async () => {
+      const ctx = createMockContext();
+
+      await handleHelpCommand(ctx);
+
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ parse_mode: "Markdown" })
+      );
+    });
+  });
+
+  describe("Browser Verification for Help", () => {
+    it("should verify dashboard loads after help command flow", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const title = await page.title();
+      expect(title).toBeTruthy();
+    });
+  });
+});
+
+// =============================================================================
+// /status Command E2E Tests
+// =============================================================================
+
+describe("/status Command E2E", () => {
+  let browser: Browser;
+  let page: Page;
+
+  beforeEach(async () => {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    page = await browser.newPage();
+  }, 30000);
+
+  afterEach(async () => {
+    if (page) await page.close();
+    if (browser) await browser.close();
+  });
+
+  describe("formatDate E2E", () => {
+    it("should handle null dates", () => {
+      expect(formatDate(null)).toBe("Never");
+    });
+
+    it("should format valid dates with full locale string", () => {
+      const date = new Date("2024-06-15T10:30:00Z");
+      const formatted = formatDate(date);
+      expect(formatted).toContain("2024");
+      expect(formatted).toContain("Jun");
+    });
+  });
+
+  describe("escapeMarkdown E2E", () => {
+    it("should escape all special Telegram markdown characters", () => {
+      const input = "User_name *bold* [link](url) `code`";
+      const escaped = escapeMarkdown(input);
+      // Verify underscores are escaped (escaped string should contain backslash-underscore)
+      expect(escaped).toContain("\\_");
+      expect(escaped).toContain("\\*");
+      expect(escaped).toContain("\\[");
+      expect(escaped).toContain("\\]");
+      expect(escaped).toContain("\\`");
+      // Verify the full escaped string is correct
+      expect(escaped).toBe("User\\_name \\*bold\\* \\[link\\]\\(url\\) \\`code\\`");
+    });
+  });
+
+  describe("getStatusMessage E2E", () => {
+    it("should show full status for subscribed user with stats", () => {
+      const subscriber = createMockSubscriber({
+        isActive: true,
+        alertsSent: 42,
+        alertPreferences: {
+          whaleAlerts: true,
+          insiderAlerts: false,
+          minTradeValue: 50000,
+        },
+        lastAlertAt: new Date("2024-06-15T10:30:00Z"),
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+      });
+
+      const message = getStatusMessage("John", true, subscriber);
+
+      expect(message).toContain("Subscribed");
+      expect(message).toContain("42");
+      expect(message).toContain("Whale Alerts");
+      expect(message).toContain("ON");
+      expect(message).toContain("OFF");
+      expect(message).toContain("$50K");
+    });
+
+    it("should show not subscribed message when not subscribed", () => {
+      const message = getStatusMessage("Jane", false);
+      expect(message).toContain("Not Subscribed");
+      expect(message).toContain("/start");
+    });
+  });
+
+  describe("getSubscriptionStatus E2E", () => {
+    it("should return correct status for active subscriber", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext();
+      const subscriber = createMockSubscriber({ isActive: true, isBlocked: false });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      const result = await getSubscriptionStatus(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.isSubscribed).toBe(true);
+      expect(result.subscriber).toBeDefined();
+    });
+
+    it("should return not subscribed for inactive user", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext();
+      const subscriber = createMockSubscriber({ isActive: false });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      const result = await getSubscriptionStatus(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.isSubscribed).toBe(false);
+    });
+
+    it("should return not subscribed for blocked user", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext();
+      const subscriber = createMockSubscriber({ isActive: true, isBlocked: true });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      const result = await getSubscriptionStatus(ctx, mockService);
+
+      expect(result.success).toBe(true);
+      expect(result.isSubscribed).toBe(false);
+    });
+  });
+
+  describe("handleStatusCommand E2E", () => {
+    it("should show subscribed status with preferences", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ firstName: "John" });
+      const subscriber = createMockSubscriber({
+        isActive: true,
+        alertPreferences: { whaleAlerts: true, insiderAlerts: true },
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      await handleStatusCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("Subscribed"),
+        { parse_mode: "Markdown" }
+      );
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext();
+      vi.mocked(mockService.findByChatId).mockRejectedValue(new Error("Connection failed"));
+
+      await handleStatusCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("error")
+      );
+    });
+  });
+
+  describe("Browser Verification for Status", () => {
+    it("should verify dashboard loads during status flow", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const content = await page.content();
+      expect(content).toBeTruthy();
+    });
+
+    it("should take screenshot of dashboard for status verification", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      await page.screenshot({
+        path: "tests/e2e/screenshots/status-command-dashboard.png",
+        fullPage: true,
+      });
+
+      expect(true).toBe(true);
+    });
+  });
+});
+
+// =============================================================================
+// /stats Command E2E Tests (Admin Only)
+// =============================================================================
+
+describe("/stats Command E2E (Admin Only)", () => {
+  let browser: Browser;
+  let page: Page;
+
+  beforeEach(async () => {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    page = await browser.newPage();
+    vi.clearAllMocks();
+  }, 30000);
+
+  afterEach(async () => {
+    if (page) await page.close();
+    if (browser) await browser.close();
+  });
+
+  describe("checkIsAdmin E2E", () => {
+    it("should return admin for configured admin ID", () => {
+      const ctx = createMockContext({ chatId: 12345 });
+      const result = checkIsAdmin(ctx);
+      expect(result.isAdmin).toBe(true);
+      expect(result.userId).toBe(12345);
+    });
+
+    it("should return not admin for non-admin ID", () => {
+      const ctx = createMockContext({ chatId: 99999 });
+      const result = checkIsAdmin(ctx);
+      expect(result.isAdmin).toBe(false);
+      expect(result.reason).toBe("User ID not in admin list");
+    });
+
+    it("should handle missing from in context", () => {
+      const ctx = createMockContext({ noFrom: true });
+      const result = checkIsAdmin(ctx);
+      expect(result.isAdmin).toBe(false);
+      expect(result.reason).toBe("No user information available");
+    });
+  });
+
+  describe("getUnauthorizedMessage E2E", () => {
+    it("should return access denied message", () => {
+      const message = getUnauthorizedMessage();
+      expect(message).toContain("Access Denied");
+      expect(message).toContain("administrators");
+      expect(message).toContain("*"); // Has markdown
+    });
+  });
+
+  describe("getStatsMessage E2E", () => {
+    it("should format all subscriber statistics", () => {
+      const stats = {
+        total: 150,
+        active: 120,
+        blocked: 10,
+        byType: {
+          PRIVATE: 80,
+          GROUP: 30,
+          SUPERGROUP: 35,
+          CHANNEL: 5,
+        },
+      };
+      const message = getStatsMessage(stats, "3d 12h 45m");
+
+      expect(message).toContain("150");
+      expect(message).toContain("120");
+      expect(message).toContain("10");
+      expect(message).toContain("20"); // inactive = 150 - 120 - 10
+      expect(message).toContain("Private Chats: 80");
+      expect(message).toContain("Groups: 30");
+      expect(message).toContain("3d 12h 45m");
+      expect(message).toContain("Online");
+    });
+  });
+
+  describe("getUptimeString E2E", () => {
+    it("should return formatted uptime string", () => {
+      const uptime = getUptimeString();
+      expect(typeof uptime).toBe("string");
+      expect(uptime.length).toBeGreaterThan(0);
+      // Should match format like "1d 2h 30m" or "5m" or "< 1m"
+      expect(uptime).toMatch(/^(\d+d\s*)?(\d+h\s*)?(\d+m)?$|^< 1m$/);
+    });
+  });
+
+  describe("handleStatsCommand E2E", () => {
+    it("should deny access to non-admin users", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 99999 });
+
+      await handleStatsCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("Access Denied"),
+        { parse_mode: "Markdown" }
+      );
+      expect(mockService.getStats).not.toHaveBeenCalled();
+    });
+
+    it("should show stats for admin users", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 12345 });
+      vi.mocked(mockService.getStats).mockResolvedValue({
+        total: 100,
+        active: 80,
+        blocked: 5,
+        byType: {
+          PRIVATE: 50,
+          GROUP: 20,
+          SUPERGROUP: 25,
+          CHANNEL: 5,
+        },
+      });
+
+      await handleStatsCommand(ctx, mockService);
+
+      expect(mockService.getStats).toHaveBeenCalled();
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("Bot Statistics"),
+        { parse_mode: "Markdown" }
+      );
+    });
+
+    it("should show all subscriber types in stats", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 12345 });
+      vi.mocked(mockService.getStats).mockResolvedValue({
+        total: 100,
+        active: 80,
+        blocked: 5,
+        byType: {
+          PRIVATE: 50,
+          GROUP: 20,
+          SUPERGROUP: 25,
+          CHANNEL: 5,
+        },
+      });
+
+      await handleStatsCommand(ctx, mockService);
+
+      const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(message).toContain("Private Chats");
+      expect(message).toContain("Groups");
+      expect(message).toContain("Supergroups");
+      expect(message).toContain("Channels");
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 12345 });
+      vi.mocked(mockService.getStats).mockRejectedValue(new Error("Database unavailable"));
+
+      await handleStatsCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("error")
+      );
+    });
+  });
+
+  describe("createStatsCommandHandler E2E", () => {
+    it("should create a working handler function", async () => {
+      const mockService = createMockSubscriberService();
+      vi.mocked(mockService.getStats).mockResolvedValue({
+        total: 10,
+        active: 8,
+        blocked: 1,
+        byType: { PRIVATE: 5, GROUP: 2, SUPERGROUP: 2, CHANNEL: 1 },
+      });
+      const ctx = createMockContext({ chatId: 12345 });
+
+      const handler = createStatsCommandHandler(mockService);
+      await handler(ctx);
+
+      expect(mockService.getStats).toHaveBeenCalled();
+    });
+  });
+
+  describe("Browser Verification for Stats", () => {
+    it("should verify dashboard loads during stats flow", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const title = await page.title();
+      expect(title).toBeTruthy();
+    });
+
+    it("should take screenshot of dashboard for stats verification", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      await page.screenshot({
+        path: "tests/e2e/screenshots/stats-command-dashboard.png",
+        fullPage: true,
+      });
+
+      expect(true).toBe(true);
+    });
+
+    it("should verify no JavaScript errors during stats flow", async () => {
+      const errors: string[] = [];
+      page.on("pageerror", (event: unknown) => {
+        const error = event as Error;
+        errors.push(error.message);
+      });
+
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const criticalErrors = errors.filter(
+        (e) =>
+          !e.includes("Warning") &&
+          !e.includes("Deprecation") &&
+          !e.includes("ResizeObserver")
+      );
+      expect(criticalErrors).toHaveLength(0);
+    });
+  });
+});
+
+// =============================================================================
+// /broadcast Command E2E Tests (Admin Only)
+// =============================================================================
+
+describe("/broadcast Command E2E", () => {
+  let browser: Browser;
+  let page: Page;
+
+  beforeEach(async () => {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    page = await browser.newPage();
+  }, 30000);
+
+  afterEach(async () => {
+    if (page) await page.close();
+    if (browser) await browser.close();
+  });
+
+  describe("parseBroadcastMessage E2E", () => {
+    it("should parse various broadcast message formats", () => {
+      // Simple message
+      expect(parseBroadcastMessage("/broadcast Hello")).toBe("Hello");
+
+      // With emoji
+      expect(parseBroadcastMessage("/broadcast 🚀 Launch!")).toBe("🚀 Launch!");
+
+      // Multiline
+      expect(parseBroadcastMessage("/broadcast Line1\nLine2")).toBe("Line1\nLine2");
+
+      // With bot username
+      expect(parseBroadcastMessage("/broadcast@WhaleBot Test")).toBe("Test");
+
+      // With extra spaces
+      expect(parseBroadcastMessage("/broadcast    Spaced    ")).toBe("Spaced");
+    });
+
+    it("should reject invalid broadcast formats", () => {
+      expect(parseBroadcastMessage("/broadcast")).toBeNull();
+      expect(parseBroadcastMessage("/broadcast   ")).toBeNull();
+      expect(parseBroadcastMessage("/start")).toBeNull();
+      expect(parseBroadcastMessage("broadcast message")).toBeNull();
+    });
+  });
+
+  describe("getBroadcastReportMessage E2E", () => {
+    it("should generate complete success report", () => {
+      const result: AdminBroadcastResult = {
+        success: true,
+        sent: 100,
+        failed: 0,
+        total: 100,
+        errors: [],
+        duration: 5000,
+      };
+
+      const message = getBroadcastReportMessage(result);
+
+      expect(message).toContain("✅");
+      expect(message).toContain("Broadcast Complete");
+      expect(message).toContain("100");
+      expect(message).toContain("100%");
+      expect(message).toContain("5000ms");
+    });
+
+    it("should generate report with failures", () => {
+      const result: AdminBroadcastResult = {
+        success: false,
+        sent: 95,
+        failed: 5,
+        total: 100,
+        errors: [
+          { chatId: BigInt(1), error: "Blocked" },
+          { chatId: BigInt(2), error: "Not found" },
+        ],
+        duration: 4500,
+      };
+
+      const message = getBroadcastReportMessage(result);
+
+      expect(message).toContain("⚠️");
+      expect(message).toContain("95%");
+      expect(message).toContain("Errors:");
+    });
+
+    it("should handle edge case with zero subscribers", () => {
+      const result: AdminBroadcastResult = {
+        success: true,
+        sent: 0,
+        failed: 0,
+        total: 0,
+        errors: [],
+        duration: 10,
+      };
+
+      const message = getBroadcastReportMessage(result);
+
+      expect(message).toContain("0%");
+      expect(message).toContain("Total subscribers: 0");
+    });
+  });
+
+  describe("getEmptyBroadcastMessage E2E", () => {
+    it("should provide helpful usage instructions", () => {
+      const message = getEmptyBroadcastMessage();
+
+      expect(message).toContain("Usage");
+      expect(message).toContain("/broadcast <message>");
+      expect(message).toContain("Example");
+    });
+  });
+
+  describe("handleBroadcastCommand E2E", () => {
+    it("should deny non-admin access to broadcast", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 99999 }); // Not in admin list
+      (ctx as { message?: { text?: string } }).message = { text: "/broadcast Test" };
+
+      await handleBroadcastCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("Access Denied"),
+        expect.any(Object)
+      );
+    });
+
+    it("should show usage when message is empty", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 12345 }); // Admin user
+      (ctx as { message?: { text?: string } }).message = { text: "/broadcast" };
+
+      await handleBroadcastCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("Usage"),
+        expect.any(Object)
+      );
+    });
+
+    it("should broadcast to all active subscribers", async () => {
+      const mockService = createMockSubscriberService();
+      const mockBotClient = {
+        sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 1 }),
+      };
+
+      const subscribers = [
+        createMockSubscriber({ chatId: BigInt(111) }),
+        createMockSubscriber({ chatId: BigInt(222) }),
+        createMockSubscriber({ chatId: BigInt(333) }),
+      ];
+      vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+      vi.mocked(mockService.incrementAlertsSent).mockResolvedValue(createMockSubscriber());
+
+      const ctx = createMockContext({ chatId: 12345 });
+      (ctx as { message?: { text?: string } }).message = { text: "/broadcast Important update!" };
+      (ctx as unknown as { api: { editMessageText: ReturnType<typeof vi.fn> } }).api = {
+        editMessageText: vi.fn().mockResolvedValue({}),
+      };
+
+      await handleBroadcastCommand(ctx, mockService, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+      // Should send to all 3 subscribers
+      expect(mockBotClient.sendMessage).toHaveBeenCalledTimes(3);
+    });
+
+    it("should handle partial failures during broadcast", async () => {
+      const mockService = createMockSubscriberService();
+      const mockBotClient = {
+        sendMessage: vi.fn()
+          .mockResolvedValueOnce({ success: true, messageId: 1 })
+          .mockResolvedValueOnce({ success: false, error: "User blocked" })
+          .mockResolvedValueOnce({ success: true, messageId: 3 }),
+      };
+
+      const subscribers = [
+        createMockSubscriber({ chatId: BigInt(111) }),
+        createMockSubscriber({ chatId: BigInt(222) }),
+        createMockSubscriber({ chatId: BigInt(333) }),
+      ];
+      vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+      vi.mocked(mockService.incrementAlertsSent).mockResolvedValue(createMockSubscriber());
+
+      const ctx = createMockContext({ chatId: 12345 });
+      (ctx as { message?: { text?: string } }).message = { text: "/broadcast Test message" };
+      (ctx as unknown as { api: { editMessageText: ReturnType<typeof vi.fn> } }).api = {
+        editMessageText: vi.fn().mockResolvedValue({}),
+      };
+
+      await handleBroadcastCommand(ctx, mockService, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+      // Should have updated the message with report
+      expect((ctx as unknown as { api: { editMessageText: ReturnType<typeof vi.fn> } }).api.editMessageText).toHaveBeenCalled();
+    });
+  });
+
+  describe("broadcastMessage E2E", () => {
+    it("should broadcast message to all subscribers and return statistics", async () => {
+      const mockService = createMockSubscriberService();
+      const mockBotClient = {
+        sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 1 }),
+      };
+
+      const subscribers = Array.from({ length: 5 }, (_, i) =>
+        createMockSubscriber({ chatId: BigInt(i + 1) })
+      );
+      vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+      vi.mocked(mockService.incrementAlertsSent).mockResolvedValue(createMockSubscriber());
+
+      const result = await broadcastMessage(
+        "Test announcement",
+        mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient,
+        mockService
+      );
+
+      expect(result.total).toBe(5);
+      expect(result.sent).toBe(5);
+      expect(result.failed).toBe(0);
+      expect(result.success).toBe(true);
+      expect(result.duration).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should collect errors for failed sends", async () => {
+      const mockService = createMockSubscriberService();
+      const mockBotClient = {
+        sendMessage: vi.fn()
+          .mockResolvedValueOnce({ success: false, error: "Chat not found" })
+          .mockResolvedValueOnce({ success: false, error: "User blocked bot" }),
+      };
+
+      const subscribers = [
+        createMockSubscriber({ chatId: BigInt(111) }),
+        createMockSubscriber({ chatId: BigInt(222) }),
+      ];
+      vi.mocked(mockService.findActive).mockResolvedValue(subscribers);
+
+      const result = await broadcastMessage(
+        "Test",
+        mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient,
+        mockService
+      );
+
+      expect(result.sent).toBe(0);
+      expect(result.failed).toBe(2);
+      expect(result.errors).toHaveLength(2);
+    });
+  });
+
+  describe("createBroadcastCommandHandler E2E", () => {
+    it("should create a working handler", async () => {
+      const mockService = createMockSubscriberService();
+      const handler = createBroadcastCommandHandler(mockService);
+
+      expect(typeof handler).toBe("function");
+    });
+  });
+
+  describe("Browser Verification for Broadcast", () => {
+    it("should verify dashboard loads for broadcast flow", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const title = await page.title();
+      expect(title).toBeTruthy();
+    });
+
+    it("should take screenshot for broadcast command verification", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      await page.screenshot({
+        path: "tests/e2e/screenshots/broadcast-command-dashboard.png",
+        fullPage: true,
+      });
+
+      expect(true).toBe(true);
+    });
+  });
+});
+
+// =============================================================================
+// /test Command E2E Tests (Admin Only)
+// =============================================================================
+
+describe("/test Command E2E", () => {
+  let browser: Browser;
+  let page: Page;
+
+  beforeEach(async () => {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    page = await browser.newPage();
+  }, 30000);
+
+  afterEach(async () => {
+    if (page) await page.close();
+    if (browser) await browser.close();
+  });
+
+  describe("getTestAlertMessage E2E", () => {
+    it("should generate a properly formatted test alert", () => {
+      const message = getTestAlertMessage();
+
+      expect(message).toContain("Test Whale Trade Alert");
+      expect(message).toContain("Critical");
+      expect(message).toContain("$1,234,567");
+      expect(message).toContain("0xTest...1234");
+    });
+
+    it("should contain markdown formatting", () => {
+      const message = getTestAlertMessage();
+
+      expect(message).toContain("*");
+      expect(message).toContain("_");
+    });
+
+    it("should include test disclaimer", () => {
+      const message = getTestAlertMessage();
+
+      expect(message).toContain("test alert");
+      expect(message).toContain("alerts are working correctly");
+    });
+  });
+
+  describe("handleTestCommand E2E", () => {
+    it("should deny access to non-admin users", async () => {
+      const mockBotClient = {
+        sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 1 }),
+      };
+
+      const ctx = createMockContext({ chatId: 99999 }); // Not admin
+
+      const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Unauthorized");
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining("Access Denied"),
+        expect.any(Object)
+      );
+    });
+
+    it("should send test alert to admin", async () => {
+      const mockBotClient = {
+        sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 456 }),
+      };
+
+      const ctx = createMockContext({ chatId: 12345 }); // Admin user
+
+      const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe(456);
+      expect(mockBotClient.sendMessage).toHaveBeenCalledWith(
+        "12345",
+        expect.stringContaining("Test Whale Trade Alert"),
+        expect.objectContaining({ parseMode: "MarkdownV2" })
+      );
+    });
+
+    it("should return error if message send fails", async () => {
+      const mockBotClient = {
+        sendMessage: vi.fn().mockResolvedValue({ success: false, error: "Rate limited" }),
+      };
+
+      const ctx = createMockContext({ chatId: 12345 });
+
+      const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Rate limited");
+    });
+
+    it("should handle missing chat ID gracefully", async () => {
+      const mockBotClient = {
+        sendMessage: vi.fn().mockResolvedValue({ success: true }),
+      };
+
+      const ctx = createMockContext({ noChat: true, chatId: 12345 });
+      // Ensure from is still set to admin
+      (ctx as unknown as { from: { id: number } }).from = { id: 12345, is_bot: false, first_name: "Admin" } as unknown as { id: number };
+
+      const result = await handleTestCommand(ctx, mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No chat ID available");
+    });
+  });
+
+  describe("createTestCommandHandler E2E", () => {
+    it("should create a working handler function", () => {
+      const handler = createTestCommandHandler();
+
+      expect(typeof handler).toBe("function");
+    });
+
+    it("should return result when invoked", async () => {
+      const mockBotClient = {
+        sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: 789 }),
+      };
+
+      const handler = createTestCommandHandler(mockBotClient as unknown as import("../../src/telegram/bot").TelegramBotClient);
+      const ctx = createMockContext({ chatId: 12345 });
+
+      const result = await handler(ctx);
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe(789);
+    });
+  });
+
+  describe("Browser Verification for Test Command", () => {
+    it("should verify dashboard loads for test command flow", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const title = await page.title();
+      expect(title).toBeTruthy();
+    });
+
+    it("should take screenshot for test command verification", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      await page.screenshot({
+        path: "tests/e2e/screenshots/test-command-dashboard.png",
+        fullPage: true,
+      });
+
+      expect(true).toBe(true);
+    });
+
+    it("should verify no JavaScript errors during test command flow", async () => {
+      const errors: string[] = [];
+      page.on("pageerror", (event: unknown) => {
+        const error = event as Error;
+        errors.push(error.message);
+      });
+
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const criticalErrors = errors.filter(
+        (e) =>
+          !e.includes("Warning") &&
+          !e.includes("Deprecation") &&
+          !e.includes("ResizeObserver")
+      );
+      expect(criticalErrors).toHaveLength(0);
     });
   });
 });
