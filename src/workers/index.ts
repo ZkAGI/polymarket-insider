@@ -12,3 +12,13 @@ export {
   type IngestionHealth,
   type CycleResult,
 } from "./ingestion-worker";
+
+export {
+  DetectionTrigger,
+  createDetectionTrigger,
+  getSharedDetectionTrigger,
+  setSharedDetectionTrigger,
+  resetSharedDetectionTrigger,
+  type DetectionTriggerConfig,
+  type DetectionCycleResult,
+} from "./detection-trigger";

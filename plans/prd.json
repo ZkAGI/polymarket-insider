@@ -4135,7 +4135,8 @@
   "priority": 202,
   "name": "Post-ingestion detection trigger",
   "description": "Trigger all detection and scoring pipelines after each successful ingestion cycle.",
-  "passes": false,
+  "passes": true,
+  "completed_at": "2026-01-14T00:00:00Z",
   "steps": [
     "Run fresh wallet detectors after trade ingestion",
     "Run volume and whale detectors",

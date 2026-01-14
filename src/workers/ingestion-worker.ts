@@ -24,6 +24,12 @@ import { TradeService, createTradeService } from "../db/trades";
 import { WalletService, createWalletService } from "../db/wallets";
 import { GammaClient, createGammaClient } from "../api/gamma";
 import { ClobClient, createClobClient } from "../api/clob";
+import {
+  DetectionTrigger,
+  createDetectionTrigger,
+  type DetectionTriggerConfig,
+  type DetectionCycleResult,
+} from "./detection-trigger";
 
 /**
  * Configuration for the ingestion worker
@@ -67,6 +73,12 @@ export interface IngestionWorkerConfig {
 
   /** Enable debug logging */
   debug?: boolean;
+
+  /** Whether to run detection after each ingestion cycle (default: true) */
+  enableDetection?: boolean;
+
+  /** Detection trigger configuration */
+  detectionConfig?: DetectionTriggerConfig;
 }
 
 /**
@@ -137,6 +149,9 @@ export interface CycleResult {
 
   /** Timestamp of cycle completion */
   completedAt: Date;
+
+  /** Detection results from post-ingestion detection (if enabled) */
+  detection?: DetectionCycleResult;
 }
 
 /**
@@ -155,6 +170,7 @@ export class IngestionWorker extends EventEmitter {
       | "maxRetries"
       | "workerId"
       | "debug"
+      | "enableDetection"
     >
   >;
   private readonly prisma: PrismaClient;
@@ -164,6 +180,7 @@ export class IngestionWorker extends EventEmitter {
   private readonly tradeService: TradeService;
   private readonly walletService: WalletService;
   private readonly logger: (message: string, data?: Record<string, unknown>) => void;
+  private readonly detectionTrigger: DetectionTrigger | null;
 
   private isRunning = false;
   private isIngesting = false;
@@ -202,6 +219,7 @@ export class IngestionWorker extends EventEmitter {
       maxRetries: config.maxRetries ?? 3,
       workerId: config.workerId ?? `ingestion-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       debug: config.debug ?? false,
+      enableDetection: config.enableDetection ?? true,
     };
 
     // Initialize Prisma client inside worker (independent of app)
@@ -213,6 +231,15 @@ export class IngestionWorker extends EventEmitter {
     this.marketService = createMarketService({ prisma: this.prisma });
     this.tradeService = createTradeService({ prisma: this.prisma });
     this.walletService = createWalletService({ prisma: this.prisma });
+
+    // Initialize detection trigger if enabled
+    this.detectionTrigger = this.config.enableDetection
+      ? createDetectionTrigger({
+          ...config.detectionConfig,
+          prisma: this.prisma,
+          debug: config.debug,
+        })
+      : null;
 
     this.logger = config.logger ?? this.defaultLogger.bind(this);
   }
@@ -394,6 +421,38 @@ export class IngestionWorker extends EventEmitter {
         walletsCreated: result.walletsCreated,
         durationMs: result.durationMs,
       });
+
+      // 3. Run post-ingestion detection (INGEST-DETECT-001)
+      if (this.detectionTrigger && (result.tradesIngested > 0 || result.walletsCreated > 0)) {
+        try {
+          this.logger("Running post-ingestion detection");
+          const detectionResult = await this.detectionTrigger.runDetectionCycle();
+          result.detection = detectionResult;
+
+          this.logger("Detection cycle completed", {
+            walletsProcessed: detectionResult.walletsProcessed,
+            alertsGenerated: detectionResult.freshWalletAlerts + detectionResult.volumeAlerts,
+            walletsFlagged: detectionResult.walletsFlagged,
+            potentialInsiders: detectionResult.potentialInsiders,
+          });
+
+          // Forward detection events
+          if (detectionResult.freshWalletAlerts > 0) {
+            this.emit("detection:fresh_wallet_alerts", { count: detectionResult.freshWalletAlerts });
+          }
+          if (detectionResult.volumeAlerts > 0) {
+            this.emit("detection:volume_alerts", { count: detectionResult.volumeAlerts });
+          }
+          if (detectionResult.potentialInsiders > 0) {
+            this.emit("detection:potential_insiders", { count: detectionResult.potentialInsiders });
+          }
+        } catch (detectionError) {
+          // Log detection error but don't fail the cycle
+          this.logger("Detection cycle failed (non-fatal)", {
+            error: detectionError instanceof Error ? detectionError.message : String(detectionError),
+          });
+        }
+      }
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error);
       result.durationMs = Date.now() - startTime;
