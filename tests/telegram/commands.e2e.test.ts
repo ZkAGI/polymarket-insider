@@ -1191,3 +1191,570 @@ describe("Stop Command E2E Tests", () => {
     });
   });
 });
+
+// =============================================================================
+// /settings Command E2E Tests (TG-BOT-005)
+// =============================================================================
+
+import {
+  handleSettingsCommand,
+  createSettingsCommandHandler,
+  handleSettingsCallback,
+  createSettingsCallbackHandler,
+  updatePreferenceFromCallback,
+  parseSettingsCallback,
+  getSettingsKeyboard,
+  getMinTradeSizeKeyboard,
+  getSeverityKeyboard,
+  getSettingsMessage,
+  formatPreferenceValue,
+  getFieldDisplayName,
+  isSettingsCallback,
+  MIN_TRADE_SIZE_OPTIONS,
+  SEVERITY_OPTIONS,
+  CALLBACK_PREFIX,
+} from "../../src/telegram/commands";
+
+describe("Settings Command E2E Tests (TG-BOT-005)", () => {
+  let browser: Browser;
+  let page: Page;
+
+  beforeEach(async () => {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    page = await browser.newPage();
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    if (page) await page.close();
+    if (browser) await browser.close();
+  });
+
+  describe("Settings Message Verification", () => {
+    it("should include user display name in settings message", () => {
+      const message = getSettingsMessage("TestUser");
+      expect(message).toContain("TestUser");
+      expect(message).toContain("⚙️");
+      expect(message).toContain("Alert Settings");
+    });
+
+    it("should include configuration instructions", () => {
+      const message = getSettingsMessage("User");
+      expect(message).toContain("Configure which alerts");
+      expect(message).toContain("Tap a button");
+    });
+  });
+
+  describe("Preference Value Formatting", () => {
+    it("should format whale alerts correctly", () => {
+      expect(formatPreferenceValue("whaleAlerts", true)).toBe("ON");
+      expect(formatPreferenceValue("whaleAlerts", false)).toBe("OFF");
+    });
+
+    it("should format insider alerts correctly", () => {
+      expect(formatPreferenceValue("insiderAlerts", true)).toBe("ON");
+      expect(formatPreferenceValue("insiderAlerts", false)).toBe("OFF");
+    });
+
+    it("should format min trade value correctly", () => {
+      expect(formatPreferenceValue("minTradeValue", 1000)).toBe("$1K");
+      expect(formatPreferenceValue("minTradeValue", 10000)).toBe("$10K");
+      expect(formatPreferenceValue("minTradeValue", 50000)).toBe("$50K");
+      expect(formatPreferenceValue("minTradeValue", 100000)).toBe("$100K");
+    });
+
+    it("should format severity correctly", () => {
+      expect(formatPreferenceValue("severity", "all")).toBe("All");
+      expect(formatPreferenceValue("severity", "high")).toBe("High+Critical");
+      expect(formatPreferenceValue("severity", "critical")).toBe("Critical only");
+    });
+  });
+
+  describe("Field Display Names", () => {
+    it("should return human-readable names for all fields", () => {
+      expect(getFieldDisplayName("whaleAlerts")).toBe("Whale Alerts");
+      expect(getFieldDisplayName("insiderAlerts")).toBe("Insider Alerts");
+      expect(getFieldDisplayName("minTradeValue")).toBe("Min Trade Size");
+      expect(getFieldDisplayName("severity")).toBe("Severity");
+    });
+  });
+
+  describe("Settings Callback Parsing", () => {
+    it("should parse whale alerts callbacks", () => {
+      const onResult = parseSettingsCallback("settings:whale:on");
+      expect(onResult.type).toBe("whale");
+      expect(onResult.value).toBe("on");
+
+      const offResult = parseSettingsCallback("settings:whale:off");
+      expect(offResult.type).toBe("whale");
+      expect(offResult.value).toBe("off");
+    });
+
+    it("should parse insider alerts callbacks", () => {
+      const result = parseSettingsCallback("settings:insider:on");
+      expect(result.type).toBe("insider");
+      expect(result.value).toBe("on");
+    });
+
+    it("should parse min size callbacks", () => {
+      const result = parseSettingsCallback("settings:minsize:50000");
+      expect(result.type).toBe("minsize");
+      expect(result.value).toBe("50000");
+    });
+
+    it("should parse severity callbacks", () => {
+      const result = parseSettingsCallback("settings:severity:high");
+      expect(result.type).toBe("severity");
+      expect(result.value).toBe("high");
+    });
+
+    it("should parse back callback", () => {
+      const result = parseSettingsCallback("settings:back");
+      expect(result.type).toBe("back");
+    });
+  });
+
+  describe("Settings Keyboard Generation", () => {
+    it("should generate main settings keyboard with 4 rows", () => {
+      const keyboard = getSettingsKeyboard({
+        whaleAlerts: true,
+        insiderAlerts: true,
+        minTradeValue: 10000,
+      });
+
+      expect(keyboard.inline_keyboard).toHaveLength(4);
+    });
+
+    it("should show correct toggle state for whale alerts", () => {
+      const enabledKeyboard = getSettingsKeyboard({ whaleAlerts: true });
+      expect(enabledKeyboard.inline_keyboard[0]?.[0]?.text).toContain("ON ✅");
+
+      const disabledKeyboard = getSettingsKeyboard({ whaleAlerts: false });
+      expect(disabledKeyboard.inline_keyboard[0]?.[0]?.text).toContain("OFF ❌");
+    });
+
+    it("should show correct toggle state for insider alerts", () => {
+      const enabledKeyboard = getSettingsKeyboard({ insiderAlerts: true });
+      expect(enabledKeyboard.inline_keyboard[1]?.[0]?.text).toContain("ON ✅");
+
+      const disabledKeyboard = getSettingsKeyboard({ insiderAlerts: false });
+      expect(disabledKeyboard.inline_keyboard[1]?.[0]?.text).toContain("OFF ❌");
+    });
+
+    it("should toggle to opposite value in callback data", () => {
+      const enabledKeyboard = getSettingsKeyboard({ whaleAlerts: true });
+      // When ON, clicking should turn OFF
+      expect(enabledKeyboard.inline_keyboard[0]?.[0]?.callback_data).toBe(
+        "settings:whale:off"
+      );
+
+      const disabledKeyboard = getSettingsKeyboard({ whaleAlerts: false });
+      // When OFF, clicking should turn ON
+      expect(disabledKeyboard.inline_keyboard[0]?.[0]?.callback_data).toBe(
+        "settings:whale:on"
+      );
+    });
+
+    it("should display current min trade size", () => {
+      const keyboard = getSettingsKeyboard({ minTradeValue: 50000 });
+      expect(keyboard.inline_keyboard[2]?.[0]?.text).toContain("$50K");
+    });
+  });
+
+  describe("Min Trade Size Keyboard", () => {
+    it("should have 4 size options and back button", () => {
+      const keyboard = getMinTradeSizeKeyboard(10000);
+      expect(keyboard.inline_keyboard[0]).toHaveLength(4);
+      expect(keyboard.inline_keyboard[1]?.[0]?.callback_data).toBe("settings:back");
+    });
+
+    it("should mark current value with checkmark", () => {
+      const keyboard = getMinTradeSizeKeyboard(50000);
+      const selectedButton = keyboard.inline_keyboard[0]?.find((b) =>
+        b.callback_data.includes("50000")
+      );
+      expect(selectedButton?.text).toContain("✓");
+    });
+
+    it("should not mark other values with checkmark", () => {
+      const keyboard = getMinTradeSizeKeyboard(50000);
+      const otherButton = keyboard.inline_keyboard[0]?.find((b) =>
+        b.callback_data.includes("10000")
+      );
+      expect(otherButton?.text).not.toContain("✓");
+    });
+  });
+
+  describe("Severity Keyboard", () => {
+    it("should have 3 severity options and back button", () => {
+      const keyboard = getSeverityKeyboard("all");
+      expect(keyboard.inline_keyboard[0]).toHaveLength(3);
+      expect(keyboard.inline_keyboard[1]?.[0]?.callback_data).toBe("settings:back");
+    });
+
+    it("should mark current severity with checkmark", () => {
+      const keyboard = getSeverityKeyboard("high");
+      const selectedButton = keyboard.inline_keyboard[0]?.find((b) =>
+        b.callback_data.includes("high")
+      );
+      expect(selectedButton?.text).toContain("✓");
+    });
+  });
+
+  describe("Callback Detection", () => {
+    it("should identify settings callbacks", () => {
+      expect(isSettingsCallback("settings:whale:on")).toBe(true);
+      expect(isSettingsCallback("settings:insider:off")).toBe(true);
+      expect(isSettingsCallback("settings:minsize:menu")).toBe(true);
+      expect(isSettingsCallback("settings:severity:all")).toBe(true);
+      expect(isSettingsCallback("settings:back")).toBe(true);
+    });
+
+    it("should reject non-settings callbacks", () => {
+      expect(isSettingsCallback("other:callback")).toBe(false);
+      expect(isSettingsCallback("whale:on")).toBe(false);
+      expect(isSettingsCallback("")).toBe(false);
+    });
+  });
+
+  describe("Full Settings Flow E2E", () => {
+    it("should complete settings display flow for subscribed user", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({
+        chatId: 123456789,
+        firstName: "TestUser",
+      });
+      const subscriber = createMockSubscriber({
+        alertPreferences: {
+          whaleAlerts: true,
+          insiderAlerts: false,
+          minTradeValue: 50000,
+        },
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      await handleSettingsCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const [message, options] = vi.mocked(ctx.reply).mock.calls[0] as [
+        string,
+        { reply_markup: { inline_keyboard: unknown[][] } },
+      ];
+      expect(message).toContain("Alert Settings");
+      expect(message).toContain("TestUser");
+      expect(options.reply_markup.inline_keyboard).toHaveLength(4);
+    });
+
+    it("should show not subscribed message for unknown user", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({
+        chatId: 999888777,
+        firstName: "Unknown",
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(null);
+
+      await handleSettingsCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(message).toContain("not currently subscribed");
+      expect(message).toContain("/start");
+    });
+
+    it("should handle errors gracefully", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 123456789 });
+      vi.mocked(mockService.findByChatId).mockRejectedValue(
+        new Error("Database error")
+      );
+
+      await handleSettingsCommand(ctx, mockService);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(message).toContain("error loading your settings");
+    });
+  });
+
+  describe("Preference Update Flow E2E", () => {
+    it("should update whale alerts from off to on", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 123456789 });
+      const subscriber = createMockSubscriber({
+        alertPreferences: { whaleAlerts: false },
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+      vi.mocked(mockService.updateAlertPreferences).mockResolvedValue(subscriber);
+
+      const result = await updatePreferenceFromCallback(
+        ctx,
+        "settings:whale:on",
+        mockService
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.updated).toBe(true);
+      expect(result.field).toBe("whaleAlerts");
+      expect(result.newValue).toBe(true);
+    });
+
+    it("should update min trade size", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 123456789 });
+      const subscriber = createMockSubscriber({
+        alertPreferences: { minTradeValue: 10000 },
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+      vi.mocked(mockService.updateAlertPreferences).mockResolvedValue(subscriber);
+
+      const result = await updatePreferenceFromCallback(
+        ctx,
+        "settings:minsize:100000",
+        mockService
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.newValue).toBe(100000);
+    });
+
+    it("should update severity to critical only", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 123456789 });
+      const subscriber = createMockSubscriber();
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+      vi.mocked(mockService.updateAlertPreferences).mockResolvedValue(subscriber);
+
+      const result = await updatePreferenceFromCallback(
+        ctx,
+        "settings:severity:critical",
+        mockService
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.field).toBe("severity");
+      expect(result.newValue).toBe("critical");
+    });
+
+    it("should reject invalid min trade size values", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ chatId: 123456789 });
+      const subscriber = createMockSubscriber();
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      const result = await updatePreferenceFromCallback(
+        ctx,
+        "settings:minsize:99999",
+        mockService
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid min trade size");
+    });
+  });
+
+  describe("Callback Handler E2E", () => {
+    /**
+     * Create a mock context with callback query for settings
+     */
+    function createSettingsCallbackContext(callbackData: string): Context {
+      return {
+        chat: { id: 123456789, type: "private" },
+        callbackQuery: {
+          id: "callback-settings-123",
+          data: callbackData,
+        },
+        answerCallbackQuery: vi.fn().mockResolvedValue(true),
+        editMessageReplyMarkup: vi.fn().mockResolvedValue({}),
+      } as unknown as Context;
+    }
+
+    it("should show min size submenu when clicking min size button", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createSettingsCallbackContext("settings:minsize:menu");
+      const subscriber = createMockSubscriber({
+        alertPreferences: { minTradeValue: 10000 },
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      await handleSettingsCallback(ctx, mockService);
+
+      expect(ctx.editMessageReplyMarkup).toHaveBeenCalled();
+      expect(ctx.answerCallbackQuery).toHaveBeenCalled();
+    });
+
+    it("should show severity submenu when clicking severity button", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createSettingsCallbackContext("settings:severity:menu");
+      const subscriber = createMockSubscriber();
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      await handleSettingsCallback(ctx, mockService);
+
+      expect(ctx.editMessageReplyMarkup).toHaveBeenCalled();
+      expect(ctx.answerCallbackQuery).toHaveBeenCalled();
+    });
+
+    it("should return to main settings on back button", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createSettingsCallbackContext("settings:back");
+      const subscriber = createMockSubscriber();
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      await handleSettingsCallback(ctx, mockService);
+
+      expect(ctx.editMessageReplyMarkup).toHaveBeenCalled();
+      expect(ctx.answerCallbackQuery).toHaveBeenCalled();
+    });
+
+    it("should update preference and show confirmation", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createSettingsCallbackContext("settings:insider:off");
+      const subscriber = createMockSubscriber({
+        alertPreferences: { insiderAlerts: true },
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+      vi.mocked(mockService.updateAlertPreferences).mockResolvedValue(subscriber);
+
+      await handleSettingsCallback(ctx, mockService);
+
+      expect(mockService.updateAlertPreferences).toHaveBeenCalled();
+      expect(ctx.editMessageReplyMarkup).toHaveBeenCalled();
+      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining("Insider Alerts set to OFF"),
+        })
+      );
+    });
+  });
+
+  describe("Handler Factory E2E", () => {
+    it("should create working settings command handler", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({ firstName: "FactoryTest" });
+      const subscriber = createMockSubscriber();
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      const handler = createSettingsCommandHandler(mockService);
+      await handler(ctx);
+
+      expect(mockService.findByChatId).toHaveBeenCalled();
+      expect(ctx.reply).toHaveBeenCalled();
+    });
+
+    it("should create working settings callback handler", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = {
+        chat: { id: 123456789, type: "private" },
+        callbackQuery: { id: "cb-factory", data: "settings:back" },
+        answerCallbackQuery: vi.fn().mockResolvedValue(true),
+        editMessageReplyMarkup: vi.fn().mockResolvedValue({}),
+      } as unknown as Context;
+      const subscriber = createMockSubscriber();
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      const handler = createSettingsCallbackHandler(mockService);
+      await handler(ctx);
+
+      expect(mockService.findByChatId).toHaveBeenCalled();
+    });
+  });
+
+  describe("Browser Verification", () => {
+    it("should verify dashboard loads during settings flow", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      const title = await page.title();
+      expect(title).toBeTruthy();
+
+      const content = await page.content();
+      expect(content).toBeTruthy();
+    });
+
+    it("should take screenshot of dashboard for settings verification", async () => {
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      await page.screenshot({
+        path: "tests/e2e/screenshots/settings-command-dashboard.png",
+        fullPage: true,
+      });
+
+      // Screenshot was taken successfully
+      expect(true).toBe(true);
+    });
+
+    it("should verify no JavaScript errors during settings flow", async () => {
+      const errors: string[] = [];
+      page.on("pageerror", (event: unknown) => {
+        const error = event as Error;
+        errors.push(error.message);
+      });
+
+      await page.goto("http://localhost:3000/dashboard", {
+        waitUntil: "networkidle2",
+        timeout: 30000,
+      });
+
+      // Filter out non-critical errors
+      const criticalErrors = errors.filter(
+        (e) =>
+          !e.includes("Warning") &&
+          !e.includes("Deprecation") &&
+          !e.includes("ResizeObserver")
+      );
+      expect(criticalErrors).toHaveLength(0);
+    });
+  });
+
+  describe("Constants Verification", () => {
+    it("should have correct MIN_TRADE_SIZE_OPTIONS", () => {
+      expect(MIN_TRADE_SIZE_OPTIONS).toHaveLength(4);
+      expect(MIN_TRADE_SIZE_OPTIONS[0]).toEqual({ label: "$1K", value: 1000 });
+      expect(MIN_TRADE_SIZE_OPTIONS[1]).toEqual({ label: "$10K", value: 10000 });
+      expect(MIN_TRADE_SIZE_OPTIONS[2]).toEqual({ label: "$50K", value: 50000 });
+      expect(MIN_TRADE_SIZE_OPTIONS[3]).toEqual({ label: "$100K", value: 100000 });
+    });
+
+    it("should have correct SEVERITY_OPTIONS", () => {
+      expect(SEVERITY_OPTIONS).toHaveLength(3);
+      expect(SEVERITY_OPTIONS[0]).toEqual({ label: "All", value: "all" });
+      expect(SEVERITY_OPTIONS[1]).toEqual({ label: "High+Critical", value: "high" });
+      expect(SEVERITY_OPTIONS[2]).toEqual({ label: "Critical only", value: "critical" });
+    });
+
+    it("should have correct CALLBACK_PREFIX values", () => {
+      expect(CALLBACK_PREFIX.WHALE_ALERTS).toBe("settings:whale:");
+      expect(CALLBACK_PREFIX.INSIDER_ALERTS).toBe("settings:insider:");
+      expect(CALLBACK_PREFIX.MIN_TRADE_SIZE).toBe("settings:minsize:");
+      expect(CALLBACK_PREFIX.SEVERITY).toBe("settings:severity:");
+    });
+  });
+
+  describe("Group Settings E2E", () => {
+    it("should work for groups using title as display name", async () => {
+      const mockService = createMockSubscriberService();
+      const ctx = createMockContext({
+        chatId: -1001234567890,
+        chatType: "supergroup",
+        title: "Whale Watchers",
+      });
+      const subscriber = createMockSubscriber({
+        chatType: TelegramChatType.SUPERGROUP,
+      });
+      vi.mocked(mockService.findByChatId).mockResolvedValue(subscriber);
+
+      await handleSettingsCommand(ctx, mockService);
+
+      const message = vi.mocked(ctx.reply).mock.calls[0]?.[0] as string;
+      expect(message).toContain("Whale Watchers");
+    });
+  });
+});

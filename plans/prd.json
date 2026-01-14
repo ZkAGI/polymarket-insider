@@ -3497,7 +3497,9 @@
       "priority": 173,
       "name": "Alert preferences with /settings command",
       "description": "Let users configure which alerts they receive",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T07:00:00Z",
+      "notes": "Implemented /settings command with inline keyboard showing: Whale Alerts (ON/OFF), Insider Alerts (ON/OFF), Min Trade Size ($1K/$10K/$50K/$100K submenu), Severity (All/High+Critical/Critical only submenu). Added callback handlers for real-time preference updates with confirmation messages. 309 tests pass including 57 new settings-specific tests.",
       "steps": [
         "Create /settings command handler",
         "Show inline keyboard with current preferences",

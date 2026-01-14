@@ -11169,3 +11169,56 @@ NOTES FOR NEXT SESSION:
 - The /stop command handler is ready and can be registered using bot.onCommand("stop", handler)
 - Commands module now exports: handleStopCommand, createStopCommandHandler, unsubscribeUser, getUnsubscribeMessage, getAlreadyUnsubscribedMessage, getNotFoundMessage
 - Users can resubscribe by sending /start (reactivation logic already in place from TG-BOT-002)
+
+
+=== Session 2026-01-14 (TG-BOT-005) ===
+
+COMPLETED: TG-BOT-005 - Alert preferences with /settings command
+
+Summary:
+- Implemented /settings command to allow users to configure their alert preferences
+- Shows inline keyboard with current settings
+- Supports toggles (Whale Alerts ON/OFF, Insider Alerts ON/OFF) and submenus (Min Trade Size, Severity)
+- Updates preferences in real-time with confirmation messages
+
+Implementation Details:
+
+Settings Options:
+- Whale Alerts: Toggle ON/OFF (shows checkmark or X)
+- Insider Alerts: Toggle ON/OFF (shows checkmark or X)
+- Min Trade Size: Opens submenu with $1K, $10K, $50K, $100K options (shows check for selected)
+- Severity: Opens submenu with All, High+Critical, Critical only options (shows check for selected)
+
+handleSettingsCommand() function:
+- Gets display name from context
+- Fetches current alert preferences from database
+- Shows not subscribed message if user not found
+- Sends settings message with inline keyboard
+
+handleSettingsCallback() function:
+- Parses callback data to determine action type
+- For menu callbacks: Shows appropriate submenu (minsize or severity)
+- For back callback: Returns to main settings keyboard
+- For toggle callbacks: Updates preference and refreshes keyboard
+- Shows confirmation toast with new value
+
+Files Modified:
+- src/telegram/commands.ts: Added /settings command handler and all helper functions (~600 lines)
+- src/telegram/index.ts: Added exports for 17 new functions/constants/types
+- tests/telegram/commands.test.ts: Added 57 unit tests (170 total now)
+- tests/telegram/commands.e2e.test.ts: Added 52 E2E tests (98 total now)
+
+Verification:
+- TypeScript typecheck: PASSED (pnpm typecheck)
+- Unit tests: 170 tests PASSED for commands.test.ts
+- E2E tests: 98 tests PASSED for commands.e2e.test.ts
+- All telegram module tests: 309 tests PASSED (4 test files)
+- Browser smoke tests: PASSED (dashboard renders correctly with screenshots)
+
+NOTES FOR NEXT SESSION:
+- TG-BOT-005 complete and marked in prd.json
+- Next feature to implement: TG-BOT-006 (Status and help commands)
+- The /settings command handler is ready and can be registered using:
+  bot.command("settings", createSettingsCommandHandler())
+  bot.callbackQuery(/^settings:/, createSettingsCallbackHandler())
+
