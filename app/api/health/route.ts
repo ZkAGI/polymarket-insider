@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, performHealthCheck } from "@/db/client";
 import { startupOrchestrator } from "@/services/startup";
+import { getIngestionHealthService } from "@/services/ingestion-health";
 import { env } from "../../../config/env";
 
 // Get version from package.json at build time or fallback
@@ -351,6 +352,84 @@ function checkAlertGeneratorHealth(): ServiceHealth {
 }
 
 /**
+ * Check ingestion worker health
+ */
+async function checkIngestionHealth(): Promise<ServiceHealth> {
+  try {
+    const healthService = getIngestionHealthService();
+    const status = await healthService.getHealthStatus();
+
+    if (status.status === "unknown") {
+      return {
+        name: "ingestion",
+        status: "disabled",
+        message: "Ingestion worker not yet started",
+        lastCheck: new Date().toISOString(),
+      };
+    }
+
+    if (status.isStalled) {
+      const stallMessages: string[] = [];
+      if (status.isMarketSyncStalled) {
+        const mins = Math.round((status.stall.marketSyncStalledForMs ?? 0) / 60000);
+        stallMessages.push(`Market sync stalled for ${mins}m`);
+      }
+      if (status.isTradeIngestStalled) {
+        const mins = Math.round((status.stall.tradeIngestStalledForMs ?? 0) / 60000);
+        stallMessages.push(`Trade ingestion stalled for ${mins}m`);
+      }
+      return {
+        name: "ingestion",
+        status: "unhealthy",
+        message: stallMessages.join(", ") || "Ingestion stalled",
+        lastCheck: new Date().toISOString(),
+        metadata: {
+          lastMarketSyncAt: status.persisted.lastMarketSyncAt?.toISOString(),
+          lastTradeIngestAt: status.persisted.lastTradeIngestAt?.toISOString(),
+          cyclesCompleted: status.persisted.cyclesCompleted,
+          cyclesFailed: status.persisted.cyclesFailed,
+        },
+      };
+    }
+
+    if (status.status === "degraded") {
+      return {
+        name: "ingestion",
+        status: "degraded",
+        message: status.persisted.lastError ?? "Some ingestion errors",
+        lastCheck: new Date().toISOString(),
+        metadata: {
+          lastMarketSyncAt: status.persisted.lastMarketSyncAt?.toISOString(),
+          lastTradeIngestAt: status.persisted.lastTradeIngestAt?.toISOString(),
+          cyclesCompleted: status.persisted.cyclesCompleted,
+          cyclesFailed: status.persisted.cyclesFailed,
+        },
+      };
+    }
+
+    return {
+      name: "ingestion",
+      status: "healthy",
+      message: "Ingestion running normally",
+      lastCheck: new Date().toISOString(),
+      metadata: {
+        lastMarketSyncAt: status.persisted.lastMarketSyncAt?.toISOString(),
+        lastTradeIngestAt: status.persisted.lastTradeIngestAt?.toISOString(),
+        totalMarketsSynced: status.persisted.marketsSynced,
+        totalTradesIngested: status.persisted.tradesIngested,
+      },
+    };
+  } catch {
+    return {
+      name: "ingestion",
+      status: "disabled",
+      message: "Ingestion health check unavailable",
+      lastCheck: new Date().toISOString(),
+    };
+  }
+}
+
+/**
  * Get orchestrator overall status
  */
 function checkOrchestratorHealth(): ServiceHealth {
@@ -467,6 +546,7 @@ export async function GET(
     walletProfilerHealth,
     alertGeneratorHealth,
     orchestratorHealth,
+    ingestionHealth,
   ] = await Promise.all([
     checkDatabaseHealth(),
     Promise.resolve(checkWebSocketHealth()),
@@ -475,6 +555,7 @@ export async function GET(
     Promise.resolve(checkWalletProfilerHealth()),
     Promise.resolve(checkAlertGeneratorHealth()),
     Promise.resolve(checkOrchestratorHealth()),
+    checkIngestionHealth(),
   ]);
 
   const services = [
@@ -485,6 +566,7 @@ export async function GET(
     walletProfilerHealth,
     alertGeneratorHealth,
     orchestratorHealth,
+    ingestionHealth,
   ];
 
   const overallStatus = calculateOverallStatus(services);

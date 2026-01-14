@@ -4155,7 +4155,9 @@
   "priority": 203,
   "name": "Ingestion health tracking",
   "description": "Track and expose ingestion health and last successful sync times.",
-  "passes": false,
+  "passes": true,
+  "completed_at": "2026-01-14T13:05:00Z",
+  "notes": "Implemented IngestionHealthService that persists health data to SystemConfig, exposes /api/ingestion-health endpoint with stats and logs options, detects stalls beyond configurable thresholds (15min market, 5min trade), generates SYSTEM alerts on stall detection, and integrates with main /api/health endpoint. 30 unit tests and 13 E2E tests pass.",
   "steps": [
     "Persist last successful market ingestion timestamp",
     "Persist last successful trade ingestion timestamp",

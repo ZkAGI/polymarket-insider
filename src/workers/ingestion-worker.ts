@@ -30,6 +30,10 @@ import {
   type DetectionTriggerConfig,
   type DetectionCycleResult,
 } from "./detection-trigger";
+import {
+  getIngestionHealthService,
+  type IngestionHealthService,
+} from "../services/ingestion-health";
 
 /**
  * Configuration for the ingestion worker
@@ -79,6 +83,12 @@ export interface IngestionWorkerConfig {
 
   /** Detection trigger configuration */
   detectionConfig?: DetectionTriggerConfig;
+
+  /** Whether to persist health data to the health service (default: true) */
+  persistHealth?: boolean;
+
+  /** Custom ingestion health service */
+  healthService?: IngestionHealthService;
 }
 
 /**
@@ -171,6 +181,7 @@ export class IngestionWorker extends EventEmitter {
       | "workerId"
       | "debug"
       | "enableDetection"
+      | "persistHealth"
     >
   >;
   private readonly prisma: PrismaClient;
@@ -181,6 +192,7 @@ export class IngestionWorker extends EventEmitter {
   private readonly walletService: WalletService;
   private readonly logger: (message: string, data?: Record<string, unknown>) => void;
   private readonly detectionTrigger: DetectionTrigger | null;
+  private readonly healthService: IngestionHealthService | null;
 
   private isRunning = false;
   private isIngesting = false;
@@ -220,6 +232,7 @@ export class IngestionWorker extends EventEmitter {
       workerId: config.workerId ?? `ingestion-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       debug: config.debug ?? false,
       enableDetection: config.enableDetection ?? true,
+      persistHealth: config.persistHealth ?? true,
     };
 
     // Initialize Prisma client inside worker (independent of app)
@@ -239,6 +252,11 @@ export class IngestionWorker extends EventEmitter {
           prisma: this.prisma,
           debug: config.debug,
         })
+      : null;
+
+    // Initialize health service if enabled
+    this.healthService = this.config.persistHealth
+      ? config.healthService ?? getIngestionHealthService({ prisma: this.prisma, debug: config.debug })
       : null;
 
     this.logger = config.logger ?? this.defaultLogger.bind(this);
@@ -414,6 +432,9 @@ export class IngestionWorker extends EventEmitter {
 
       // Record sync completion
       await this.recordSyncComplete(syncLog.id, result);
+
+      // Persist health data to health service (INGEST-HEALTH-001)
+      await this.persistHealthData();
 
       this.logger("Ingestion cycle completed", {
         marketsSynced: result.marketsSynced,
@@ -698,6 +719,38 @@ export class IngestionWorker extends EventEmitter {
         errors: result.error ? { message: result.error } : undefined,
       },
     });
+  }
+
+  /**
+   * Persist health data to health service (INGEST-HEALTH-001)
+   */
+  private async persistHealthData(): Promise<void> {
+    if (!this.healthService) {
+      return;
+    }
+
+    try {
+      // Update runtime health in the service
+      this.healthService.updateRuntimeHealth(this.health);
+
+      // Persist health data to database
+      await this.healthService.persistHealth({
+        workerId: this.config.workerId,
+        lastMarketSyncAt: this.health.lastMarketSyncAt,
+        lastTradeIngestAt: this.health.lastTradeIngestAt,
+        cyclesCompleted: this.health.cyclesCompleted,
+        cyclesFailed: this.health.cyclesFailed,
+        marketsSynced: this.health.marketsSynced,
+        tradesIngested: this.health.tradesIngested,
+        walletsCreated: this.health.walletsCreated,
+        lastError: this.health.lastError,
+      });
+    } catch (error) {
+      // Log but don't fail cycle if health persistence fails
+      this.logger("Failed to persist health data (non-fatal)", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   /**

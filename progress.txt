@@ -12734,3 +12734,67 @@ NOTES FOR NEXT SESSION:
 - Next priority feature: INGEST-WALLET-001 (priority 201)
 - The ingestion worker already has wallet materialization implemented
 - Need to verify and test that feature next
+
+COMPLETED: INGEST-HEALTH-001 - Ingestion health tracking
+- Created IngestionHealthService in src/services/ingestion-health.ts (~550 lines)
+- Service features:
+  * Persists last successful market/trade ingestion timestamps to SystemConfig
+  * Tracks cycle statistics (completed, failed, markets synced, trades ingested, wallets created)
+  * Configurable stall thresholds (default: 15min market sync, 5min trade ingest)
+  * Automatic stall detection and SYSTEM alert generation (AlertType.SYSTEM, AlertSeverity.HIGH)
+  * Runtime health caching from ingestion worker
+  * Start/stop lifecycle with event emission (started, stopped, stall:detected, stall:recovered)
+  * Sync statistics aggregation (total, success rate, avg duration, hourly/daily counts)
+  * Recent sync log retrieval
+- Created /api/ingestion-health API endpoint:
+  * GET /api/ingestion-health - Full health status with all details
+  * GET /api/ingestion-health?simple=true - Simple status check (200/503)
+  * GET /api/ingestion-health?stats=true - Include sync statistics
+  * GET /api/ingestion-health?logs=true&limit=N - Include recent sync logs
+  * Returns HTTP 503 when unhealthy, 200 otherwise
+  * No-cache headers for fresh data
+- Integrated with main /api/health endpoint:
+  * Added checkIngestionHealth() function
+  * Ingestion now appears as a service in the health check response
+  * Shows metadata when healthy (totalMarketsSynced, totalTradesIngested)
+  * Shows stall details when unhealthy
+- Updated ingestion worker to persist health data:
+  * Added persistHealth config option (default: true)
+  * Added healthService property
+  * Added persistHealthData() method called after each cycle
+  * Worker updates both runtime health and persisted health
+- Created comprehensive test suites:
+  * tests/services/ingestion-health.test.ts - 30 unit tests covering:
+    - Constructor and configuration
+    - Start/stop lifecycle and events
+    - getPersistedHealth (parsing, default values, error handling)
+    - persistHealth (storage, merging, errors)
+    - getHealthStatus (stall detection, status determination)
+    - checkHealth (events, alerts, recovery detection)
+    - getLastSuccessfulSync, getRecentSyncLogs, getSyncStats
+    - updateRuntimeHealth caching
+  * tests/e2e/ingestion-health.e2e.test.ts - 13 E2E browser tests covering:
+    - Full health response structure
+    - Simple status mode
+    - Stats inclusion
+    - Logs inclusion
+    - Combined query parameters
+    - HTTP status codes
+    - No-cache headers
+    - Timestamp validity
+    - Integration with main health endpoint
+    - Response time under 5 seconds
+    - No console errors
+- Screenshots captured:
+  * tests/e2e/screenshots/ingestion-health/api-full-response.png
+  * tests/e2e/screenshots/ingestion-health/api-with-stats-logs.png
+  * tests/e2e/screenshots/ingestion-health/health-api-with-ingestion.png
+- All tests pass (30 unit + 13 E2E)
+- TypeScript compiles with no errors
+
+NOTES FOR NEXT SESSION:
+- All PRD features are now complete (passes: true)
+- The ingestion health service integrates with the ingestion worker and main health endpoint
+- Stall alerts are generated after configurable thresholds (15min market, 5min trade by default)
+- The health data is persisted to SystemConfig table for durability across restarts
+

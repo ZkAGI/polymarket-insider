@@ -58,3 +58,15 @@ export type {
   StartupStatus,
   StartupEvents,
 } from "./startup";
+
+export {
+  IngestionHealthService,
+  getIngestionHealthService,
+  createIngestionHealthService,
+  resetIngestionHealthService,
+} from "./ingestion-health";
+export type {
+  IngestionHealthServiceConfig,
+  PersistedHealth,
+  IngestionHealthStatus,
+} from "./ingestion-health";
