@@ -12144,3 +12144,68 @@ NOTES FOR NEXT SESSION:
 - API follows same patterns as dashboard endpoints
 - Database not running during E2E testing, tests handle 500 errors gracefully
 - Wallet page still uses mock data, can be updated to use this API
+
+=== UI-API-007: Market Page API Endpoint ===
+Date: 2026-01-14
+
+FEATURE: Implemented comprehensive market detail API endpoint.
+
+IMPLEMENTATION:
+- Created app/api/market/[id]/route.ts with GET handler
+- Validates market ID format (must not be empty)
+- Fetches market from database first, falls back to Gamma API if not found
+- Fetches price history from database or generates synthetic data
+- Fetches volume history from database or generates synthetic data
+- Fetches recent trades for this specific market
+- In-memory caching with 30-second TTL and cache headers
+
+API ENDPOINT: GET /api/market/[id]
+
+QUERY PARAMETERS:
+- priceInterval: Interval for price history (1h, 4h, 1d) (default: 1h)
+- priceDays: Number of days for price history (1-180, default 7)
+- volumeInterval: Interval for volume history (1h, 4h, 1d) (default: 1h)
+- volumeDays: Number of days for volume history (1-180, default 7)
+- tradesLimit: Number of recent trades to return (1-100, default 20)
+
+RESPONSE STRUCTURE:
+- market: Complete market details with outcomes, description, etc.
+- priceHistory: Array of {timestamp, prices} for charting
+- volumeHistory: Array of {timestamp, volume} for charting
+- trades: Recent trades for this market
+- generatedAt: ISO timestamp
+
+FEATURES:
+- 400 for invalid/empty market ID
+- 404 for non-existent markets (not in DB and not in Gamma API)
+- 500 with error details for database errors
+- Cache-Control and X-Cache headers for successful responses
+- Synthetic data generation when database is empty:
+  - Price history: Random walk around base probability
+  - Volume history: Randomized volume around daily average
+
+DATA SOURCES:
+- Primary: Prisma database (Market, PriceHistory, Trade tables)
+- Fallback: Gamma API for market details when not in database
+- Synthetic: Generated price/volume history when DB has no history
+
+FILES CREATED:
+- app/api/market/[id]/route.ts
+- tests/api/market/market-detail.test.ts (21 tests)
+- tests/e2e/market-detail-api.e2e.test.ts (34 tests)
+
+FILES MODIFIED:
+- tests/e2e/dashboard-real-api.e2e.test.ts (fixed unused variable TypeScript errors)
+- tests/hooks/useDashboardData.test.ts (fixed optional chaining TypeScript errors)
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 21 tests PASSED (tests/api/market/market-detail.test.ts)
+- E2E tests: 34 tests PASSED (tests/e2e/market-detail-api.e2e.test.ts)
+
+NOTES FOR NEXT SESSION:
+- UI-API-007 complete and marked in prd.json
+- Next feature to implement: UI-WS-001 (Dashboard real-time WebSocket updates)
+- API follows same patterns as wallet and dashboard endpoints
+- Database not running during E2E testing, tests handle 500 errors gracefully
+- Market page still uses mock data, can be updated to use this API

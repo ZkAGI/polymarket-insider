@@ -63,7 +63,7 @@ describe("Dashboard Real API Integration", () => {
       });
 
       // Check if skeleton or content is visible
-      const hasSkeleton = await page.evaluate(() => {
+      await page.evaluate(() => {
         return (
           document.querySelector('[data-testid="dashboard-skeleton"]') !== null ||
           document.querySelector('.animate-pulse') !== null
@@ -193,7 +193,7 @@ describe("Dashboard Real API Integration", () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Check for error state or banner
-      const hasErrorState = await page.evaluate(() => {
+      await page.evaluate(() => {
         const body = document.body.innerHTML;
         return (
           body.includes("Error") ||
@@ -367,7 +367,7 @@ describe("Dashboard Real API Integration", () => {
       });
 
       // Check for auto-refresh controls
-      const hasAutoRefresh = await page.evaluate(() => {
+      await page.evaluate(() => {
         const body = document.body.innerHTML;
         return (
           body.includes("30s") ||

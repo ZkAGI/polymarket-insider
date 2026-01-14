@@ -357,7 +357,7 @@ describe("useDashboardData hooks", () => {
       });
 
       expect(result.current.wallets).toHaveLength(1);
-      expect(result.current.wallets[0].address).toBe("0x1234567890abcdef");
+      expect(result.current.wallets[0]?.address).toBe("0x1234567890abcdef");
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/dashboard/whales?limit=10&offset=0"
       );
@@ -404,7 +404,7 @@ describe("useDashboardData hooks", () => {
       });
 
       expect(result.current.markets).toHaveLength(1);
-      expect(result.current.markets[0].question).toBe("Will Trump win 2024?");
+      expect(result.current.markets[0]?.question).toBe("Will Trump win 2024?");
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/dashboard/markets?limit=10&offset=0"
       );

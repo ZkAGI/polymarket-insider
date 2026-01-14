@@ -3826,7 +3826,8 @@
       "priority": 188,
       "name": "Market page API endpoint",
       "description": "API for market detail page",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-01-14T12:43:00Z",
       "steps": [
         "Create app/api/market/[id]/route.ts",
         "Fetch market from database or Gamma API",
