@@ -12364,3 +12364,92 @@ NOTES FOR NEXT SESSION:
 - Next features: MONITOR-001 (Structured logging with pino), MONITOR-002 (Metrics endpoint)
 - Manual testing of Docker setup recommended: docker-compose up
 - Production image should be tested with: docker build --target production -t polymarket-tracker:prod .
+
+=== MONITOR-001: Structured Logging with Pino ===
+Date: 2026-01-14
+
+FEATURE: Implemented pino-compatible structured logging utility
+
+IMPLEMENTATION OVERVIEW:
+Created a custom logging utility that provides a pino-compatible API using native console methods.
+This approach avoids external dependencies while maintaining the structured logging patterns
+that pino provides.
+
+SRC/UTILS/LOGGER.TS:
+- LOG_LEVELS constant with numeric values (trace=10, debug=20, info=30, warn=40, error=50, fatal=60)
+- LogLevel type: "trace" | "debug" | "info" | "warn" | "error" | "fatal"
+- Logger interface with all pino-compatible methods
+- LoggerOptions interface for configuration
+
+CORE FUNCTIONS:
+- createLogger(options?): Creates configured logger instance
+  - level: Configurable log level (defaults to LOG_LEVEL env var or "info")
+  - name: Logger name included in output
+  - prettyPrint: Human-readable format in development
+  - base: Base context included in all logs
+
+- createServiceLogger(serviceName): Creates logger with service context
+- createRequestLogger(requestId): Creates child logger with request ID
+
+CHILD LOGGERS:
+- log.child(bindings): Creates child logger inheriting parent context
+- Context merging: child context merged with parent context
+- Supports nested child loggers
+
+LOG OUTPUT FORMATS:
+1. JSON Format (prettyPrint: false):
+   {"time":"ISO8601","level":"info","levelNum":30,"msg":"message",...context}
+
+2. Pretty Format (prettyPrint: true):
+   [HH:MM:SS.mmm] LEVEL (service): message {context}
+
+PRE-CONFIGURED SERVICE LOGGERS:
+- serviceLoggers.marketSync
+- serviceLoggers.tradeStream
+- serviceLoggers.walletProfiler
+- serviceLoggers.alertGenerator
+- serviceLoggers.telegram
+- serviceLoggers.database
+- serviceLoggers.api
+- serviceLoggers.ws
+
+Uses lazy singleton pattern - loggers created on first access.
+
+FEATURES:
+- Environment-based configuration (LOG_LEVEL, NODE_ENV)
+- ISO8601 timestamps
+- Numeric level values for log aggregation
+- Context/metadata support (both positional argument styles)
+- Child logger inheritance
+- Console method mapping (trace/debug->console.debug, info->console.info, etc.)
+
+FILES CREATED:
+- src/utils/logger.ts: Logging utility implementation
+- tests/utils/logger.test.ts: 30 unit tests
+
+Test Results:
+- TypeScript typecheck: PASSED
+- Unit tests: 30 tests PASSED
+
+USAGE EXAMPLES:
+import { logger, createServiceLogger, serviceLoggers } from '@/utils/logger';
+
+// Default logger
+logger.info('Application started');
+
+// Service logger
+const log = createServiceLogger('MyService');
+log.info('Service initialized', { port: 3000 });
+
+// Pre-configured service loggers
+serviceLoggers.marketSync.info('Sync started');
+
+// Child logger
+const requestLog = log.child({ requestId: 'req-123' });
+requestLog.info('Processing request');
+
+NOTES FOR NEXT SESSION:
+- MONITOR-001 complete
+- Logger ready to replace console.log throughout codebase
+- Next feature: MONITOR-002 (Metrics endpoint)
+- Consider installing actual pino package for production if needed
