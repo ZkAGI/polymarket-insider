@@ -244,32 +244,94 @@ export class TradeStreamService extends EventEmitter {
    * This connects to the WebSocket and begins processing trades.
    */
   async start(): Promise<void> {
-    if (this.isRunning) {
-      this.logger("Service already running");
+  if (this.isRunning) {
+    this.logger("Service already running");
+    return;
+  }
+
+  this.logger("Starting trade stream service", {
+    whaleThreshold: this.config.whaleThreshold,
+    autoCreateWallets: this.config.autoCreateWallets,
+  });
+
+  this.isRunning = true;
+  this.stats.startedAt = new Date();
+  this.setupEventHandlers();
+
+  try {
+    await this.tradeStreamClient.connect();
+    this.logger("Connected to trade stream");
+
+    // AUTO-SUBSCRIBE to all outcome tokens
+    await this.subscribeToAllMarkets();
+
+    this.emit("started");
+  } catch (error) {
+    this.isRunning = false;
+    this.logger("Failed to connect", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+private async subscribeToAllMarkets(): Promise<void> {
+  try {
+    // Get recent active markets with outcomes (limit to prevent overload)
+    const recentOutcomes = await this.prisma.outcome.findMany({
+      where: { 
+        clobTokenId: { not: null },
+        market: {
+          active: true,
+          closed: false,
+        }
+      },
+      select: { clobTokenId: true },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+
+    const tokenIds = recentOutcomes
+      .map(o => o.clobTokenId)
+      .filter((id): id is string => id !== null && id.length > 10);
+
+    if (tokenIds.length === 0) {
+      this.logger("No tokens to subscribe to");
       return;
     }
 
-    this.logger("Starting trade stream service", {
-      whaleThreshold: this.config.whaleThreshold,
-      autoCreateWallets: this.config.autoCreateWallets,
-    });
+    this.logger("Subscribing to active market tokens", { count: tokenIds.length });
 
-    this.isRunning = true;
-    this.stats.startedAt = new Date();
-    this.setupEventHandlers();
+    // Subscribe in smaller batches with delay
+    const batchSize = 20;
+    let subscribed = 0;
 
-    try {
-      await this.tradeStreamClient.connect();
-      this.logger("Connected to trade stream");
-      this.emit("started");
-    } catch (error) {
-      this.isRunning = false;
-      this.logger("Failed to connect", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
+    for (let i = 0; i < tokenIds.length; i += batchSize) {
+      const batch = tokenIds.slice(i, i + batchSize);
+      
+      try {
+        await this.tradeStreamClient.subscribe({ tokenIds: batch });
+        subscribed += batch.length;
+        
+        // Small delay between batches to avoid overwhelming the WebSocket
+        if (i + batchSize < tokenIds.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } catch (e) {
+        this.logger("Batch subscription failed, continuing", { 
+          batch: i / batchSize,
+          error: e instanceof Error ? e.message : String(e)
+        });
+      }
     }
+
+    this.logger("Subscription complete", { subscribed, total: tokenIds.length });
+  } catch (error) {
+    this.logger("Failed to subscribe to markets", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
+}
 
   /**
    * Stop the trade stream service.

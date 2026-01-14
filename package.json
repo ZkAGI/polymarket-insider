@@ -61,6 +61,7 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "@polymarket/clob-client": "^5.2.1",
     "@prisma/client": "^6.19.1",
     "dotenv": "^17.2.3",
     "grammy": "^1.39.2",
